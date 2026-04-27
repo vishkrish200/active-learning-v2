@@ -20,6 +20,7 @@ from marginal_value.training.config import (
     validate_training_dispatch,
 )
 from marginal_value.ranking.audit_submission import build_ranking_model_card, write_ranking_model_card
+from marginal_value.select import run_external_selector
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -62,6 +63,23 @@ def main(argv: list[str] | None = None) -> int:
     audit_parser.add_argument("--top-k", nargs="+", type=int, default=[10, 25, 50, 100, 200])
     audit_parser.add_argument("--low-quality-threshold", type=float, default=0.45)
 
+    select_parser = subparsers.add_parser(
+        "select",
+        help="Run the frozen external old-support/candidate-pool selector",
+    )
+    select_parser.add_argument("--old-support", required=True)
+    select_parser.add_argument("--candidate-pool", required=True)
+    select_parser.add_argument("--output", required=True)
+    select_parser.add_argument("--sample-rate", type=float, default=30.0)
+    select_parser.add_argument("--k-old", type=int, default=5)
+    select_parser.add_argument("--quality-threshold", type=float, default=0.85)
+    select_parser.add_argument("--max-stationary-fraction", type=float, default=0.90)
+    select_parser.add_argument("--max-abs-value", type=float, default=60.0)
+    select_parser.add_argument("--cluster-similarity-threshold", type=float, default=0.985)
+    select_parser.add_argument("--source-cap", type=int, default=2)
+    select_parser.add_argument("--no-source-cap", action="store_true")
+    select_parser.add_argument("--max-samples", type=int)
+
     args = parser.parse_args(argv)
     if args.command == "rank":
         return _rank(args)
@@ -98,6 +116,23 @@ def main(argv: list[str] | None = None) -> int:
         )
         output_path = write_ranking_model_card(card, args.out)
         print(f"Wrote ranking model card: {output_path}")
+        return 0
+    if args.command == "select":
+        source_cap = None if args.no_source_cap else args.source_cap
+        result = run_external_selector(
+            old_support_path=args.old_support,
+            candidate_pool_path=args.candidate_pool,
+            output_path=args.output,
+            sample_rate=args.sample_rate,
+            k_old=args.k_old,
+            quality_threshold=args.quality_threshold,
+            max_stationary_fraction=args.max_stationary_fraction,
+            max_abs_value=args.max_abs_value,
+            cluster_similarity_threshold=args.cluster_similarity_threshold,
+            source_cap=source_cap,
+            max_samples=args.max_samples,
+        )
+        print(f"Wrote ranked candidates: {result['output_path']}")
         return 0
     return 1
 

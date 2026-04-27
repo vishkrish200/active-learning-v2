@@ -41,6 +41,53 @@ Expected minimal submission columns:
 worker_id,rank,score,quality_score,reason_code
 ```
 
+## External Hidden-Test Selector
+
+For a held-out evaluator, use the frozen selector interface. It ranks a candidate
+pool using only old support and candidate clips; it does not accept labels,
+targets, or evaluation rows.
+
+Input manifests are CSV files with at least:
+
+```text
+sample_id,raw_path
+```
+
+`raw_path` may point to a JSONL IMU file with `acc`/`gyro` arrays, or to a CSV
+with six numeric IMU channels. Relative paths are resolved relative to the
+manifest file.
+
+Run:
+
+```bash
+python3 -m marginal_value.select \
+  --old-support old_support.csv \
+  --candidate-pool candidate_pool.csv \
+  --output ranked_candidates.csv
+```
+
+Equivalent console command:
+
+```bash
+marginal-value select \
+  --old-support old_support.csv \
+  --candidate-pool candidate_pool.csv \
+  --output ranked_candidates.csv
+```
+
+Default method:
+
+```text
+quality_score >= 0.85
+stationary_fraction <= 0.90
+max_abs_value <= 60.0
+rank by old-support novelty in raw_shape_stats
+cap early selections at 2 per new_cluster_id
+```
+
+This supports only the narrow current claim: high-quality raw-shape coverage
+selection. It is not a downstream active-learning proof.
+
 ## Modal-Only Training
 
 Do not run actual training on the local Mac. Local commands are only for validation and packaging checks.

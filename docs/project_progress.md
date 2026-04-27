@@ -3186,3 +3186,70 @@ Do not add a weighted raw+temporal hybrid yet.
 First decide whether the project claim is raw-shape/media utility or broad behavior discovery.
 If the claim is broad behavior discovery, the next meaningful experiment is a blind/downstream evaluation or a new independent temporal representation with predeclared gates.
 ```
+
+## 46. External Hidden-Test Selector Interface
+
+The repo now includes a deterministic external selector entrypoint so an outside evaluator can test the current algorithm without exposing hidden targets or evaluation features.
+
+Implementation:
+
+```text
+marginal_value/select.py
+tests/test_external_selector.py
+docs/external_hidden_test_protocol_2026-04-27.md
+```
+
+Command:
+
+```bash
+python3 -m marginal_value.select \
+  --old-support old_support.csv \
+  --candidate-pool candidate_pool.csv \
+  --output ranked_candidates.csv
+```
+
+Equivalent installed command:
+
+```bash
+marginal-value select \
+  --old-support old_support.csv \
+  --candidate-pool candidate_pool.csv \
+  --output ranked_candidates.csv
+```
+
+Input manifests require:
+
+```text
+sample_id,raw_path
+```
+
+`raw_path` may point to JSONL IMU rows or per-clip CSV files. Relative paths are resolved against the manifest directory.
+
+Frozen default selector:
+
+```text
+representation = raw_shape_stats
+quality_score >= 0.85
+stationary_fraction <= 0.90
+max_abs_value <= 60.0
+old-support novelty = mean cosine distance to k=5 nearest old-support clips
+candidate cluster cap = 2 per new_cluster_id
+cluster threshold = 0.985 cosine similarity
+```
+
+This is intentionally a selector, not an evaluator. It does not accept:
+
+```text
+hidden target rows
+labels
+evaluation embeddings
+target-source metadata
+```
+
+Scientific interpretation:
+
+```text
+This makes the current narrow claim externally testable.
+It does not upgrade the broad active-learning claim.
+The evaluator should measure hidden-target coverage or downstream utility using representations/metrics not controlled by this selector.
+```
