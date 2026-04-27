@@ -3424,3 +3424,66 @@ python3 -m marginal_value.select \
 ```
 
 The selector still does not accept hidden targets, labels, eval embeddings, or target-source metadata.
+
+## 50. Challenge Controls Marginal-Coverage Run
+
+Added the two missing "embarrassing controls" to the marginal-coverage eval:
+
+```text
+quality_gated_random_clustercap2
+kcenter_greedy_quality_gated
+```
+
+Implementation/config:
+
+```text
+marginal_value/eval/marginal_coverage_eval.py
+configs/marginal_coverage_eval_challenge_controls.json
+tests/test_marginal_coverage_eval.py
+```
+
+Modal run:
+
+```text
+smoke run: completed
+full run: completed
+run url: https://modal.com/apps/vishkrish200/main/ap-oCZC34TT5YfX7GT3Saue47
+mode: full
+rows: 20,000
+source groups: 5,437
+folds: 4
+remote report: /artifacts/eval/marginal_coverage/challenge_controls/marginal_coverage_report_full.json
+remote candidates: /artifacts/eval/marginal_coverage/challenge_controls/marginal_coverage_candidates_full.jsonl
+local report: data/modal_reports/challenge_controls/marginal_coverage_report_full.json
+local candidates: data/modal_reports/challenge_controls/marginal_coverage_candidates_full.jsonl
+```
+
+Primary table, mean relative coverage gain:
+
+| Policy | K | temporal | raw-shape | window-shape | primary avg temporal+raw |
+|---|---:|---:|---:|---:|---:|
+| `quality_gated_random_clustercap2` | 100 | 0.0119 | 0.0535 | 0.0124 | 0.0327 |
+| `kcenter_greedy_quality_gated` | 100 | 0.0167 | 0.0769 | 0.0301 | 0.0468 |
+| `window_shape_q85_stat90_abs60_clustercap2` | 100 | 0.0175 | 0.0994 | 0.0329 | 0.0584 |
+| `quality_gated_random_clustercap2` | 200 | 0.0138 | 0.0951 | 0.0158 | 0.0545 |
+| `kcenter_greedy_quality_gated` | 200 | 0.0190 | 0.1190 | 0.0330 | 0.0690 |
+| `window_shape_q85_stat90_abs60_clustercap2` | 200 | 0.0198 | 0.1189 | 0.0332 | 0.0693 |
+| `quality_gated_random_clustercap2` | 400 | 0.0188 | 0.1366 | 0.0278 | 0.0777 |
+| `kcenter_greedy_quality_gated` | 400 | 0.0228 | 0.1381 | 0.0352 | 0.0805 |
+| `window_shape_q85_stat90_abs60_clustercap2` | 400 | 0.0223 | 0.1390 | 0.0348 | 0.0806 |
+
+Interpretation:
+
+```text
+The frozen window-shape candidate beats the quality-gated random cluster-capped control at K=100 and K=200.
+It is not clearly better than k-center greedy; at K=200 and K=400 the primary average is essentially tied.
+This means the defensible claim should be narrowed: the project has evidence for quality-gated geometric coverage selection, not yet for a uniquely superior old-novelty scoring rule.
+```
+
+Decision:
+
+```text
+Keep window_shape_stats_q85_stat90_abs60_clustercap2 as the current selector because it is deterministic, simple, and balanced.
+Do not claim it is materially better than k-center without another validation axis or a hidden-test result.
+Treat kcenter_greedy_quality_gated as a required baseline in all future reports.
+```

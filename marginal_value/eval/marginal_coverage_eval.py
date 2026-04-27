@@ -335,6 +335,8 @@ def _run_marginal_coverage_fold(
         ],
         eval_rep_novelty_k_old=int(config["eval"].get("eval_rep_novelty_k_old", config["ranking"].get("k_old", 10))),
         quality_gate_eval_rep_novelty=bool(config["eval"].get("quality_gate_eval_rep_novelty", False)),
+        quality_gated_random_controls=_quality_gated_random_control_specs(config),
+        kcenter_greedy_controls=_kcenter_greedy_control_specs(config),
         cluster_similarity_threshold=float(
             config["ranking"].get(
                 "cluster_similarity_threshold",
@@ -379,6 +381,8 @@ def _evaluate_policies(
     eval_rep_novelty_representations: Sequence[str],
     eval_rep_novelty_k_old: int,
     quality_gate_eval_rep_novelty: bool,
+    quality_gated_random_controls: Sequence[dict[str, object]],
+    kcenter_greedy_controls: Sequence[dict[str, object]],
     cluster_similarity_threshold: float,
 ) -> dict[str, dict[str, object]]:
     policy_orders = {
@@ -389,6 +393,20 @@ def _evaluate_policies(
         "final_score_only": _order_by_score(scored, ("final_score", "sample_id")),
         "diverse_source_cluster": _diverse_source_cluster_order(scored),
     }
+    for spec in kcenter_greedy_controls:
+        name = _control_policy_name(spec, default="kcenter_greedy_quality_gated")
+        representation = str(spec.get("representation", "window_mean_std_pool"))
+        if representation not in eval_embeddings:
+            raise ValueError(f"k-center control representation is not loaded: {representation}")
+        policy_orders[name] = _kcenter_greedy_quality_gated_order(
+            scored=scored,
+            candidate_indices=candidate_indices,
+            support_indices=support_indices,
+            embeddings=eval_embeddings[representation],
+            quality_threshold=_control_quality_threshold(spec, default=0.45),
+            max_stationary_fraction=_optional_control_float(spec, "max_stationary_fraction"),
+            max_abs_value=_optional_control_float(spec, "max_abs_value"),
+        )
     for representation in eval_rep_novelty_representations:
         if representation not in eval_embeddings:
             raise ValueError(f"eval_rep_novelty representation is not loaded: {representation}")
@@ -488,6 +506,22 @@ def _evaluate_policies(
         seeds=random_seeds,
         min_quality=random_min_quality,
     )
+    for spec in quality_gated_random_controls:
+        name = _control_policy_name(spec, default="quality_gated_random")
+        reports[name] = _random_policy_report(
+            scored=scored,
+            candidate_indices=candidate_indices,
+            support_indices=support_indices,
+            target_indices=target_indices,
+            eval_embeddings=eval_embeddings,
+            k_values=k_values,
+            seeds=random_seeds,
+            min_quality=_control_quality_threshold(spec, default=random_min_quality),
+            max_stationary_fraction=_optional_control_float(spec, "max_stationary_fraction"),
+            max_abs_value=_optional_control_float(spec, "max_abs_value"),
+            source_cap=_optional_control_int(spec, "source_cap"),
+            source_key=str(spec.get("source_cap_key", "source_group_id")),
+        )
     return reports
 
 
@@ -528,13 +562,28 @@ def _random_policy_report(
     k_values: Sequence[int],
     seeds: Sequence[int],
     min_quality: float,
+    max_stationary_fraction: float | None = None,
+    max_abs_value: float | None = None,
+    source_cap: int | None = None,
+    source_key: str = "source_group_id",
 ) -> dict[str, object]:
-    high_quality = [idx for idx, row in enumerate(scored) if float(row.get("quality_score", 0.0)) >= min_quality]
+    high_quality = [
+        idx
+        for idx, row in enumerate(scored)
+        if _passes_control_gates(
+            row,
+            quality_threshold=min_quality,
+            max_stationary_fraction=max_stationary_fraction,
+            max_abs_value=max_abs_value,
+        )
+    ]
     fallback = [idx for idx in range(len(scored)) if idx not in set(high_quality)]
     seed_orders: list[list[int]] = []
     for seed in seeds:
         rng = np.random.default_rng(int(seed))
         high = list(rng.permutation(high_quality).astype(int)) if high_quality else []
+        if source_cap is not None:
+            high = _source_capped_order(high, scored, source_cap=int(source_cap), source_key=source_key)
         low = list(rng.permutation(fallback).astype(int)) if fallback else []
         seed_orders.append([*high, *low])
 
@@ -542,6 +591,10 @@ def _random_policy_report(
         "order_size": int(len(scored)),
         "random_seeds": [int(seed) for seed in seeds],
         "min_quality": float(min_quality),
+        "max_stationary_fraction": "" if max_stationary_fraction is None else float(max_stationary_fraction),
+        "max_abs_value": "" if max_abs_value is None else float(max_abs_value),
+        "source_cap": "" if source_cap is None else int(source_cap),
+        "source_key": "" if source_cap is None else source_key,
     }
     candidate_index_array = np.asarray(candidate_indices, dtype=int)
     for k in k_values:
@@ -946,6 +999,175 @@ def _quality_gated_old_novelty_order(
         source_key=source_key,
     )
     return [int(row["candidate_index"]) for row in ranked]
+
+
+def _quality_gated_random_control_specs(config: dict[str, Any]) -> list[dict[str, object]]:
+    return _control_policy_specs(config, key="quality_gated_random_controls")
+
+
+def _kcenter_greedy_control_specs(config: dict[str, Any]) -> list[dict[str, object]]:
+    return _control_policy_specs(config, key="kcenter_greedy_controls")
+
+
+def _control_policy_specs(config: dict[str, Any], *, key: str) -> list[dict[str, object]]:
+    specs = config.get("eval", {}).get(key, [])
+    if specs is None:
+        return []
+    if not isinstance(specs, list):
+        raise ValueError(f"eval.{key} must be a list.")
+    output: list[dict[str, object]] = []
+    seen_names: set[str] = set()
+    for spec in specs:
+        if not isinstance(spec, dict):
+            raise ValueError(f"eval.{key} entries must be objects.")
+        name = _control_policy_name(spec, default=key.rstrip("s"))
+        if name in seen_names:
+            raise ValueError(f"Duplicate control policy name: {name}")
+        output.append(dict(spec))
+        seen_names.add(name)
+    return output
+
+
+def _control_policy_name(spec: dict[str, object], *, default: str) -> str:
+    name = str(spec.get("name", default)).strip()
+    if not name:
+        raise ValueError("Control policy specs require a non-empty name.")
+    return name
+
+
+def _control_quality_threshold(spec: dict[str, object], *, default: float) -> float:
+    return _clip_quality_threshold(float(spec.get("quality_threshold", default)))
+
+
+def _optional_control_float(spec: dict[str, object], key: str) -> float | None:
+    if key not in spec or spec[key] is None:
+        return None
+    return float(spec[key])
+
+
+def _optional_control_int(spec: dict[str, object], key: str) -> int | None:
+    if key not in spec or spec[key] is None:
+        return None
+    value = int(spec[key])
+    if value <= 0:
+        raise ValueError(f"{key} must be positive when provided.")
+    return value
+
+
+def _passes_control_gates(
+    row: dict[str, object],
+    *,
+    quality_threshold: float,
+    max_stationary_fraction: float | None,
+    max_abs_value: float | None,
+) -> bool:
+    if _safe_float(row.get("quality_score", 0.0)) < float(quality_threshold):
+        return False
+    if max_stationary_fraction is not None:
+        if _safe_float(row.get("stationary_fraction", 0.0)) > float(max_stationary_fraction):
+            return False
+    if max_abs_value is not None:
+        if _safe_float(row.get("max_abs_value", row.get("max_abs", 0.0))) > float(max_abs_value):
+            return False
+    return True
+
+
+def _source_capped_order(
+    order: Sequence[int],
+    rows: list[dict[str, object]],
+    *,
+    source_cap: int,
+    source_key: str,
+) -> list[int]:
+    selected: list[int] = []
+    skipped: list[int] = []
+    source_counts: defaultdict[str, int] = defaultdict(int)
+    for idx in order:
+        row = rows[int(idx)]
+        if source_key not in row:
+            raise ValueError(f"source_key {source_key} is missing from a random-control row.")
+        source = str(row[source_key])
+        if source_counts[source] < source_cap:
+            selected.append(int(idx))
+            source_counts[source] += 1
+        else:
+            skipped.append(int(idx))
+    return [*selected, *skipped]
+
+
+def _kcenter_greedy_quality_gated_order(
+    *,
+    scored: list[dict[str, object]],
+    candidate_indices: np.ndarray,
+    support_indices: np.ndarray,
+    embeddings: np.ndarray,
+    quality_threshold: float,
+    max_stationary_fraction: float | None,
+    max_abs_value: float | None,
+) -> list[int]:
+    eligible = [
+        idx
+        for idx, row in enumerate(scored)
+        if _passes_control_gates(
+            row,
+            quality_threshold=quality_threshold,
+            max_stationary_fraction=max_stationary_fraction,
+            max_abs_value=max_abs_value,
+        )
+    ]
+    eligible_order = _farthest_first_order(
+        scored=scored,
+        eligible_indices=eligible,
+        candidate_embeddings=embeddings[np.asarray(candidate_indices, dtype=int)],
+        support_embeddings=embeddings[np.asarray(support_indices, dtype=int)],
+    )
+    eligible_set = set(eligible_order)
+    fallback = _quality_then_novelty_order(scored, [idx for idx in range(len(scored)) if idx not in eligible_set])
+    return [*eligible_order, *fallback]
+
+
+def _farthest_first_order(
+    *,
+    scored: list[dict[str, object]],
+    eligible_indices: Sequence[int],
+    candidate_embeddings: np.ndarray,
+    support_embeddings: np.ndarray,
+) -> list[int]:
+    if not eligible_indices:
+        return []
+    candidates = normalize_rows(np.asarray(candidate_embeddings, dtype=float))
+    support = normalize_rows(np.asarray(support_embeddings, dtype=float))
+    nearest_similarity = np.max(candidates @ support.T, axis=1) if len(support) else np.full(len(candidates), -1.0)
+    remaining = set(int(idx) for idx in eligible_indices)
+    ordered: list[int] = []
+    while remaining:
+        best = sorted(
+            remaining,
+            key=lambda idx: (
+                -(1.0 - float(nearest_similarity[int(idx)])),
+                -_safe_float(scored[int(idx)].get("quality_score", 0.0)),
+                str(scored[int(idx)].get("sample_id", "")),
+            ),
+        )[0]
+        ordered.append(best)
+        remaining.remove(best)
+        selected_similarity = candidates @ candidates[best]
+        nearest_similarity = np.maximum(nearest_similarity, selected_similarity)
+    return ordered
+
+
+def _quality_then_novelty_order(rows: list[dict[str, object]], indices: Sequence[int]) -> list[int]:
+    return [
+        int(idx)
+        for idx in sorted(
+            indices,
+            key=lambda idx: (
+                -_safe_float(rows[int(idx)].get("quality_score", 0.0)),
+                -_safe_float(rows[int(idx)].get("old_novelty_score", 0.0)),
+                str(rows[int(idx)].get("sample_id", "")),
+            ),
+        )
+    ]
 
 
 def _eval_rep_old_novelty_rows(

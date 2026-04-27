@@ -62,3 +62,7 @@ If the frozen candidate loses temporal/window-shape coverage to
 `old_novelty_only` or quality-gated random across repeated folds, do not claim
 balanced marginal coverage. If it only wins in `window_shape_stats`, report it
 as representation-specific novelty ranking.
+
+If the frozen candidate ties `kcenter_greedy_quality_gated`, describe the method
+as quality-gated geometric coverage ranking rather than a uniquely superior
+old-novelty rule.

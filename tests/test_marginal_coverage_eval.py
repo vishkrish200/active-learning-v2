@@ -82,6 +82,25 @@ class MarginalCoverageEvalTests(unittest.TestCase):
                             {"name": "stat90_abs60", "max_stationary_fraction": 0.90, "max_abs_value": 60.0},
                         ],
                     },
+                    "quality_gated_random_controls": [
+                        {
+                            "name": "quality_gated_random_clustercap2",
+                            "quality_threshold": 0.45,
+                            "max_stationary_fraction": 0.90,
+                            "max_abs_value": 60.0,
+                            "source_cap": 2,
+                            "source_cap_key": "new_cluster_id",
+                        }
+                    ],
+                    "kcenter_greedy_controls": [
+                        {
+                            "name": "kcenter_greedy_quality_gated",
+                            "representation": "window_mean_std_pool",
+                            "quality_threshold": 0.45,
+                            "max_stationary_fraction": 0.90,
+                            "max_abs_value": 60.0,
+                        }
+                    ],
                 },
                 "seed": 11,
             }
@@ -116,9 +135,19 @@ class MarginalCoverageEvalTests(unittest.TestCase):
         self.assertIn("quality_gated_old_novelty_q45_stat90_abs60", fold["policies"])
         self.assertIn("quality_gated_old_novelty_q45_clustercap2", fold["policies"])
         self.assertIn("random_high_quality", fold["policies"])
+        self.assertIn("quality_gated_random_clustercap2", fold["policies"])
+        self.assertIn("kcenter_greedy_quality_gated", fold["policies"])
         self.assertIn("window_mean_std_pool", fold["policies"]["ranker"]["coverage@2"])
         self.assertIn("temporal_order", fold["policies"]["ranker"]["coverage@2"])
         self.assertIn("raw_shape_stats", fold["policies"]["ranker"]["coverage@2"])
+        self.assertIn(
+            "relative_coverage_gain_mean",
+            fold["policies"]["quality_gated_random_clustercap2"]["coverage@2"]["raw_shape_stats"],
+        )
+        self.assertIn(
+            "relative_coverage_gain",
+            fold["policies"]["kcenter_greedy_quality_gated"]["coverage@2"]["raw_shape_stats"],
+        )
         self.assertIn("max_stationary_fraction", fold["policies"]["quality_gated_old_novelty_q45_stat90"]["selection@2"])
         self.assertIn("max_abs_value", fold["policies"]["quality_gated_old_novelty_q45_stat90_abs60"]["selection@2"])
         self.assertTrue(any(int(row["is_target_source_group"]) == 1 for row in candidates))
@@ -145,6 +174,21 @@ class MarginalCoverageEvalTests(unittest.TestCase):
         self.assertEqual(qgate_config["eval"]["quality_gated_old_novelty"]["validity_gates"][0]["name"], "stat90")
         self.assertEqual(qgate_config["eval"]["quality_gated_old_novelty"]["validity_gates"][1]["name"], "stat90_abs60")
         self.assertEqual(qgate_config["eval"]["quality_gated_old_novelty"]["source_cap_key"], "new_cluster_id")
+
+        controls_config = json.loads(Path("configs/marginal_coverage_eval_challenge_controls.json").read_text(encoding="utf-8"))
+        self.assertEqual(controls_config["artifacts"]["output_dir"], "/artifacts/eval/marginal_coverage/challenge_controls")
+        self.assertEqual(
+            controls_config["eval"]["quality_gated_random_controls"][0]["name"],
+            "quality_gated_random_clustercap2",
+        )
+        self.assertEqual(
+            controls_config["eval"]["kcenter_greedy_controls"][0]["name"],
+            "kcenter_greedy_quality_gated",
+        )
+        self.assertEqual(
+            controls_config["eval"]["kcenter_greedy_controls"][0]["representation"],
+            "window_shape_stats",
+        )
 
 
 def _write_synthetic_physical_source_dataset(root: Path) -> None:
