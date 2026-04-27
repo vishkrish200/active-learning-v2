@@ -1,0 +1,43 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 900
+  },
+  "artifacts": {
+    "candidate_path": "/artifacts/eval/grammar_ablation/grammar_leave_cluster_ablation_scores_full.csv",
+    "output_dir": "/artifacts/eval/learned_ranker_lco"
+  },
+  "features": {
+    "requested": [
+      "quality_score",
+      "n_primitives",
+      "token_nll_mean",
+      "token_nll_p95",
+      "transition_nll_mean",
+      "transition_nll_p95",
+      "rare_bigram_fraction",
+      "rare_trigram_fraction",
+      "rare_phrase_fraction",
+      "longest_unseen_phrase_len",
+      "old_novelty_score",
+      "source_cluster",
+      "heldout_cluster",
+      "fold_index"
+    ],
+    "strict_feature_coverage": false
+  },
+  "eval": {
+    "fold_column": "fold_index",
+    "exclude_eval_samples_from_train": true,
+    "eval_fraction": 0.3,
+    "seed": 31,
+    "k_values": [10, 50, 100, 200],
+    "baseline_score_columns": [
+      "token_nll_p95",
+      "transition_nll_p95",
+      "rare_phrase_fraction",
+      "longest_unseen_phrase_len"
+    ]
+  }
+}

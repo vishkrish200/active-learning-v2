@@ -1,0 +1,22 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 600
+  },
+  "artifacts": {
+    "diagnostics_path": "/artifacts/ranking/window_mean_std_grammar_promoted/baseline_diagnostics_val_full.csv",
+    "candidate_path": "/artifacts/ranking/window_mean_std_grammar_promoted/baseline_ranking_val_candidates_full.csv",
+    "quality_metadata_path": "/artifacts/ranking/window_mean_std_grammar_promoted/baseline_quality_metadata_full.csv",
+    "output_dir": "/artifacts/eval/shadow_ranking/quality_gated_grammar"
+  },
+  "shadow": {
+    "score_variant": "quality_gated_grammar",
+    "cluster_bonus_weight": 0.25
+  },
+  "audit": {
+    "top_ks": [10, 50, 100, 200],
+    "low_quality_threshold": 0.45,
+    "n_examples": 50
+  }
+}

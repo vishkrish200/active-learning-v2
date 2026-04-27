@@ -1,0 +1,52 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 600
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/eval/score_calibration",
+    "datasets": [
+      {
+        "name": "baseline_grammar_promoted",
+        "path": "/artifacts/ranking/window_mean_std_grammar_promoted/baseline_ranking_val_candidates_full.csv",
+        "cluster_column": "new_cluster_id",
+        "allow_cluster_aware_variants": true,
+        "cluster_bonus_weight": 0.25
+      },
+      {
+        "name": "leave_cluster_grammar",
+        "path": "/artifacts/eval/grammar_ablation/grammar_leave_cluster_ablation_scores_full.csv",
+        "cluster_column": "new_cluster_id",
+        "allow_cluster_aware_variants": false,
+        "forbidden_score_features": [
+          "final_score",
+          "old_novelty_score",
+          "new_density_score",
+          "heldout_cluster",
+          "source_cluster",
+          "fold_index"
+        ]
+      },
+      {
+        "name": "motion_phrase_holdout",
+        "path": "/artifacts/eval/motion_phrase_holdout/motion_phrase_holdout_scores_full.csv",
+        "cluster_column": "fold_index",
+        "allow_cluster_aware_variants": false,
+        "forbidden_score_features": [
+          "is_artifact",
+          "is_redundant",
+          "negative_type",
+          "duplicate_group_id",
+          "heldout_phrase_id",
+          "fold_index"
+        ]
+      }
+    ]
+  },
+  "eval": {
+    "k_values": [10, 50, 100, 200],
+    "primary_k": 100,
+    "low_quality_threshold": 0.45
+  }
+}

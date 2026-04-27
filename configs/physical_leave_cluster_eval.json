@@ -1,0 +1,42 @@
+{
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_physical_source_urls.txt",
+    "val_manifest": "cache/manifests/val_unused_for_submission_urls.txt"
+  },
+  "artifacts": {
+    "root": "/artifacts",
+    "output_dir": "/artifacts/eval/physical_leave_cluster/window_mean_std_physical_source"
+  },
+  "quality": {
+    "sample_rate": 30.0,
+    "max_samples_per_clip": 5400
+  },
+  "eval": {
+    "max_rows": 20000,
+    "smoke_max_rows": 512,
+    "n_clusters": 64,
+    "smoke_n_clusters": 12,
+    "folds": 4,
+    "smoke_folds": 2,
+    "clusters_per_fold": 1,
+    "max_positive_per_fold": 500,
+    "max_negative_per_fold": 500,
+    "k_old": 10,
+    "k_new_density": 10,
+    "novelty_weight": 0.75,
+    "candidate_cluster_similarity_threshold": 0.985,
+    "cluster_cap_top_k": 200,
+    "cluster_max_per_cluster": 8,
+    "cluster_cap_key": "new_cluster_id",
+    "cluster_cap_min_quality": 0.45,
+    "cluster_bonus_weight": 0.0,
+    "mmr_lambda": 0.0,
+    "embedding_load_workers": 16,
+    "kmeans_iterations": 10,
+    "k_values": [10, 50, 100, 200]
+  },
+  "seed": 17
+}

@@ -1,0 +1,30 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 900
+  },
+  "artifacts": {
+    "tokens_dir": "/artifacts/tokens/window_mean_std_tokenizer",
+    "output_dir": "/artifacts/eval/motion_phrase_holdout"
+  },
+  "grammar": {
+    "fit_split": "pretrain",
+    "order": 3,
+    "smoothing": 0.1,
+    "rare_threshold": 0
+  },
+  "phrase_holdout": {
+    "phrase_len": 3,
+    "min_support": 8,
+    "max_families": 8,
+    "negative_sample_size": 500,
+    "artifact_negative_count": 64,
+    "redundancy_negative_count": 64,
+    "seed": 37
+  },
+  "eval": {
+    "k_values": [10, 50, 100, 200],
+    "low_quality_threshold": 0.45
+  }
+}

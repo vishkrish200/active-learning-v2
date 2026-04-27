@@ -1,0 +1,28 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 600
+  },
+  "artifacts": {
+    "ranking_dir": "/artifacts/ranking/window_mean_std_baseline",
+    "tokens_dir": "/artifacts/tokens/window_mean_std_tokenizer",
+    "output_dir": "/artifacts/eval/grammar_ablation"
+  },
+  "grammar": {
+    "fit_split": "pretrain",
+    "order": 3,
+    "smoothing": 0.1,
+    "rare_threshold": 0
+  },
+  "cluster_ablation": {
+    "n_clusters": 12,
+    "n_folds": 6,
+    "negative_sample_size": 500,
+    "seed": 23
+  },
+  "eval": {
+    "k_values": [10, 50, 100, 200],
+    "low_quality_threshold": 0.45
+  }
+}

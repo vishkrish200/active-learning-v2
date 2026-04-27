@@ -1,0 +1,21 @@
+ranker:
+  baseline_model: quality_gated_feature_ranker
+  target_model: lightgbm_lambdarank
+  metric: ndcg
+  eval_at: [10, 50, 100, 200]
+  features:
+    - quality_score
+    - old_knn_d1
+    - old_knn_d5_mean
+    - old_knn_d50_mean
+    - old_cluster_tail_prob
+    - token_nll_mean
+    - token_nll_p95
+    - transition_nll_p95
+    - duration_nll_p95
+    - rare_phrase_fraction
+    - new_batch_density
+    - new_cluster_size
+    - mount_conditioned_knn
+    - redundancy_penalty
+

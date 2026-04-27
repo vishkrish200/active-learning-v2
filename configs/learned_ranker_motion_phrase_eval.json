@@ -1,0 +1,51 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 900
+  },
+  "artifacts": {
+    "candidate_path": "/artifacts/eval/motion_phrase_holdout/motion_phrase_holdout_scores_full.csv",
+    "output_dir": "/artifacts/eval/learned_ranker_motion_phrase"
+  },
+  "features": {
+    "requested": [
+      "quality_score",
+      "token_nll_mean",
+      "token_nll_p95",
+      "transition_nll_p95",
+      "rare_phrase_fraction",
+      "longest_unseen_phrase_len",
+      "n_primitives",
+      "token_duplicate_count",
+      "token_duplicate_fraction",
+      "token_max_neighbor_similarity",
+      "token_mean_top5_neighbor_similarity",
+      "token_neighborhood_density",
+      "token_fold_centroid_similarity",
+      "token_boundary_score",
+      "is_artifact",
+      "is_redundant",
+      "negative_type",
+      "duplicate_group_id",
+      "heldout_phrase_id",
+      "fold_index",
+      "reason_code"
+    ],
+    "strict_feature_coverage": false
+  },
+  "eval": {
+    "fold_column": "fold_index",
+    "exclude_eval_samples_from_train": true,
+    "k_values": [10, 50, 100, 200],
+    "baseline_score_columns": [
+      "token_nll_p95",
+      "transition_nll_p95",
+      "rare_phrase_fraction",
+      "longest_unseen_phrase_len",
+      "token_duplicate_fraction",
+      "token_neighborhood_density",
+      "token_boundary_score"
+    ]
+  }
+}

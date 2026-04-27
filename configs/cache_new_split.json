@@ -1,0 +1,23 @@
+{
+  "execution": {
+    "provider": "modal",
+    "source_volume": "activelearning-observe-full-cache",
+    "target_volume": "imu-novelty-subset-data",
+    "timeout_seconds": 1200,
+    "smoke_samples": 8,
+    "full_samples": null
+  },
+  "source": {
+    "root": "/source",
+    "split": "val"
+  },
+  "target": {
+    "root": "/data",
+    "source_manifest": "cache/manifests/val_urls.txt",
+    "new_manifest": "cache/manifests/new_urls.txt",
+    "empty_val_manifest": "cache/manifests/val_unused_for_submission_urls.txt",
+    "feature_dir": "cache/features",
+    "raw_dir": "cache/raw",
+    "report_path": "cache/manifests/new_cache_report.json"
+  }
+}

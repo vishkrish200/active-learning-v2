@@ -1,0 +1,49 @@
+{
+  "execution": {
+    "provider": "modal",
+    "gpu": "H100",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 7200
+  },
+  "data": {
+    "root": "/data",
+    "format": "npz_features",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_urls.txt",
+    "val_manifest": "cache/manifests/val_urls.txt",
+    "feature_dim": 75
+  },
+  "artifacts": {
+    "root": "/artifacts",
+    "output_dir": "/artifacts/tokens/window_mean_std_tokenizer"
+  },
+  "splits": {
+    "fit_split": "pretrain",
+    "transform_splits": ["pretrain", "val"]
+  },
+  "patches": {
+    "feature_source": "npz_features",
+    "patch_len_sec": 0.5,
+    "patch_stride_sec": 0.25,
+    "sample_rate": 30.0,
+    "smoke_fit_samples": 128,
+    "smoke_transform_samples_per_split": 64,
+    "full_fit_samples": 5000
+  },
+  "vq": {
+    "codebook_size": 256,
+    "n_iter": 25,
+    "seed": 7
+  },
+  "bpe": {
+    "num_merges": 2048,
+    "min_count": 2,
+    "base_step_sec": 0.25,
+    "max_primitive_duration_sec": 12.0
+  },
+  "diagnostics": {
+    "top_k_primitives": 25
+  }
+}

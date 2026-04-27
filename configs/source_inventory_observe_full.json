@@ -1,0 +1,33 @@
+{
+  "execution": {
+    "provider": "modal",
+    "source_volume": "activelearning-observe-full-cache",
+    "target_volume": "imu-novelty-subset-data",
+    "artifact_volume": "imu-novelty-artifacts",
+    "smoke_manifest_samples": 512,
+    "smoke_scan_files": 512
+  },
+  "source": {
+    "root": "/source",
+    "scan_splits": ["pretrain", "val"],
+    "physical_source_split": "pretrain",
+    "physical_source_url_prefix": "https://storage.googleapis.com/buildai-imu-benchmark-v1-preexisting",
+    "split_by_manifest": {
+      "pretrain": "pretrain",
+      "new": "val",
+      "val": "val"
+    }
+  },
+  "target": {
+    "root": "/data",
+    "manifests": {
+      "pretrain": "cache/manifests/pretrain_urls.txt",
+      "new": "cache/manifests/new_urls.txt",
+      "val": "cache/manifests/val_unused_for_submission_urls.txt"
+    },
+    "physical_source_manifest": "cache/manifests/pretrain_physical_source_urls.txt"
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/source_inventory_observe_full"
+  }
+}

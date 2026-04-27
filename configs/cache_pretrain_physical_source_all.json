@@ -1,0 +1,25 @@
+{
+  "execution": {
+    "provider": "modal",
+    "source_volume": "activelearning-observe-full-cache",
+    "target_volume": "imu-novelty-subset-data",
+    "timeout_seconds": 21600,
+    "smoke_samples": 8,
+    "full_samples": null,
+    "progress_every": 250
+  },
+  "source": {
+    "root": "/source",
+    "split": "pretrain"
+  },
+  "target": {
+    "root": "/data",
+    "source_manifest": "cache/manifests/pretrain_physical_source_urls.txt",
+    "feature_dir": "cache/features",
+    "raw_dir": "cache/raw",
+    "report_path": "cache/manifests/pretrain_physical_source_cache_report.json"
+  },
+  "selection": {
+    "strategy": "source_existing_all"
+  }
+}

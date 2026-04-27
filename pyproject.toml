@@ -1,0 +1,20 @@
+[project]
+name = "marginal-data-value"
+version = "0.1.0"
+description = "Quality-gated IMU marginal data value ranking system."
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "pandas",
+]
+
+[project.optional-dependencies]
+modal = [
+  "modal",
+]
+
+[project.scripts]
+marginal-value = "marginal_value.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["marginal_value*"]

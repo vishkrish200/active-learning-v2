@@ -1,0 +1,19 @@
+encoder:
+  architecture: handcrafted_multiscale_baseline
+  sample_rate: 30
+  input_channels: 6
+  clip_embedding_dim: 512
+
+quality:
+  min_quality_for_high_rank: 0.45
+  spike_abs_threshold: 100.0
+  flatline_variance_epsilon: 1.0e-8
+
+support:
+  old_knn_k: [1, 5, 10, 50, 100]
+  similarity: cosine
+
+reranker:
+  method: mmr
+  lambda_redundancy: 0.25
+

@@ -1,0 +1,74 @@
+{
+  "execution": {
+    "provider": "modal",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 3600
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_physical_source_urls.txt",
+    "val_manifest": "cache/manifests/val_unused_for_submission_urls.txt",
+    "new_manifest": "cache/manifests/new_urls.txt",
+    "feature_dim": 75
+  },
+  "artifacts": {
+    "root": "/artifacts",
+    "output_dir": "/artifacts/ranking/raw_shape_stats_qgate85_stat90_abs60_parentcap2_oldnovelty_knn5_new"
+  },
+  "splits": {
+    "support_split": "pretrain",
+    "query_split": "new",
+    "negative_split": "pretrain"
+  },
+  "ranking": {
+    "run_mode": "submission",
+    "representation": "raw_shape_stats",
+    "raw_shape_max_samples": 1800,
+    "k_old": 5,
+    "k_new_density": 10,
+    "reranker_method": "quality_gated_old_novelty_sourcecap",
+    "quality_gate_threshold": 0.85,
+    "max_stationary_fraction": 0.90,
+    "max_abs_value": 60.0,
+    "source_cap": 2,
+    "source_cap_key": "new_cluster_parent_id",
+    "cluster_similarity_threshold": 0.985,
+    "cluster_bonus_weight": 0.0,
+    "cluster_cap_top_k": 200,
+    "cluster_max_per_cluster": 2,
+    "cluster_cap_key": "new_cluster_parent_id",
+    "cluster_cap_min_quality": 0.85,
+    "prefix_cluster_cap_key": "new_cluster_parent_id",
+    "novelty_weight": 1.0,
+    "mmr_lambda": 0.0,
+    "k_values": [10, 50, 100, 200],
+    "negative_sample_size": 500,
+    "embedding_load_workers": 16,
+    "min_query_samples": 2000,
+    "smoke_support_samples": 256,
+    "smoke_query_samples": 64,
+    "smoke_negative_samples": 64,
+    "seed": 17
+  },
+  "grammar_features": {
+    "enabled": false
+  },
+  "score_guards": {
+    "stationary_singleton": {
+      "enabled": false
+    }
+  },
+  "large_cluster_split": {
+    "enabled": false
+  },
+  "quality": {
+    "sample_rate": 30.0,
+    "max_samples_per_clip": 5400
+  },
+  "corruption_eval": {
+    "enabled": false
+  }
+}

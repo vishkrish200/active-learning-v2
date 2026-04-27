@@ -1,0 +1,56 @@
+{
+  "execution": {
+    "provider": "modal",
+    "gpu": "H100",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 21600
+  },
+  "data": {
+    "root": "/data",
+    "format": "npz_features",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_urls.txt",
+    "val_manifest": "cache/manifests/val_urls.txt",
+    "train_split": "pretrain",
+    "holdout_split": "val",
+    "sample_rate": 30.0,
+    "feature_dim": 75,
+    "max_files_for_smoke": 16
+  },
+  "training": {
+    "batch_size": 32,
+    "learning_rate": 0.0003,
+    "max_steps": 2000,
+    "smoke_steps": 2,
+    "validation_steps": 150,
+    "mask_probability": 0.2,
+    "seed": 7,
+    "d_model": 128,
+    "checkpoint_dir": "/artifacts/checkpoints",
+    "validation_checkpoint_name": "validation_encoder_normalized_vicreg_pretrain_only.pt",
+    "full_checkpoint_name": "ssl_encoder_normalized_vicreg_pretrain_only.pt"
+  },
+  "encoder": {
+    "architecture": "normalized_vicreg_mlp",
+    "embedding_dim": 128,
+    "dropout": 0.1,
+    "normalization": {
+      "enabled": true,
+      "max_files_for_fit": 1024,
+      "max_windows_per_file": 256
+    },
+    "losses": {
+      "masked_reconstruction": 1.0,
+      "vicreg_invariance": 1.0,
+      "vicreg_variance": 1.0,
+      "vicreg_covariance": 0.04
+    },
+    "augmentation": {
+      "noise_std": 0.03,
+      "timestep_dropout": 0.05,
+      "channel_dropout": 0.03
+    }
+  }
+}

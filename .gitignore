@@ -1,0 +1,16 @@
+.venv/
+.claude/
+.omx/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+/data/
+/artifacts/
+/outputs/
+/marginal_data_value.egg-info/
+*.log
+
+.DS_Store

@@ -1,0 +1,26 @@
+{
+  "execution": {
+    "provider": "modal",
+    "source_volume": "activelearning-observe-full-cache",
+    "target_volume": "imu-novelty-subset-data",
+    "timeout_seconds": 7200,
+    "smoke_samples": 8,
+    "full_samples": null
+  },
+  "source": {
+    "root": "/source",
+    "split": "pretrain"
+  },
+  "target": {
+    "root": "/data",
+    "source_manifest": "cache/manifests/pretrain_urls.txt",
+    "feature_dir": "cache/features",
+    "raw_dir": "cache/raw",
+    "report_path": "cache/manifests/pretrain_worker_coverage_cache_report.json"
+  },
+  "selection": {
+    "strategy": "worker_coverage",
+    "clips_per_worker": 1,
+    "max_workers": 10000
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 600
+  },
+  "artifacts": {
+    "ranking_dir": "/artifacts/ranking/window_mean_std_quality_gated_grammar_new_worker_coverage",
+    "audit_dir": "/artifacts/ranking/window_mean_std_quality_gated_grammar_new_worker_coverage"
+  },
+  "audit": {
+    "top_ks": [10, 25, 50, 100, 200],
+    "low_quality_threshold": 0.45,
+    "n_examples": 50
+  }
+}

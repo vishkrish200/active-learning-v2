@@ -1,0 +1,36 @@
+{
+  "execution": {
+    "provider": "modal",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 1200
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_urls.txt",
+    "val_manifest": "cache/manifests/val_unused_for_submission_urls.txt",
+    "new_manifest": "cache/manifests/new_urls.txt",
+    "feature_dim": 75
+  },
+  "tokens": {
+    "input_dir": "/artifacts/tokens/window_mean_std_tokenizer_worker_coverage",
+    "output_dir": "/artifacts/tokens/window_mean_std_tokenizer_worker_coverage_new",
+    "source_mode": "full"
+  },
+  "splits": {
+    "fit_split": "pretrain",
+    "transform_split": "new"
+  },
+  "patches": {
+    "patch_len_sec": 0.5,
+    "patch_stride_sec": 0.25,
+    "smoke_fit_sequences": 64,
+    "smoke_transform_samples": 64
+  },
+  "bpe": {
+    "base_step_sec": 0.25,
+    "max_primitive_duration_sec": 12.0
+  }
+}

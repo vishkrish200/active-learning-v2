@@ -1,0 +1,104 @@
+{
+  "execution": {
+    "provider": "modal",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 3600
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_physical_source_urls.txt",
+    "val_manifest": "cache/manifests/val_unused_for_submission_urls.txt",
+    "feature_dim": 75
+  },
+  "artifacts": {
+    "root": "/artifacts",
+    "output_dir": "/artifacts/eval/marginal_coverage/subcluster40"
+  },
+  "ranking": {
+    "representation": "window_mean_std_pool",
+    "k_old": 10,
+    "k_new_density": 10,
+    "reranker_method": "tiered_cluster_cap",
+    "cluster_similarity_threshold": 0.985,
+    "cluster_bonus_weight": 0.0,
+    "cluster_cap_top_k": 200,
+    "cluster_max_per_cluster": 5,
+    "cluster_cap_schedule": [
+      {"top_k": 50, "max_per_cluster": 2},
+      {"top_k": 200, "max_per_cluster": 5}
+    ],
+    "cluster_cap_key": "new_cluster_id",
+    "cluster_cap_min_quality": 0.45,
+    "novelty_weight": 0.75,
+    "mmr_lambda": 0.0,
+    "seed": 17
+  },
+  "grammar_features": {
+    "enabled": true,
+    "path_template": "/artifacts/tokens/window_mean_std_tokenizer_worker_coverage_new/grammar_features_pretrain_full.csv",
+    "extra_path_templates": [
+      "/artifacts/tokens/window_mean_std_tokenizer_worker_coverage_new/grammar_features_pretrain_full.csv"
+    ],
+    "use_in_score": true,
+    "score_variant": "quality_gated_grammar",
+    "score_weight": 0.3,
+    "min_quality": 0.45,
+    "min_new_density_score": 0.0,
+    "ablation_report_path": "/artifacts/eval/grammar_ablation/worker_coverage/grammar_leave_cluster_ablation_report_full.json"
+  },
+  "score_guards": {
+    "stationary_singleton": {
+      "enabled": true,
+      "stationary_threshold": 0.90,
+      "max_new_density_score": 0.35,
+      "min_grammar_score": 0.85,
+      "penalty_multiplier": 0.35
+    }
+  },
+  "large_cluster_split": {
+    "enabled": true,
+    "method": "feature_kmeans",
+    "max_cluster_size": 300,
+    "target_subcluster_size": 40,
+    "score_feature_weight": 0.0,
+    "kmeans_iterations": 16,
+    "score_columns": [
+      "grammar_score_component",
+      "grammar_score",
+      "old_novelty_score",
+      "new_density_score",
+      "distance_to_new_cluster_medoid",
+      "final_score"
+    ]
+  },
+  "quality": {
+    "sample_rate": 30.0,
+    "max_samples_per_clip": 5400
+  },
+  "eval": {
+    "smoke_max_rows": 1024,
+    "max_rows": 20000,
+    "smoke_folds": 1,
+    "folds": 4,
+    "source_groups_per_fold": 64,
+    "candidate_fraction": 0.5,
+    "max_candidate_per_fold": 500,
+    "max_negative_per_fold": 500,
+    "max_target_per_fold": 500,
+    "embedding_load_workers": 16,
+    "k_values": [10, 50, 100, 200],
+    "random_seeds": [17, 23, 37, 41, 53],
+    "random_min_quality": 0.45,
+    "raw_shape_max_samples": 1800,
+    "representations": [
+      "window_mean_std_pool",
+      "temporal_order",
+      "raw_shape_stats",
+      "grammar_features"
+    ]
+  },
+  "seed": 17
+}

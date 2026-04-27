@@ -1,0 +1,25 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 3600
+  },
+  "tokens": {
+    "input_dir": "/artifacts/tokens/window_mean_std_tokenizer_worker_coverage_new"
+  },
+  "artifacts": {
+    "root": "/artifacts",
+    "output_dir": "/artifacts/tokens/window_mean_std_tokenizer_worker_coverage_new"
+  },
+  "splits": {
+    "fit_split": "pretrain",
+    "score_split": "pretrain",
+    "allow_fit_split_scoring": true
+  },
+  "grammar": {
+    "model": "ngram",
+    "order": 3,
+    "smoothing": 0.1,
+    "rare_threshold": 0
+  }
+}

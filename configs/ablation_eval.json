@@ -1,0 +1,38 @@
+{
+  "execution": {
+    "provider": "modal",
+    "gpu": "H100",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 7200
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_urls.txt",
+    "val_manifest": "cache/manifests/val_urls.txt",
+    "feature_dim": 75
+  },
+  "artifacts": {
+    "root": "/artifacts",
+    "output_dir": "/artifacts/eval/ablation_bakeoff"
+  },
+  "checkpoint": {
+    "path": "/artifacts/checkpoints/ssl_encoder_pretrain_only.pt"
+  },
+  "splits": {
+    "support_split": "pretrain",
+    "query_split": "val",
+    "positive_split": "val",
+    "negative_split": "pretrain"
+  },
+  "eval": {
+    "k_values": [10, 50, 100, 200],
+    "negative_sample_size": 500,
+    "smoke_support_samples": 256,
+    "smoke_positive_samples": 64,
+    "smoke_negative_samples": 64,
+    "seed": 17
+  }
+}

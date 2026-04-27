@@ -1,0 +1,12 @@
+grammar_lm:
+  baseline_model: ngram_motion_grammar
+  transformer_target:
+    vocab_size: 10000
+    duration_buckets: 64
+    d_model: 384
+    n_layers: 6
+    n_heads: 8
+    context_len: 256
+    dropout: 0.1
+    objective: token_and_duration_nll
+

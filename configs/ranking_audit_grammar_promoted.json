@@ -1,0 +1,16 @@
+{
+  "execution": {
+    "provider": "modal",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 600
+  },
+  "artifacts": {
+    "ranking_dir": "/artifacts/ranking/window_mean_std_grammar_promoted",
+    "audit_dir": "/artifacts/ranking/window_mean_std_grammar_promoted"
+  },
+  "audit": {
+    "top_ks": [10, 50, 100],
+    "low_quality_threshold": 0.45,
+    "n_examples": 25
+  }
+}
