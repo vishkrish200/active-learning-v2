@@ -3327,3 +3327,100 @@ Build a representation-by-representation generalization matrix.
 If a representation only wins in itself, the claim remains representation-specific.
 If one ranking representation improves multiple independent coverage spaces, that is stronger evidence for broad behavior discovery.
 ```
+
+## 48. Cross-Representation Matrix Result
+
+The detached Modal cross-representation run completed successfully.
+
+Artifacts downloaded locally:
+
+```text
+data/modal_reports/cross_rep_matrix/marginal_coverage_report_full.json
+data/modal_reports/cross_rep_matrix/marginal_coverage_candidates_full.jsonl
+```
+
+Run dimensions:
+
+```text
+mode = full
+rows = 20,000
+source groups = 5,437
+folds = 4
+representations = window_mean_std_pool, temporal_order, raw_shape_stats, window_shape_stats
+```
+
+Key K=100 result:
+
+| Policy | temporal | raw-shape | window-shape | Interpretation |
+|---|---:|---:|---:|---|
+| `quality_only` | 0.0059 | 0.0775 | 0.0279 | strong quality/raw control |
+| `old_novelty_only` | 0.0173 | 0.0572 | 0.0327 | good temporal/window-shape control |
+| `raw_shape_q85_stat90_abs60_clustercap2` | 0.0030 | 0.1682 | 0.0043 | raw-shape specialist, poor generalization |
+| `temporal_q85_stat90_abs60_clustercap2` | 0.0159 | 0.0389 | 0.0229 | temporal-safe, weak raw |
+| `window_shape_q85_stat90_abs60_clustercap2` | 0.0175 | 0.0994 | 0.0329 | best balanced candidate |
+
+Key K=200 result:
+
+| Policy | temporal | raw-shape | window-shape |
+|---|---:|---:|---:|
+| `quality_only` | 0.0098 | 0.1035 | 0.0326 |
+| `old_novelty_only` | 0.0199 | 0.0703 | 0.0340 |
+| `raw_shape_q85_stat90_abs60_clustercap2` | 0.0099 | 0.1792 | 0.0089 |
+| `temporal_q85_stat90_abs60_clustercap2` | 0.0198 | 0.0975 | 0.0328 |
+| `window_shape_q85_stat90_abs60_clustercap2` | 0.0198 | 0.1189 | 0.0332 |
+
+Interpretation:
+
+```text
+The raw-shape candidate should be treated as a raw-shape/media specialist.
+The window-shape candidate is now the main scientific candidate because it is much more balanced across temporal, raw-shape, and window-shape coverage.
+```
+
+## 49. Challenge-Matched External Selector
+
+The external selector now matches the challenge framing more directly.
+
+Implementation update:
+
+```text
+marginal_value/select.py
+tests/test_external_selector.py
+docs/submission_contract.md
+```
+
+Default selector changed from raw-shape specialist to:
+
+```text
+window_shape_stats_q85_stat90_abs60_clustercap2
+```
+
+Challenge-mode behavior:
+
+```text
+old support rows are segmented into non-overlapping 180-second support clips
+new candidate rows are ranked as candidate clips
+old-support novelty is mean cosine distance to k=5 nearest old support clips
+quality gate is quality_score >= 0.85
+physical gates are stationary_fraction <= 0.90 and max_abs_value <= 60.0
+new-batch diversity cap is 2 per new_cluster_id
+```
+
+Supported manifest formats:
+
+```text
+CSV with sample_id,raw_path
+CSV with worker_id,path/file_path fallback
+one-path-per-line text manifest
+one-URL-per-line text manifest for JSONL URLs
+```
+
+Command:
+
+```bash
+python3 -m marginal_value.select \
+  --old-support pretrain_paths_or_urls.txt \
+  --candidate-pool new_paths_or_urls.txt \
+  --output ranked_candidates.csv
+```
+
+The selector still does not accept hidden targets, labels, eval embeddings, or target-source metadata.

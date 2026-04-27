@@ -71,6 +71,11 @@ def main(argv: list[str] | None = None) -> int:
     select_parser.add_argument("--candidate-pool", required=True)
     select_parser.add_argument("--output", required=True)
     select_parser.add_argument("--sample-rate", type=float, default=30.0)
+    select_parser.add_argument(
+        "--representation",
+        choices=["window_shape_stats", "window_mean_std_pool", "temporal_order", "raw_shape_stats"],
+        default="window_shape_stats",
+    )
     select_parser.add_argument("--k-old", type=int, default=5)
     select_parser.add_argument("--quality-threshold", type=float, default=0.85)
     select_parser.add_argument("--max-stationary-fraction", type=float, default=0.90)
@@ -79,6 +84,9 @@ def main(argv: list[str] | None = None) -> int:
     select_parser.add_argument("--source-cap", type=int, default=2)
     select_parser.add_argument("--no-source-cap", action="store_true")
     select_parser.add_argument("--max-samples", type=int)
+    select_parser.add_argument("--support-clip-seconds", type=float, default=180.0)
+    select_parser.add_argument("--support-stride-seconds", type=float)
+    select_parser.add_argument("--no-segment-old-support", action="store_true")
 
     args = parser.parse_args(argv)
     if args.command == "rank":
@@ -124,6 +132,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_pool_path=args.candidate_pool,
             output_path=args.output,
             sample_rate=args.sample_rate,
+            representation=args.representation,
             k_old=args.k_old,
             quality_threshold=args.quality_threshold,
             max_stationary_fraction=args.max_stationary_fraction,
@@ -131,6 +140,9 @@ def main(argv: list[str] | None = None) -> int:
             cluster_similarity_threshold=args.cluster_similarity_threshold,
             source_cap=source_cap,
             max_samples=args.max_samples,
+            segment_old_support=not args.no_segment_old_support,
+            support_clip_seconds=args.support_clip_seconds,
+            support_stride_seconds=args.support_stride_seconds,
         )
         print(f"Wrote ranked candidates: {result['output_path']}")
         return 0

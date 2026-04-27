@@ -43,26 +43,28 @@ worker_id,rank,score,quality_score,reason_code
 
 ## External Hidden-Test Selector
 
-For a held-out evaluator, use the frozen selector interface. It ranks a candidate
-pool using only old support and candidate clips; it does not accept labels,
-targets, or evaluation rows.
+For a held-out evaluator, use the frozen selector interface. It ranks newly
+arrived IMU clips using only the old corpus and the new candidate batch; it does
+not accept labels, targets, or evaluation rows.
 
-Input manifests are CSV files with at least:
+Input manifests may be CSV files with at least:
 
 ```text
 sample_id,raw_path
 ```
 
+or one-path/URL-per-line text files.
+
 `raw_path` may point to a JSONL IMU file with `acc`/`gyro` arrays, or to a CSV
 with six numeric IMU channels. Relative paths are resolved relative to the
-manifest file.
+manifest file. `http://`, `https://`, and `file://` JSONL URLs are also accepted.
 
 Run:
 
 ```bash
 python3 -m marginal_value.select \
-  --old-support old_support.csv \
-  --candidate-pool candidate_pool.csv \
+  --old-support pretrain_paths_or_urls.txt \
+  --candidate-pool new_paths_or_urls.txt \
   --output ranked_candidates.csv
 ```
 
@@ -70,23 +72,26 @@ Equivalent console command:
 
 ```bash
 marginal-value select \
-  --old-support old_support.csv \
-  --candidate-pool candidate_pool.csv \
+  --old-support pretrain_paths_or_urls.txt \
+  --candidate-pool new_paths_or_urls.txt \
   --output ranked_candidates.csv
 ```
 
 Default method:
 
 ```text
+old support traces are segmented into non-overlapping 180-second support clips
+representation = window_shape_stats
 quality_score >= 0.85
 stationary_fraction <= 0.90
 max_abs_value <= 60.0
-rank by old-support novelty in raw_shape_stats
+rank by mean k=5 old-support novelty
 cap early selections at 2 per new_cluster_id
 ```
 
-This supports only the narrow current claim: high-quality raw-shape coverage
-selection. It is not a downstream active-learning proof.
+This supports the current challenge-matched claim: high-quality, nonredundant
+IMU clips that are under-covered by the old corpus in a fixed window-shape
+feature space. It is not a downstream active-learning proof.
 
 ## Modal-Only Training
 

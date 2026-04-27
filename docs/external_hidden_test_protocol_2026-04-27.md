@@ -7,18 +7,19 @@ Date: 2026-04-27
 This protocol gives an external evaluator a clean way to test the current
 selector without exposing hidden targets, labels, or evaluation embeddings.
 
-The current defensible claim is narrow:
+The current defensible claim is challenge-matched and narrow:
 
 ```text
-Select high-quality IMU clips that expand raw-shape/distributional coverage relative to old support.
+Rank newly arrived IMU clips by quality-gated novelty relative to old 3-minute support segments.
 ```
 
-The selector should not be described as proven active learning or general
-marginal data value until a hidden/downstream test establishes that claim.
+The selector should not be described as a learned active-learning policy or a
+proof of semantic behavior discovery until a hidden/downstream test establishes
+that claim.
 
 ## Inputs
 
-Provide two CSV manifests:
+Provide two CSV manifests or one-path/URL-per-line text manifests:
 
 ```text
 old_support.csv
@@ -43,6 +44,9 @@ may be either:
 - JSONL with `acc` and `gyro` arrays, or six numeric IMU channels.
 - CSV with six numeric IMU channels and optional timestamp column.
 
+For text manifests, each non-empty non-comment line is treated as a raw path or
+URL. `http://`, `https://`, and `file://` JSONL URLs are accepted.
+
 Do not provide the hidden target set to the selector.
 
 ## Command
@@ -66,7 +70,9 @@ marginal-value select \
 ## Frozen Default Method
 
 ```text
-representation: raw_shape_stats
+old support: segment traces into non-overlapping 180-second support clips
+new candidates: rank each manifest row as one candidate clip
+representation: window_shape_stats
 quality_score >= 0.85
 stationary_fraction <= 0.90
 max_abs_value <= 60.0
@@ -117,5 +123,6 @@ Important:
 The selector must not receive hidden targets, labels, evaluation embeddings, or target-source metadata.
 ```
 
-If the selector only improves the same raw-shape representation it ranks on,
-the supported claim remains raw-shape coverage only.
+If the selector only improves the same representation it ranks on, the
+supported claim remains representation-specific rather than broad behavior
+discovery.
