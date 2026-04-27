@@ -1,0 +1,93 @@
+{
+  "execution": {
+    "provider": "modal",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 3600
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "pretrain_manifest": "cache/manifests/pretrain_physical_source_urls.txt",
+    "val_manifest": "cache/manifests/val_unused_for_submission_urls.txt",
+    "feature_dim": 75
+  },
+  "artifacts": {
+    "root": "/artifacts",
+    "output_dir": "/artifacts/eval/marginal_coverage/cross_rep_matrix"
+  },
+  "ranking": {
+    "representation": "window_mean_std_pool",
+    "k_old": 5,
+    "k_new_density": 10,
+    "reranker_method": "quality_gated_old_novelty",
+    "quality_gate_threshold": 0.45,
+    "cluster_similarity_threshold": 0.985,
+    "cluster_bonus_weight": 0.0,
+    "cluster_cap_top_k": 200,
+    "cluster_max_per_cluster": 2,
+    "cluster_cap_key": "new_cluster_id",
+    "cluster_cap_min_quality": 0.45,
+    "novelty_weight": 1.0,
+    "mmr_lambda": 0.0,
+    "seed": 17
+  },
+  "grammar_features": {
+    "enabled": false
+  },
+  "score_guards": {
+    "stationary_singleton": {
+      "enabled": false
+    }
+  },
+  "large_cluster_split": {
+    "enabled": false
+  },
+  "quality": {
+    "sample_rate": 30.0,
+    "max_samples_per_clip": 5400
+  },
+  "eval": {
+    "smoke_max_rows": 1024,
+    "max_rows": 20000,
+    "smoke_folds": 1,
+    "folds": 4,
+    "source_groups_per_fold": 64,
+    "candidate_fraction": 0.5,
+    "max_candidate_per_fold": 500,
+    "max_negative_per_fold": 500,
+    "max_target_per_fold": 500,
+    "embedding_load_workers": 16,
+    "k_values": [50, 100, 200, 400],
+    "random_seeds": [17, 23, 37, 41, 53],
+    "random_min_quality": 0.45,
+    "raw_shape_max_samples": 1800,
+    "representations": [
+      "window_mean_std_pool",
+      "temporal_order",
+      "raw_shape_stats",
+      "window_shape_stats"
+    ],
+    "eval_rep_novelty_representations": [
+      "window_mean_std_pool",
+      "temporal_order",
+      "raw_shape_stats",
+      "window_shape_stats"
+    ],
+    "eval_rep_novelty_k_old": 5,
+    "quality_gate_eval_rep_novelty": true,
+    "quality_gated_old_novelty": {
+      "enabled": true,
+      "thresholds": [
+        {"name": "q85", "mode": "fixed", "value": 0.85}
+      ],
+      "validity_gates": [
+        {"name": "stat90_abs60", "max_stationary_fraction": 0.90, "max_abs_value": 60.0}
+      ],
+      "source_caps": [2],
+      "source_cap_key": "new_cluster_id"
+    }
+  },
+  "seed": 17
+}

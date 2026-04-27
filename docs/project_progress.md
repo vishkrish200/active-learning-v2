@@ -3253,3 +3253,77 @@ This makes the current narrow claim externally testable.
 It does not upgrade the broad active-learning claim.
 The evaluator should measure hidden-target coverage or downstream utility using representations/metrics not controlled by this selector.
 ```
+
+## 47. Detached Cross-Representation Generalization Matrix
+
+The next scientific check is running on Modal in detached mode so the remote job should survive local laptop sleep/disconnect.
+
+Config:
+
+```text
+configs/marginal_coverage_eval_cross_rep_matrix.json
+```
+
+Launch command:
+
+```bash
+.venv/bin/modal run --detach modal_marginal_coverage_eval.py \
+  --config-path configs/marginal_coverage_eval_cross_rep_matrix.json
+```
+
+Modal run:
+
+```text
+https://modal.com/apps/vishkrish200/main/ap-YuVEuf3zUNZQ3TIs3na5FY
+```
+
+The app was verified as:
+
+```text
+state = ephemeral (detached)
+tasks = 1
+```
+
+This run is intentionally small in method space:
+
+```text
+quality threshold = q85
+validity gate = stationary_fraction <= 0.90 and max_abs_value <= 60.0
+candidate cap = 2 per new_cluster_id
+K = 50, 100, 200, 400
+folds = 4
+max_rows = 20,000
+```
+
+Ranking/novelty representations tested:
+
+```text
+window_mean_std_pool
+temporal_order
+raw_shape_stats
+window_shape_stats
+```
+
+Coverage representations measured:
+
+```text
+window_mean_std_pool
+temporal_order
+raw_shape_stats
+window_shape_stats
+```
+
+Expected artifacts:
+
+```text
+/artifacts/eval/marginal_coverage/cross_rep_matrix/marginal_coverage_report_full.json
+/artifacts/eval/marginal_coverage/cross_rep_matrix/marginal_coverage_candidates_full.jsonl
+```
+
+Scientific purpose:
+
+```text
+Build a representation-by-representation generalization matrix.
+If a representation only wins in itself, the claim remains representation-specific.
+If one ranking representation improves multiple independent coverage spaces, that is stronger evidence for broad behavior discovery.
+```
