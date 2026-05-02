@@ -4,15 +4,22 @@ Date: 2026-05-02
 
 ## Verdict
 
-The recommended artifact is the 3-seed consensus ranking:
+The 3-seed consensus ranking is now a fallback/provenance artifact:
 
 ```text
 /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
 ```
 
-This replaces the original single support-sample ranking as the primary
-candidate output. The original ranking remains a useful provenance/fallback
-artifact.
+It replaced the original single support-sample ranking, but has now been
+superseded as the primary candidate output by the exact-window blend:
+
+```text
+/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_submission_full_new_worker_id.csv
+```
+
+The consensus ranking remains useful because it documents the old 25k support
+sampling sensitivity and provides a stability baseline for the exact-window
+result.
 
 ## Method
 

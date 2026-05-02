@@ -8,7 +8,7 @@ import modal
 from marginal_value.logging_utils import log_event
 
 
-APP_NAME = "marginal-value-build-full-support-shards"
+APP_NAME = "marginal-value-active-exact-window-blend-rank"
 DATA_VOLUME_NAME = "imu-novelty-subset-data"
 ARTIFACTS_VOLUME_NAME = "activelearning-imu-rebuild-cache"
 
@@ -26,24 +26,24 @@ artifacts_volume = modal.Volume.from_name(ARTIFACTS_VOLUME_NAME, create_if_missi
 
 @app.function(
     image=image,
-    timeout=3600 * 12,
+    timeout=3600 * 2,
     cpu=16,
     memory=65536,
     volumes={"/data": data_volume, "/artifacts": artifacts_volume},
 )
-def remote_build_full_support_shards(config: dict, smoke: bool = False) -> dict:
-    from marginal_value.data.build_full_support_shards import run_build_full_support_shards
+def remote_active_exact_window_blend_rank(config: dict, smoke: bool = False) -> dict:
+    from marginal_value.active.exact_window_blend_rank import run_active_exact_window_blend_rank
 
-    log_event("modal_build_full_support_shards", "remote_start", smoke=smoke)
-    result = run_build_full_support_shards(config, smoke=smoke, on_shard_written=artifacts_volume.commit)
+    log_event("modal_active_exact_window_blend_rank", "remote_start", smoke=smoke)
+    result = run_active_exact_window_blend_rank(config, smoke=smoke)
     artifacts_volume.commit()
-    log_event("modal_build_full_support_shards", "remote_done", **result)
+    log_event("modal_active_exact_window_blend_rank", "remote_done", **result)
     return result
 
 
 @app.local_entrypoint()
-def build_full_support_shards(
-    config_path: str = "configs/build_full_support_shards.json",
+def active_exact_window_blend_rank(
+    config_path: str = "configs/active_exact_window_blend_rank.json",
     run_full: bool = False,
     skip_smoke: bool = False,
     wait_full: bool = False,
@@ -52,21 +52,21 @@ def build_full_support_shards(
         raise ValueError("--skip-smoke is only valid when --run-full is also set.")
     config = json.loads(Path(config_path).read_text(encoding="utf-8"))
     log_event(
-        "modal_build_full_support_shards",
+        "modal_active_exact_window_blend_rank",
         "local_dispatch_start",
         run_full=run_full,
         skip_smoke=skip_smoke,
         wait_full=wait_full,
     )
     if skip_smoke:
-        log_event("modal_build_full_support_shards", "local_smoke_skipped", reason="previous_smoke_passed")
+        log_event("modal_active_exact_window_blend_rank", "local_smoke_skipped", reason="previous_smoke_passed")
     else:
-        smoke_result = remote_build_full_support_shards.remote(config, smoke=True)
-        print(f"Remote full-support shard smoke completed: {smoke_result}")
+        smoke_result = remote_active_exact_window_blend_rank.remote(config, smoke=True)
+        print(f"Remote active exact-window blend rank smoke completed: {smoke_result}")
     if not run_full:
-        print("Full full-support shard build was not launched. Re-run with --run-full after reviewing smoke output.")
+        print("Full active exact-window blend rank was not launched. Re-run with --run-full after reviewing smoke output.")
         log_event(
-            "modal_build_full_support_shards",
+            "modal_active_exact_window_blend_rank",
             "local_dispatch_done",
             run_full=run_full,
             skip_smoke=skip_smoke,
@@ -74,21 +74,21 @@ def build_full_support_shards(
         )
         return
     if wait_full:
-        full_result = remote_build_full_support_shards.remote(config, smoke=False)
-        print(f"Remote full-support shard build completed: {full_result}")
+        full_result = remote_active_exact_window_blend_rank.remote(config, smoke=False)
+        print(f"Remote active exact-window blend rank completed: {full_result}")
         log_event(
-            "modal_build_full_support_shards",
+            "modal_active_exact_window_blend_rank",
             "local_dispatch_done",
             run_full=run_full,
             skip_smoke=skip_smoke,
             wait_full=wait_full,
         )
         return
-    full_call = remote_build_full_support_shards.spawn(config, smoke=False)
+    full_call = remote_active_exact_window_blend_rank.spawn(config, smoke=False)
     call_id = getattr(full_call, "object_id", str(full_call))
-    print(f"Remote full-support shard build spawned: {call_id}")
+    print(f"Remote active exact-window blend rank full spawned: {call_id}")
     log_event(
-        "modal_build_full_support_shards",
+        "modal_active_exact_window_blend_rank",
         "local_dispatch_done",
         run_full=run_full,
         skip_smoke=skip_smoke,

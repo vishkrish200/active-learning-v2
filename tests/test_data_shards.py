@@ -68,6 +68,7 @@ class DataShardTests(unittest.TestCase):
     def test_modal_build_full_support_shards_entrypoint_and_config_validate(self):
         source = Path("modal_build_full_support_shards.py").read_text(encoding="utf-8")
         config = json.loads(Path("configs/build_full_support_shards.json").read_text(encoding="utf-8"))
+        window_config = json.loads(Path("configs/build_full_support_window_shards.json").read_text(encoding="utf-8"))
 
         self.assertIn("marginal-value-build-full-support-shards", source)
         self.assertIn("run_build_full_support_shards(config, smoke=smoke", source)
@@ -78,6 +79,9 @@ class DataShardTests(unittest.TestCase):
         self.assertEqual(config["shards"]["clip_splits"], ["pretrain", "new"])
         self.assertEqual(config["shards"]["progress_every_shards"], 1)
         validate_build_full_support_shards_config(config)
+        self.assertEqual(window_config["shards"]["representations"], ["window_mean_std_pool"])
+        self.assertEqual(window_config["shards"]["output_dir"], "/artifacts/active/full_support_shards/window_mean_std_v1")
+        validate_build_full_support_shards_config(window_config)
 
 
 def _config(root: Path) -> dict[str, object]:

@@ -5,22 +5,24 @@ Date: 2026-05-02
 ## Direct Verdict
 
 The current artifact is a credible external-challenge submission candidate. The
-recommended output is now the 3-seed consensus ranking over budgeted support
-samples, not the original single support-sample ranking.
+recommended output is now the exact-window blend ranking: partial TS2Vec
+old-support novelty plus exact full-corpus `window_mean_std_pool` old-support
+novelty.
 
-It should be described as a budgeted multi-view geometric acquisition selector,
-not as a clean scientific TS2Vec active-learning result.
+It should be described as a multi-view geometric acquisition selector with
+partial TS2Vec support, not as a clean scientific TS2Vec active-learning result
+or an exact full-support TS2Vec search.
 
 Recommended label:
 
 ```text
-Budgeted TS2Vec/window blended k-center acquisition selector
+Partial-TS2Vec / exact-window blended k-center acquisition selector
 ```
 
 Final selector:
 
 ```text
-consensus_blend_kcenter_ts2vec_window_mean_std_pool_a05
+exact_window_blend_kcenter_ts2vec_window_mean_std_pool_a05
 ```
 
 ## Submission Files
@@ -28,20 +30,20 @@ consensus_blend_kcenter_ts2vec_window_mean_std_pool_a05
 Primary candidate file:
 
 ```text
-/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
+/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_submission_full_new_worker_id.csv
 ```
 
 Backup ID-format file:
 
 ```text
-/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_worker_id.csv
+/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_submission_full_worker_id.csv
 ```
 
 Diagnostics and report:
 
 ```text
-/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_diagnostics_full.csv
-/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_report_full.json
+/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_diagnostics_full.csv
+/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_report_full.json
 ```
 
 Use the `new_worker_id` file as primary unless the evaluator explicitly expects
@@ -49,12 +51,13 @@ the internal manifest-hash `worker_id` column.
 
 ## Method Summary
 
-We rank the 2,000 newly arrived IMU clips using a budgeted multi-view
+We rank the 2,000 newly arrived IMU clips using a multi-view geometric
 acquisition selector. Each candidate is embedded with a TS2Vec-style temporal
 encoder and with a cheap handcrafted window-stat representation. Candidate
 novelty is estimated against two old-support views: a partial cached TS2Vec
-old-support index and a sampled window-stat old-support index. The two novelty
-scores are min-max normalized and blended with `alpha=0.5`.
+old-support index and an exact full-corpus `window_mean_std_pool` old-support
+index over all 200,000 old clips. The two novelty scores are min-max normalized
+and blended with `alpha=0.5`.
 
 Before ranking, clips are filtered by hard hygiene gates:
 
@@ -64,37 +67,41 @@ stationary_fraction <= 0.90
 max_abs_value <= 60.0
 ```
 
-Each seeded ordering uses a quality-gated blended k-center strategy to
-prioritize clips that are both under-covered by the old corpus and nonredundant
-within the new batch. The final promoted ordering averages ranks across seeds
-`1, 2, 3`, with Borda score and mean novelty score as deterministic tie-breaks.
+The final ordering uses a quality-gated blended k-center strategy to prioritize
+clips that are both under-covered by the old corpus and nonredundant within the
+new batch.
 
-This is not an exact full-200k TS2Vec search. It is a budgeted approximation
-designed to fit compute and IO constraints while still using all 2,000 new
-candidate clips.
+This is not an exact full-200k TS2Vec search. It is exact for the window-stat
+old-support view and partial for the TS2Vec old-support view.
 
 ## Exact Config
 
 Final ranking config:
 
 ```text
-configs/active_final_blend_rank_budget_h100.json
+configs/active_exact_window_blend_rank.json
 ```
 
 Important settings:
 
 ```text
-budgeted_candidate_only: true
 left_representation: ts2vec
 right_representation: window_mean_std_pool
 alpha: 0.5
 left_support_shard_dir: /artifacts/active/embedding_cache/ts2vec_window_full_new/embeddings_7481b57ede264d17002b4316_shards
+left_query_shard_dir: /artifacts/active/embedding_cache/ts2vec_window_new_only_h100/embeddings_5fcc8a7d4d3d16bf699786fa_shards
 min_left_support_clips: 20000
-right_support_max_clips: 25000
+right_support_shard_dir: /artifacts/active/full_support_shards/window_mean_std_v1
 max_query_clips: 2500
 quality_threshold: 0.85
 max_stationary_fraction: 0.90
 max_abs_value: 60.0
+```
+
+Window full-support shard config:
+
+```text
+configs/build_full_support_window_shards.json
 ```
 
 New-candidate TS2Vec precompute config:
@@ -121,7 +128,7 @@ n_left_support: 22327
 n_right_support: 25000
 ```
 
-Successful 3-seed consensus run:
+Successful 3-seed consensus run, now fallback/provenance:
 
 ```text
 Modal app: ap-yhHD37KCA4PsXm2Vpv8osq
@@ -139,6 +146,50 @@ Consensus top-k hygiene:
 | 10 | 0.000 | 0.000 | 0.000 | 10 |
 | 50 | 0.000 | 0.000 | 0.020 | 49 |
 | 100 | 0.000 | 0.000 | 0.010 | 99 |
+
+Successful exact-window final ranking:
+
+```text
+Modal app: ap-hivXtqllLALI9UBYyOBJ8e
+mode: full
+n_query: 2000
+n_left_support: 22327
+n_right_support: 200000
+```
+
+Full window shard build:
+
+```text
+Modal app: ap-Qavmxl6rQzJ9yHZd7wUDoM
+n_clips: 202000
+n_shards: 50
+manifest: /artifacts/active/full_support_shards/window_mean_std_v1/full_support_shards_full.json
+```
+
+Exact-window top-k hygiene:
+
+| K | Quality Fail | Physical Fail | Duplicate Rate | Unique New Clusters |
+| ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.000 | 0.000 | 0.000 | 10 |
+| 50 | 0.000 | 0.000 | 0.000 | 50 |
+| 100 | 0.000 | 0.000 | 0.000 | 100 |
+| 200 | 0.000 | 0.000 | 0.005 | 199 |
+
+Exact-window comparison against 3-seed consensus:
+
+| Metric | Value |
+| --- | ---: |
+| rank_spearman | 0.9846 |
+| top10_overlap | 0.8000 |
+| top50_overlap | 0.6800 |
+| top100_overlap | 0.8100 |
+| top200_overlap | 0.8300 |
+
+Detailed exact-window results:
+
+```text
+docs/exact_full_window_results_2026-05-02.md
+```
 
 ## Validation Summary
 
@@ -181,15 +232,20 @@ docs/ranker_hygiene_fix_results.md
    partial full-support precompute. It does not search all 200,000 old clips in
    TS2Vec space.
 
-3. Window old support is sampled.
+3. TS2Vec old support is still the remaining support approximation.
 
-   The selector uses a capped 25,000 old-support `window_mean_std_pool` subset,
-   not all 200,000 old clips. This was necessary because full support feature IO
-   was still slow on Modal volumes. A 3-seed support-sampling stability run
-   found high overall rank correlation but weak top-10 overlap for individual
-   seeds, so the promoted artifact is a consensus over seeds `1, 2, 3`.
+   The window-stat view now uses all 200,000 old-support clips. The TS2Vec view
+   still uses the partial 22,327-clip old-support cache. A full-support TS2Vec
+   run should wait until the large-shard data path is extended to TS2Vec
+   inference rather than being launched through small-file IO.
 
-4. External held-out score is unknown.
+4. Old-support shard quality metadata is incomplete in the window-only shard.
+
+   The final ranking still computes and enforces candidate-side quality and
+   physical-validity gates. Do not claim old-support quality-balanced sampling
+   from this shard alone.
+
+5. External held-out score is unknown.
 
    Internal active-loop evaluation supports the blend selector, but the
    challenge evaluator remains the real test.

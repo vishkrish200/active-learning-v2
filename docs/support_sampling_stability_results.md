@@ -9,11 +9,15 @@ sampled 25,000-clip window-stat old support.
 
 This means the budgeted engineering selector is defensible, but it should not
 be described as an exact scientific full-support acquisition result. The
-recommended artifact is now the 3-seed consensus ranking, which directly
-reduces dependence on any one sampled old-support subset.
+recommended artifact at that stage was the 3-seed consensus ranking, which
+directly reduced dependence on any one sampled old-support subset.
 
-The next larger improvement would be to remove the support-sampling
-approximation with a real full-support data layer.
+That next improvement has now been run for the cheap window-stat view. The
+current primary artifact is the exact-window blend documented in:
+
+```text
+docs/exact_full_window_results_2026-05-02.md
+```
 
 ## Runs
 

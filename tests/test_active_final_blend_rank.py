@@ -11,7 +11,12 @@ from marginal_value.active.final_blend_rank import (
     run_active_final_blend_rank,
     validate_active_final_blend_rank_config,
 )
+from marginal_value.active.exact_window_blend_rank import (
+    run_active_exact_window_blend_rank,
+    validate_active_exact_window_blend_rank_config,
+)
 from marginal_value.active.registry import ClipRecord
+from marginal_value.data.build_full_support_shards import run_build_full_support_shards
 from marginal_value.data.split_manifest import hash_manifest_url
 
 
@@ -219,6 +224,101 @@ class ActiveFinalBlendRankTests(unittest.TestCase):
         self.assertEqual(budget_config["ranking"]["right_embedding_workers"], 16)
         validate_active_final_blend_rank_config(budget_config)
 
+    def test_exact_window_blend_rank_uses_window_shards_for_full_right_support(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            urls = _write_fixture(root)
+            shard_result = run_build_full_support_shards(_window_shard_config(root), smoke=True)
+            left_shard_dir = root / "partial_left_shards"
+            _write_partial_embedding_shard(
+                left_shard_dir,
+                sample_ids=[hash_manifest_url(url) for url in urls["pretrain_urls"][:2]],
+                representation="window_mean_std_pool",
+                values=np.asarray(
+                    [
+                        [1.0, 0.0, 0.0, 0.0, 0.1, 0.1, 0.1, 0.1],
+                        [0.0, 1.0, 0.0, 0.0, 0.1, 0.1, 0.1, 0.1],
+                    ],
+                    dtype="float32",
+                ),
+            )
+            left_query_shard_dir = root / "partial_left_query_shards"
+            _write_partial_embedding_shard(
+                left_query_shard_dir,
+                sample_ids=[hash_manifest_url(url) for url in urls["new_urls"]],
+                representation="window_mean_std_pool",
+                values=np.asarray(
+                    [
+                        [1.0, 0.0, 0.0, 0.0, 0.2, 0.2, 0.2, 0.2],
+                        [0.0, 1.0, 0.0, 0.0, 0.2, 0.2, 0.2, 0.2],
+                        [0.0, 0.0, 1.0, 0.0, 0.2, 0.2, 0.2, 0.2],
+                    ],
+                    dtype="float32",
+                ),
+            )
+            config = {
+                "execution": {
+                    "provider": "modal",
+                    "allow_local_paths_for_tests": True,
+                    "smoke_query_samples": 3,
+                    "smoke_window_support_samples": 3,
+                },
+                "data": {
+                    "root": str(root),
+                    "feature_glob": "cache/features/*.npz",
+                    "raw_glob": "cache/raw/*.jsonl",
+                    "quality_metadata": "quality.jsonl",
+                    "manifests": {
+                        "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+                        "new": "cache/manifests/new_urls.txt",
+                    },
+                },
+                "embeddings": {"cache_dir": str(root / "query_cache")},
+                "ranking": {
+                    "support_split": "pretrain",
+                    "query_split": "new",
+                    "left_representation": "window_mean_std_pool",
+                    "right_representation": "window_mean_std_pool",
+                    "left_support_shard_dir": str(left_shard_dir),
+                    "left_query_shard_dir": str(left_query_shard_dir),
+                    "right_support_shard_manifest": shard_result["manifest_path"],
+                    "candidate_cache_dir": str(root / "query_cache"),
+                    "min_left_support_clips": 2,
+                    "alpha": 0.5,
+                    "old_novelty_k": 1,
+                    "quality_threshold": 0.85,
+                    "max_stationary_fraction": 0.90,
+                    "max_abs_value": 60.0,
+                    "cluster_similarity_threshold": 0.995,
+                    "top_k_values": [2, 3],
+                },
+                "artifacts": {"output_dir": str(root / "exact_out")},
+            }
+
+            result = run_active_exact_window_blend_rank(config, smoke=True)
+            report = json.loads(Path(result["report_path"]).read_text(encoding="utf-8"))
+            diagnostics = _read_csv(Path(result["diagnostics_path"]))
+
+        self.assertEqual(result["mode"], "smoke")
+        self.assertEqual(result["ranking_mode"], "partial_left_exact_window_right")
+        self.assertEqual(report["right_support_cache"]["status"], "full_support_shard_hit")
+        self.assertEqual(report["n_right_support"], 3)
+        self.assertEqual(report["n_query"], 3)
+        self.assertEqual(report["topk_quality"]["k2"]["quality_failure_rate"], 0.0)
+        self.assertEqual(len(diagnostics), 3)
+
+    def test_modal_exact_window_blend_rank_entrypoint_and_config_validate(self):
+        source = Path("modal_active_exact_window_blend_rank.py").read_text(encoding="utf-8")
+        config = json.loads(Path("configs/active_exact_window_blend_rank.json").read_text(encoding="utf-8"))
+
+        self.assertIn("marginal-value-active-exact-window-blend-rank", source)
+        self.assertIn("run_active_exact_window_blend_rank(config, smoke=smoke)", source)
+        self.assertIn("remote_active_exact_window_blend_rank.remote(config, smoke=True)", source)
+        self.assertIn("remote_active_exact_window_blend_rank.spawn(config, smoke=False)", source)
+        self.assertNotIn("gpu=", source)
+        self.assertEqual(config["ranking"]["right_support_shard_dir"], "/artifacts/active/full_support_shards/window_mean_std_v1")
+        validate_active_exact_window_blend_rank_config(config)
+
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
@@ -256,6 +356,35 @@ def _write_manifest(root: Path, relpath: str, urls: list[str]) -> None:
     path = root / relpath
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(urls) + "\n", encoding="utf-8")
+
+
+def _window_shard_config(root: Path) -> dict[str, object]:
+    return {
+        "execution": {
+            "provider": "modal",
+            "allow_local_paths_for_tests": True,
+            "smoke_max_clips_per_split": 3,
+        },
+        "data": {
+            "root": str(root),
+            "feature_glob": "cache/features/*.npz",
+            "raw_glob": "cache/raw/*.jsonl",
+            "quality_metadata": "quality.jsonl",
+            "manifests": {
+                "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+                "new": "cache/manifests/new_urls.txt",
+            },
+        },
+        "shards": {
+            "output_dir": str(root / "window_shards"),
+            "clip_splits": ["pretrain", "new"],
+            "representations": ["window_mean_std_pool"],
+            "shard_size": 2,
+            "workers": 1,
+            "include_imu_samples": False,
+            "progress_every_shards": 1,
+        },
+    }
 
 
 def _write_cached_clip(root: Path, url: str, *, center: np.ndarray) -> None:
