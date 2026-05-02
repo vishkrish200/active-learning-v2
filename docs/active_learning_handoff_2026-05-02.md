@@ -111,12 +111,14 @@ Training loop details:
 - temporal positions capped at 64 during training
 - collapse checks logged per epoch
 
-Important reviewer note: the TS2Vec training implementation should be audited
-before treating the checkpoint as a clean SSL result. In particular,
-`create_overlapping_crops()` currently returns two copies of the same sampled
-crop rather than two different overlapping crops. The downstream budgeted
-selector output is usable as an engineering artifact, but the SSL training loop
-is not yet something I would present as fully validated research code.
+Important reviewer note: the TS2Vec checkpoint should still be re-run before
+treating it as a clean SSL result. The public `create_overlapping_crops()`
+helper previously returned two copies of the same sampled crop, while the
+training loop used a separate shifted-crop path. That helper bug has been fixed
+and the training helper now delegates to the same canonical crop primitive, but
+the current promoted checkpoint predates the fixed-provenance run. The
+downstream budgeted selector output is usable as an engineering artifact; the
+next scientific step is to train and evaluate a fresh fixed-crop checkpoint.
 
 ## TS2Vec Diagnostics And Interpretation
 
@@ -338,4 +340,3 @@ This is the honest claim:
    hygienic ranker be tried after the selector is stable?
 5. Should final submission use `worker_id` or `new_worker_id` format? Both were
    written; confirm the external evaluator's expected column.
-

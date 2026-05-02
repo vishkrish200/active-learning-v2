@@ -149,12 +149,15 @@ docs/ranker_hygiene_fix_results.md
 
 ## Known Limitations
 
-1. TS2Vec training has a crop bug.
+1. TS2Vec checkpoint provenance still needs a fresh fixed-crop run.
 
-   `create_overlapping_crops()` currently returns two copies of one sampled
-   crop. The resulting checkpoint can still be used as an empirical embedding
-   signal because the blend evaluation supports it, but do not claim clean
-   TS2Vec training validity until this is fixed and retrained.
+   The public `create_overlapping_crops()` helper previously returned two
+   copies of one sampled crop. The training loop used a separate shifted-crop
+   path, but the split implementation made the checkpoint provenance too muddy
+   for a clean scientific claim. The helper has been fixed and the training
+   path now delegates to the same canonical crop primitive. Do not claim clean
+   TS2Vec training validity until a fresh fixed-crop checkpoint is trained and
+   evaluated.
 
 2. Old-support TS2Vec is partial.
 

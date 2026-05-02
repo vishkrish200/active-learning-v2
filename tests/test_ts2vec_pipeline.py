@@ -247,6 +247,25 @@ class TS2VecPipelineTests(unittest.TestCase):
         np.testing.assert_array_equal(left_indices, np.asarray([3, 4, 5]))
         np.testing.assert_array_equal(right_indices, np.asarray([0, 1, 2]))
 
+    def test_create_overlapping_crops_returns_distinct_aligned_views(self):
+        from marginal_value.models.ts2vec_loss import create_overlapping_crops
+
+        values = np.arange(10, dtype=np.float32)[:, None].repeat(6, axis=1)
+        rng = _FixedRng([6, 3, 0, 0])
+
+        left, right, left_indices, right_indices = create_overlapping_crops(
+            values,
+            min_overlap=0.5,
+            crop_min_len=6,
+            crop_max_len=6,
+            rng=rng,
+        )
+
+        self.assertFalse(np.array_equal(left, right))
+        self.assertEqual(left.shape, (6, 6))
+        self.assertEqual(right.shape, (6, 6))
+        np.testing.assert_array_equal(left[left_indices, 0], right[right_indices, 0])
+
     def test_overlap_subsampling_preserves_alignment_and_bounds(self):
         from marginal_value.models.ts2vec_loss import subsample_overlap_indices
 

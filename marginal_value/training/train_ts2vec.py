@@ -359,28 +359,9 @@ def _pool_sequence_embedding(sequence: object, pooling: str):
 
 
 def _two_overlapping_fixed_crops(values: np.ndarray, *, crop_len: int, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    padded = _pad_to_length(values, int(crop_len))
-    if len(padded) == crop_len:
-        indices = np.arange(int(crop_len), dtype=np.int64)
-        return padded.copy(), padded.copy(), indices, indices
-    max_start = len(padded) - int(crop_len)
-    start_a = int(rng.integers(0, max_start + 1))
-    max_shift = max(1, int(crop_len // 2))
-    low = max(0, start_a - max_shift)
-    high = min(max_start, start_a + max_shift)
-    start_b = int(rng.integers(low, high + 1))
-    overlap_start = max(start_a, start_b)
-    overlap_end = min(start_a + int(crop_len), start_b + int(crop_len))
-    if overlap_end <= overlap_start:
-        raise RuntimeError("Overlapping crop sampler produced disjoint crops.")
-    left_indices = np.arange(overlap_start - start_a, overlap_end - start_a, dtype=np.int64)
-    right_indices = np.arange(overlap_start - start_b, overlap_end - start_b, dtype=np.int64)
-    return (
-        padded[start_a : start_a + crop_len].copy(),
-        padded[start_b : start_b + crop_len].copy(),
-        left_indices,
-        right_indices,
-    )
+    from marginal_value.models.ts2vec_loss import _overlapping_fixed_length_crops
+
+    return _overlapping_fixed_length_crops(values, crop_len=int(crop_len), min_overlap=0.5, rng=rng)
 
 
 def _pad_to_length(values: np.ndarray, length: int) -> np.ndarray:

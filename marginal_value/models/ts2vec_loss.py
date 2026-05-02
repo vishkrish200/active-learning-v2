@@ -31,12 +31,12 @@ def create_overlapping_crops(
     crop_min_len: int | None = None,
     crop_max_len: int | None = None,
     rng: np.random.Generator | None = None,
-) -> tuple[np.ndarray, np.ndarray, int, int]:
-    """Create two random crops with a shared local overlap interval.
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Create two random crops with aligned local overlap indices.
 
-    The returned overlap indices are valid local indices for both crops. The
-    training loop uses this as an augmentation primitive; the contrastive loss
-    can then treat matching local overlap positions as positives.
+    The returned overlap arrays are local indices for each crop. Matching
+    positions in those arrays refer to the same original timestep and can be
+    used as temporal positives.
     """
     values = np.asarray(x, dtype=np.float32)
     if values.ndim != 2:
@@ -51,12 +51,59 @@ def create_overlapping_crops(
     if min_len > max_len:
         min_len = max_len
     crop_len = int(generator.integers(min_len, max_len + 1))
-    overlap_len = int(generator.integers(max(1, int(np.ceil(crop_len * min_overlap))), crop_len + 1))
-    overlap_start = int(generator.integers(0, crop_len - overlap_len + 1))
-    overlap_end = overlap_start + overlap_len
-    start = int(generator.integers(0, len(values) - crop_len + 1))
-    crop = values[start : start + crop_len]
-    return crop.copy(), crop.copy(), overlap_start, overlap_end
+    return _overlapping_fixed_length_crops(values, crop_len=crop_len, min_overlap=min_overlap, rng=generator)
+
+
+def _overlapping_fixed_length_crops(
+    x: np.ndarray,
+    *,
+    crop_len: int,
+    min_overlap: float = 0.5,
+    rng: np.random.Generator | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    values = np.asarray(x, dtype=np.float32)
+    if values.ndim != 2:
+        raise ValueError("x must be shaped (T, C).")
+    if int(crop_len) < 2:
+        raise ValueError("crop_len must be at least 2.")
+    if not 0.0 < float(min_overlap) <= 1.0:
+        raise ValueError("min_overlap must be in (0, 1].")
+    generator = rng if rng is not None else np.random.default_rng()
+    padded = _pad_to_length(values, int(crop_len))
+    if len(padded) == int(crop_len):
+        indices = np.arange(int(crop_len), dtype=np.int64)
+        return padded.copy(), padded.copy(), indices, indices
+
+    max_start = len(padded) - int(crop_len)
+    start_a = int(generator.integers(0, max_start + 1))
+    min_overlap_len = max(1, int(np.ceil(int(crop_len) * float(min_overlap))))
+    max_shift = max(0, int(crop_len) - min_overlap_len)
+    low = max(0, start_a - max_shift)
+    high = min(max_start, start_a + max_shift)
+    start_b = int(generator.integers(low, high + 1))
+    if start_b == start_a and high > low:
+        start_b = high if start_a != high else low
+
+    overlap_start = max(start_a, start_b)
+    overlap_end = min(start_a + int(crop_len), start_b + int(crop_len))
+    if overlap_end <= overlap_start:
+        raise RuntimeError("Overlapping crop sampler produced disjoint crops.")
+    left_indices = np.arange(overlap_start - start_a, overlap_end - start_a, dtype=np.int64)
+    right_indices = np.arange(overlap_start - start_b, overlap_end - start_b, dtype=np.int64)
+    return (
+        padded[start_a : start_a + int(crop_len)].copy(),
+        padded[start_b : start_b + int(crop_len)].copy(),
+        left_indices,
+        right_indices,
+    )
+
+
+def _pad_to_length(values: np.ndarray, length: int) -> np.ndarray:
+    if len(values) >= int(length):
+        return values
+    output = np.zeros((int(length), values.shape[1]), dtype=np.float32)
+    output[: len(values)] = values
+    return output
 
 
 def hierarchical_contrastive_loss(
