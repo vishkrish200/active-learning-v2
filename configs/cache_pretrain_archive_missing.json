@@ -1,0 +1,36 @@
+{
+  "execution": {
+    "provider": "modal",
+    "source_volume": "activelearning-observe-full-cache",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 21600,
+    "smoke_samples": 16,
+    "full_samples": null,
+    "progress_every": 1000,
+    "full_selected_progress_hint": 40000,
+    "feature_workers": 8,
+    "max_pending_features": 32
+  },
+  "source": {
+    "root": "/source",
+    "archive_path": "/source/pretrain_100k.tar.zst",
+    "split": "pretrain",
+    "url_prefix": "https://storage.googleapis.com/buildai-imu-benchmark-v1-preexisting"
+  },
+  "target": {
+    "root": "/data",
+    "source_manifest": "cache/manifests/pretrain_urls.txt",
+    "extracted_manifest": "cache/manifests/pretrain_physical_source_urls.txt",
+    "union_manifest": "cache/manifests/pretrain_physical_plus_archive_urls.txt",
+    "archive_cached_manifest": "cache/manifests/pretrain_archive_cached_urls.txt",
+    "feature_dir": "cache/features",
+    "raw_dir": "cache/raw"
+  },
+  "selection": {
+    "strategy": "missing_from_extracted"
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/cache/source_archive_pretrain_100k"
+  }
+}

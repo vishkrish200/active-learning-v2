@@ -1,0 +1,51 @@
+{
+  "execution": {
+    "provider": "modal",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 7200,
+    "smoke_max_episodes": 1
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "quality_metadata": "/artifacts/active/quality/full_pretrain_smoke/active_quality_smoke.jsonl",
+    "manifests": {
+      "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+      "new": "cache/manifests/new_urls.txt"
+    }
+  },
+  "episodes": {
+    "path": "/artifacts/active/episodes/full_pretrain_smoke/active_episodes_smoke.jsonl"
+  },
+  "embeddings": {
+    "cache_dir": "/artifacts/active/embedding_cache/full_pretrain_smoke"
+  },
+  "evaluation": {
+    "representations": [
+      "window_mean_std_pool",
+      "temporal_order",
+      "raw_shape_stats",
+      "window_shape_stats"
+    ],
+    "primary_representation": "window_mean_std_pool",
+    "policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_only",
+      "kcenter_greedy_quality_gated",
+      "window_shape_stats_q85_stat90_abs60_clustercap2",
+      "oracle_greedy_eval_only"
+    ],
+    "k_values": [10, 25, 50, 100, 200, 400],
+    "quality_threshold": 0.45,
+    "random_seed": 20260428,
+    "old_novelty_k": 10,
+    "raw_shape_max_samples": 900,
+    "cluster_similarity_threshold": 0.995
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/active/eval/full_pretrain_smoke"
+  }
+}

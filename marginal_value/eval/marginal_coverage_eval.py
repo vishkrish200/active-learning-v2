@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import numpy as np
 
 from marginal_value.data.split_manifest import SplitSample, build_split_manifest, select_split
+from marginal_value.indexing.cosine_search import mean_nearest_cosine_distance
 from marginal_value.indexing.knn_features import normalize_rows
 from marginal_value.logging_utils import log_event, log_progress
 from marginal_value.preprocessing.quality import load_modal_jsonl_imu, quality_scores_for_rows
@@ -776,16 +777,13 @@ def _grammar_feature_embeddings(
 
 
 def _mean_nearest_distance(query_embeddings: np.ndarray, support_embeddings: np.ndarray) -> float:
-    query = normalize_rows(np.asarray(query_embeddings, dtype=float))
-    support = normalize_rows(np.asarray(support_embeddings, dtype=float))
+    query = np.asarray(query_embeddings, dtype=float)
+    support = np.asarray(support_embeddings, dtype=float)
     if len(query) == 0:
         raise ValueError("Coverage distance requires at least one target row.")
     if len(support) == 0:
         raise ValueError("Coverage distance requires at least one support row.")
-    similarities = query @ support.T
-    nearest = np.max(similarities, axis=1)
-    distances = 1.0 - nearest
-    return float(np.mean(np.maximum(distances, 0.0)))
+    return mean_nearest_cosine_distance(query, support, backend="auto")
 
 
 def _select_source_group_folds(

@@ -1,0 +1,62 @@
+{
+  "execution": {
+    "provider": "modal",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 3600,
+    "smoke_support_samples": 512,
+    "smoke_query_samples": 64
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "manifests": {
+      "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+      "new": "cache/manifests/new_urls.txt"
+    }
+  },
+  "embeddings": {
+    "cache_dir": "/artifacts/active/embedding_cache/ts2vec_window_new_only_h100"
+  },
+  "ranking": {
+    "budgeted_candidate_only": true,
+    "support_split": "pretrain",
+    "query_split": "new",
+    "left_representation": "ts2vec",
+    "right_representation": "window_mean_std_pool",
+    "alpha": 0.5,
+    "old_novelty_k": 10,
+    "quality_threshold": 0.85,
+    "max_stationary_fraction": 0.90,
+    "max_abs_value": 60.0,
+    "cluster_similarity_threshold": 0.995,
+    "left_support_shard_dir": "/artifacts/active/embedding_cache/ts2vec_window_full_new/embeddings_7481b57ede264d17002b4316_shards",
+    "min_left_support_clips": 20000,
+    "candidate_cache_dir": "/artifacts/active/embedding_cache/ts2vec_window_new_only_h100",
+    "right_support_cache_dir": "/artifacts/active/embedding_cache/window_mean_std_support_full",
+    "right_embedding_workers": 16,
+    "right_support_max_clips": 25000,
+    "fail_if_right_support_exceeds_max": false,
+    "max_query_clips": 2500,
+    "fail_if_query_exceeds_max": true,
+    "top_k_values": [
+      10,
+      50,
+      100,
+      200
+    ],
+    "representation_options": {
+      "ts2vec_checkpoint_path": "/artifacts/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+      "ts2vec_device": "cuda",
+      "ts2vec_batch_size": 128
+    }
+  },
+  "quality": {
+    "sample_rate": 30.0,
+    "max_samples_per_clip": 5400
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100"
+  }
+}

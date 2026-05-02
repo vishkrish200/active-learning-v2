@@ -1,0 +1,37 @@
+{
+  "execution": {
+    "provider": "modal",
+    "source_volume": "activelearning-observe-full-cache",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 3600,
+    "smoke_manifest_samples": 128
+  },
+  "source": {
+    "root": "/source",
+    "split_by_manifest": {
+      "pretrain": "pretrain",
+      "new": "val",
+      "val": "val"
+    }
+  },
+  "target": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "max_feature_files_for_window_stats": 5000,
+    "manifests": {
+      "pretrain": "cache/manifests/pretrain_physical_plus_archive_urls.txt",
+      "val": "cache/manifests/val_unused_for_submission_urls.txt",
+      "new": "cache/manifests/new_urls.txt"
+    }
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/audits/support_coverage_physical_plus_archive"
+  },
+  "expected": {
+    "old_manifest_urls": 200000,
+    "physical_plus_archive_urls": 107401,
+    "new_workers": 2000
+  }
+}

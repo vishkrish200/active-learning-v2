@@ -1,0 +1,78 @@
+{
+  "execution": {
+    "provider": "modal",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 7200,
+    "smoke_max_episodes": 2
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "quality_metadata": "/artifacts/active/quality/full_pretrain_sample/active_quality_full.jsonl",
+    "manifests": {
+      "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+      "new": "cache/manifests/new_urls.txt"
+    }
+  },
+  "episodes": {
+    "path": "/artifacts/active/episodes/scale_pretrain/active_episodes_full.jsonl"
+  },
+  "labels": {
+    "path": "/artifacts/active/labels/ranker_hygiene_fix/active_label_gain_full.csv"
+  },
+  "embeddings": {
+    "cache_dir": "/artifacts/active/embedding_cache/ts2vec_candidate_scale"
+  },
+  "ranker": {
+    "representations": [
+      "ts2vec",
+      "window_mean_std_pool",
+      "temporal_order",
+      "raw_shape_stats",
+      "window_shape_stats"
+    ],
+    "primary_representation": "ts2vec",
+    "label_column": "gated_balanced_gain",
+    "hygiene_gate": {
+      "quality_threshold": 0.85,
+      "max_stationary_fraction": 0.9,
+      "max_abs_value": 60.0,
+      "duplicate_cosine_threshold": null
+    },
+    "ridge_l2": 1.0,
+    "sample_rate": 30.0,
+    "raw_shape_max_samples": 900,
+    "representation_options": {
+      "ts2vec_checkpoint_path": "/artifacts/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+      "ts2vec_device": "cuda"
+    },
+    "old_novelty_k": 10,
+    "cluster_similarity_threshold": 0.995,
+    "quality_threshold": 0.45,
+    "hybrid_policy": {
+      "enabled": true,
+      "quality_threshold": 0.85,
+      "max_stationary_fraction": 0.9,
+      "max_abs_value": 60.0,
+      "pool_multiplier": 1.5
+    },
+    "random_seed": 20260429,
+    "k_values": [5, 10, 25, 50, 100],
+    "train_episode_count": 48,
+    "validation_episode_count": 8,
+    "test_episode_count": 8,
+    "baseline_policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_only",
+      "kcenter_greedy_quality_gated",
+      "window_shape_stats_q85_stat90_abs60_clustercap2",
+      "oracle_greedy_eval_only"
+    ]
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/active/ranker/scale_pretrain"
+  }
+}

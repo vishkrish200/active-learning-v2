@@ -1,0 +1,39 @@
+{
+  "execution": {
+    "provider": "modal",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 3600,
+    "smoke_max_clips_per_split": 8
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "manifests": {
+      "new": "cache/manifests/new_urls.txt"
+    }
+  },
+  "embeddings": {
+    "cache_dir": "/artifacts/active/embedding_cache/ts2vec_window_new_only_h100"
+  },
+  "precompute": {
+    "clip_splits": [
+      "new"
+    ],
+    "max_clips_per_split": 2500,
+    "fail_if_split_exceeds_max": true,
+    "representations": [
+      "ts2vec",
+      "window_mean_std_pool"
+    ],
+    "sample_rate": 30.0,
+    "shard_size": 1024,
+    "workers": 1,
+    "representation_options": {
+      "ts2vec_checkpoint_path": "/artifacts/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+      "ts2vec_device": "cuda",
+      "ts2vec_batch_size": 128
+    }
+  }
+}

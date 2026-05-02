@@ -1,6 +1,6 @@
 # Project Progress Report
 
-Last updated: 2026-04-27
+Last updated: 2026-04-28
 
 This document records what has been built, tested, learned, and deliberately deferred in the active-learning IMU marginal data value project. It is meant to be the durable project memory: the methods we tried, why we tried them, what passed, what failed, and what the next engineering decisions should be.
 
@@ -3486,4 +3486,302 @@ Decision:
 Keep window_shape_stats_q85_stat90_abs60_clustercap2 as the current selector because it is deterministic, simple, and balanced.
 Do not claim it is materially better than k-center without another validation axis or a hidden-test result.
 Treat kcenter_greedy_quality_gated as a required baseline in all future reports.
+```
+
+## 51. Active Acquisition Rebuild Kickoff
+
+The latest external review correctly reframed the current selector as a strong
+baseline rather than the final scientific system. The next project target is an
+episode-trained active acquisition policy:
+
+```text
+old support + pseudo-new candidate batch + hidden target
+-> candidate marginal gain labels
+-> learned acquisition ranker
+-> greedy redundancy-aware ranking of daily new clips
+```
+
+Added rebuild plan:
+
+```text
+docs/active_acquisition_rebuild_plan.md
+```
+
+Refreshed data-truth runs:
+
+```text
+source inventory run:
+https://modal.com/apps/vishkrish200/main/ap-VsYGO0TxykyzzpcFq6OPUR
+remote report:
+/artifacts/source_inventory_observe_full/source_inventory_full.json
+
+support coverage run:
+https://modal.com/apps/vishkrish200/main/ap-DsY6LqFxVHZ0esAlOZlUy0
+remote report:
+/artifacts/audits/support_coverage_physical_source/support_coverage_audit_full.json
+```
+
+Source inventory result:
+
+| Metric | Value |
+|---|---:|
+| pretrain manifest URLs | 200,000 |
+| pretrain source-existing URLs | 68,210 |
+| physical-source manifest URLs | 68,210 |
+| new manifest URLs | 2,000 |
+| new source-existing URLs | 2,000 |
+| source tar archives visible | 1 |
+
+Support coverage result:
+
+| Metric | Value |
+|---|---:|
+| pretrain physical-source manifest URLs | 68,210 |
+| pretrain cached raw+features | 68,208 |
+| new manifest URLs | 2,000 |
+| new cached raw+features | 2,000 |
+| feature files | 73,513 |
+| raw files | 73,515 |
+
+Interpretation:
+
+```text
+The old 13k support-cache problem is fixed for the physical-source path.
+However, the validated old support is still 68,208 cached physical-source clips,
+not the theoretical ~1.15M 180-second windows over 10,000 one-hour workers.
+Before claiming the full old corpus is unavailable, inspect the visible source
+tar archive to see whether it contains missing source data or duplicates.
+```
+
+Speed/GPU update:
+
+```text
+marginal_value/indexing/cosine_search.py now provides a shared cosine kNN and
+mean nearest-neighbor coverage-distance backend. It uses Torch CUDA when
+available and falls back to NumPy locally.
+
+modal_marginal_coverage_eval.py now installs torch==2.8.0 and requests H100, so
+future marginal-coverage and active-labeling style distance work can use GPU
+instead of large CPU matrix multiplies.
+```
+
+Next code step:
+
+```text
+Finish archive-only pretrain caching and support coverage first. Then implement
+marginal_value/active/episodes.py and tests. Do not tune the current selector
+further until the episode generator and marginal-gain labeler exist.
+```
+
+## 52. Source Archive Recovery
+
+Added a source archive audit and cache path for `/source/pretrain_100k.tar.zst`:
+
+```text
+marginal_value/data/source_archive_audit.py
+modal_source_archive_audit.py
+configs/source_archive_audit_pretrain_100k.json
+tests/test_source_archive_audit.py
+
+marginal_value/data/cache_source_archive.py
+modal_cache_source_archive.py
+configs/cache_pretrain_archive_missing.json
+tests/test_cache_source_archive.py
+```
+
+Archive audit full run:
+
+```text
+command:
+.venv/bin/python -m modal run --detach modal_source_archive_audit.py \
+  --run-full \
+  --skip-smoke \
+  --config-path configs/source_archive_audit_pretrain_100k.json
+
+modal run:
+https://modal.com/apps/vishkrish200/main/ap-jASQ7nfVbdaY6WIs6UuZrp
+
+remote report:
+/artifacts/audits/source_archive_pretrain_100k/source_archive_audit_full.json
+
+local report:
+data/audits/source_archive_pretrain_100k/source_archive_audit_full.json
+```
+
+Archive audit result:
+
+| Metric | Value |
+|---|---:|
+| archive data members | 100,000 |
+| archive workers | 5,000 |
+| clips per archive worker | 20 |
+| archive URLs matching pretrain manifest | 100,000 |
+| archive URLs already in physical-source manifest | 60,809 |
+| archive URLs missing from physical-source manifest | 39,191 |
+| archive URLs not in pretrain manifest | 0 |
+
+Combined source implication:
+
+| Source set | URLs | Workers |
+|---|---:|---:|
+| extracted physical source | 68,210 | 8,483 |
+| archive | 100,000 | 5,000 |
+| physical + archive union | 107,401 | 8,916 |
+| still unavailable from current source mounts/archive | 92,599 | unknown |
+
+Interpretation:
+
+```text
+The visible archive is not just duplicate source. It recovers 39,191 pretrain
+clips that were absent from the extracted physical-source manifest. The next
+scientific support set should be pretrain_physical_plus_archive_urls.txt after
+the archive cache job writes raw+feature files and support coverage confirms
+parity.
+```
+
+Archive cache smoke run:
+
+```text
+command:
+.venv/bin/python -m modal run --detach modal_cache_source_archive.py \
+  --config-path configs/cache_pretrain_archive_missing.json
+
+modal run:
+https://modal.com/apps/vishkrish200/main/ap-vdukYnZaGRXR8ol3MTOza0
+
+result:
+selected = 16
+raw_copied = 16
+feature_written = 16
+malformed_source = 0
+union_manifest_smoke_count = 68,226
+```
+
+Archive cache full run:
+
+```text
+command:
+.venv/bin/python -m modal run --detach modal_cache_source_archive.py \
+  --run-full \
+  --skip-smoke \
+  --config-path configs/cache_pretrain_archive_missing.json
+
+modal run:
+https://modal.com/apps/vishkrish200/main/ap-sFmYyYe7IBxioOiR3CsChQ
+
+result:
+selected = 39,191
+cached_archive_url_count = 39,191
+cached_archive_worker_count = 2,118
+raw_copied = 38,142
+feature_written = 38,142
+skipped_existing = 1,049
+malformed_source = 0
+union_manifest = /data/cache/manifests/pretrain_physical_plus_archive_urls.txt
+union_url_count = 107,401
+union_worker_count = 8,916
+```
+
+Union support coverage run:
+
+```text
+command:
+.venv/bin/python -m modal run --detach modal_support_coverage_audit.py \
+  --run-full \
+  --skip-smoke \
+  --config-path configs/support_coverage_audit_physical_plus_archive.json
+
+modal run:
+https://modal.com/apps/vishkrish200/main/ap-tF23lOxIhb9Z3CLf6Lzepf
+
+remote report:
+/artifacts/audits/support_coverage_physical_plus_archive/support_coverage_audit_full.json
+
+local report:
+data/audits/support_coverage_physical_plus_archive/support_coverage_audit_full.json
+
+result:
+pretrain_manifest_url_count = 107,401
+pretrain_manifest_worker_count = 8,916
+pretrain_cached_both_count = 107,399
+new_manifest_url_count = 2,000
+new_cached_both_count = 2,000
+feature_file_count = 111,671
+raw_file_count = 111,673
+malformed_archive_rows = 0
+```
+
+Remaining tiny repair:
+
+```text
+Two pretrain URLs in the union manifest have raw JSONL but no feature NPZ:
+worker03833/clip005.txt
+worker04447/clip013.txt
+
+They are both physical-source URLs, not archive-only failures. This leaves
+99.998% pretrain raw+feature parity and should not block active episode
+generation.
+```
+
+## 53. Public GCS Pretrain Investigation
+
+Investigated whether the remaining missing pretrain URLs are bad manifest rows
+or just absent from the Modal `/source` mirror/archive.
+
+Local evidence artifacts:
+
+```text
+data/audits/gcs_pretrain_object_count.json
+data/audits/missing_pretrain_gcs_probe_results.tsv
+```
+
+Public GCS bucket listing:
+
+```text
+bucket: buildai-imu-benchmark-v1-preexisting
+prefix: pretrain/
+object_count: 200,000
+worker_count: 10,000
+worker_clip_hist: 20 clips for each worker
+```
+
+Direct sampled URL probe:
+
+| Bucket | Probe result |
+|---|---:|
+| missing entire worker URLs | 80/80 returned HTTP 206 |
+| missing partial worker URLs | 80/80 returned HTTP 206 |
+| archive-only present URLs | 20/20 returned HTTP 206 |
+| physical-source present URLs | 20/20 returned HTTP 206 |
+
+Distribution of the Modal source/archive gap:
+
+| Worker coverage in physical+archive union | Worker count |
+|---:|---:|
+| 20 / 20 clips | 5,000 |
+| 7 / 20 clips | 4 |
+| 6 / 20 clips | 14 |
+| 5 / 20 clips | 55 |
+| 4 / 20 clips | 222 |
+| 3 / 20 clips | 610 |
+| 2 / 20 clips | 1,285 |
+| 1 / 20 clips | 1,726 |
+| 0 / 20 clips | 1,084 |
+
+Conclusion:
+
+```text
+The original pretrain manifest is consistent with public GCS. Eddy's/GCS source
+is not wrong. The Modal /source mirror and visible tar archive are incomplete.
+The remaining 92,599 pretrain URLs should be cacheable by downloading directly
+from the manifest URLs.
+```
+
+Next data step:
+
+```text
+Add a direct-GCS cache job that downloads manifest URLs missing from
+pretrain_physical_plus_archive_urls.txt into /data/cache/raw and /data/cache/features.
+Then run support coverage against the full pretrain_urls.txt manifest and move
+active episode generation to the full cached support set if coverage passes.
 ```
