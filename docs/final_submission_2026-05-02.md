@@ -5,9 +5,10 @@ Date: 2026-05-02
 ## Direct Verdict
 
 The current artifact is a credible external-challenge submission candidate. The
-recommended output is now the exact-window blend ranking: partial TS2Vec
-old-support novelty plus exact full-corpus `window_mean_std_pool` old-support
-novelty.
+recommended output is now the trace-gate exact-window blend rerank: partial
+TS2Vec old-support novelty plus exact full-corpus `window_mean_std_pool`
+old-support novelty, with a trace-aware hygiene rerank to demote spike-driven
+clips.
 
 It should be described as a multi-view geometric acquisition selector with
 partial TS2Vec support, not as a clean scientific TS2Vec active-learning result
@@ -16,13 +17,13 @@ or an exact full-support TS2Vec search.
 Recommended label:
 
 ```text
-Partial-TS2Vec / exact-window blended k-center acquisition selector
+Partial-TS2Vec / exact-window blended k-center selector with trace-aware hygiene rerank
 ```
 
 Final selector:
 
 ```text
-exact_window_blend_kcenter_ts2vec_window_mean_std_pool_a05
+trace_gate_exact_window_blend_kcenter_ts2vec_window_mean_std_pool_a05
 ```
 
 ## Submission Files
@@ -30,20 +31,21 @@ exact_window_blend_kcenter_ts2vec_window_mean_std_pool_a05
 Primary candidate file:
 
 ```text
-/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_submission_full_new_worker_id.csv
+/artifacts/active/final_blend_rank/exact_full_window_a05/spike_hygiene_ablation/spike_hygiene_ablation_trace_gate_submission_full_new_worker_id.csv
 ```
 
 Backup ID-format file:
 
 ```text
-/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_submission_full_worker_id.csv
+/artifacts/active/final_blend_rank/exact_full_window_a05/spike_hygiene_ablation/spike_hygiene_ablation_trace_gate_submission_full_worker_id.csv
 ```
 
 Diagnostics and report:
 
 ```text
-/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_diagnostics_full.csv
-/artifacts/active/final_blend_rank/exact_full_window_a05/active_exact_window_blend_report_full.json
+/artifacts/active/final_blend_rank/exact_full_window_a05/spike_hygiene_ablation/spike_hygiene_ablation_trace_gate_diagnostics_full.csv
+/artifacts/active/final_blend_rank/exact_full_window_a05/spike_hygiene_ablation/spike_hygiene_ablation_report_full.json
+/artifacts/active/final_blend_rank/exact_full_window_a05/trace_gate_targeted_audit/trace_gate_audit_report_full.json
 ```
 
 Use the `new_worker_id` file as primary unless the evaluator explicitly expects
@@ -69,7 +71,11 @@ max_abs_value <= 60.0
 
 The final ordering uses a quality-gated blended k-center strategy to prioritize
 clips that are both under-covered by the old corpus and nonredundant within the
-new batch.
+new batch. It then applies a trace-aware hygiene rerank that demotes clips with
+spike-driven or trace-level artifact verdicts below trace-pass rows. This is a
+conservative rerank rather than a new model: it preserves the exact-window
+multi-view selector while preventing isolated sensor bursts from occupying the
+top of the submission.
 
 This is not an exact full-200k TS2Vec search. It is exact for the window-stat
 old-support view and partial for the TS2Vec old-support view.
@@ -190,6 +196,32 @@ Detailed exact-window results:
 ```text
 docs/exact_full_window_results_2026-05-02.md
 ```
+
+Top-K visual audit:
+
+```text
+docs/exact_window_topk_audit_2026-05-03.md
+```
+
+Spike-hygiene ablation:
+
+```text
+docs/spike_hygiene_ablation_2026-05-03.md
+```
+
+Trace-gate targeted audit:
+
+```text
+docs/trace_gate_targeted_audit_2026-05-03.md
+```
+
+The trace-gate ablation removes all three `likely_artifact` clips from the
+exact-window top 50 while preserving top-50 cluster diversity and retaining
+`0.94` overlap with the exact-window top 50. The targeted replacement audit
+passed: the trace-gate top 10 and the three promoted top-50 replacements were
+all manually judged as plausible motion, while the three removed top-50 clips
+matched the spike-driven artifact failure mode. The trace-gate rerank is
+therefore the current primary artifact.
 
 ## Validation Summary
 
@@ -327,7 +359,9 @@ registry config.
 ## Support-Sampling Stability
 
 The support sample is broad, but the exact top of any single-seed ranking is
-sample-sensitive. The promoted artifact is therefore a 3-seed consensus ranking.
+sample-sensitive. The 3-seed consensus ranking remains useful provenance, but
+the later exact-window full-support run plus trace-gate audit is the current
+primary recommendation.
 
 3-seed stability and consensus run:
 
@@ -352,9 +386,11 @@ Summary:
 | top100_overlap_min | 0.6500 |
 
 All three seeded runs, and the consensus ranking, had 0.000 quality and
-physical failure rates at K=10, K=50, and K=100. The single-seed top 10 is not
-stable enough to claim an exact support-independent ordering, so the consensus
-ranking is the recommended artifact.
+physical failure rates at K=10, K=50, and K=100. The single-seed budgeted top 10
+was not stable enough to claim an exact support-independent ordering. The later
+exact-window full-support run replaced the sampled window-stat view, and the
+trace-gate rerank now addresses the remaining spike-driven top-rank hygiene
+issue.
 
 Detailed results:
 
@@ -367,9 +403,10 @@ docs/support_sampling_stability_results.md
 Use this wording:
 
 > We rank new IMU clips with a budgeted multi-view acquisition selector. The
-> method combines TS2Vec novelty against a partial old-support cache with cheap
-> window-stat novelty against sampled old support, applies hard sensor-quality
-> gates, and uses k-center-style reranking to reduce redundancy.
+> method combines TS2Vec novelty against a partial old-support cache with exact
+> full-corpus window-stat novelty, applies hard sensor-quality gates, uses
+> k-center-style reranking to reduce redundancy, and applies a conservative
+> trace-aware rerank to demote spike-driven sensor artifacts.
 
 Avoid:
 
@@ -379,3 +416,6 @@ Avoid:
 
 The original single-sample output remains useful as a provenance/fallback
 artifact, but it is no longer the primary recommendation.
+
+The plain exact-window output also remains useful as a provenance/fallback
+artifact. The primary recommendation is the trace-gate exact-window rerank.
