@@ -405,6 +405,9 @@ def _run_budgeted_candidate_only_final_blend_rank(config: dict[str, Any], *, smo
         },
         "query_embedding_cache": query_result.report(),
         "right_support_embedding_cache": right_result.report(),
+        "right_support_seed": None
+        if ranking_config.get("right_support_seed") is None
+        else int(ranking_config["right_support_seed"]),
         "registry_coverage": _deduplicate_coverage_aliases(registry_coverage),
         "topk_quality": _topk_quality_summary(
             ranked_rows,
@@ -532,6 +535,10 @@ def _right_support_clips_for_budgeted_rank(
         raise ValueError(
             f"Support split has {len(clips)} clips, exceeding ranking.right_support_max_clips={max_count}."
         )
+    if len(clips) > max_count and ranking_config.get("right_support_seed") is not None:
+        rng = np.random.default_rng(int(ranking_config["right_support_seed"]))
+        indices = sorted(int(index) for index in rng.choice(len(clips), size=max_count, replace=False))
+        return [clips[index] for index in indices]
     return list(clips[:max_count])
 
 

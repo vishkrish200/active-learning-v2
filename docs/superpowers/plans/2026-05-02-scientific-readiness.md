@@ -19,7 +19,7 @@
 - Modify: `docs/final_submission_2026-05-02.md`
 - Modify: `docs/active_learning_handoff_2026-05-02.md`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Add tests that call `create_overlapping_crops()` on a monotonic synthetic clip and assert:
 
@@ -35,7 +35,7 @@ self.assertFalse(np.array_equal(left, right))
 np.testing.assert_array_equal(left[left_idx, 0], right[right_idx, 0])
 ```
 
-- [ ] **Step 2: Verify red**
+- [x] **Step 2: Verify red**
 
 Run:
 
@@ -45,11 +45,11 @@ Run:
 
 Expected: fail because the current helper returns identical crops.
 
-- [ ] **Step 3: Implement canonical sampler**
+- [x] **Step 3: Implement canonical sampler**
 
 Update `create_overlapping_crops()` to return `(left_crop, right_crop, left_overlap_indices, right_overlap_indices)` using two shifted starts with guaranteed overlap. Route `_two_overlapping_fixed_crops()` through this helper to avoid two implementations.
 
-- [ ] **Step 4: Verify green**
+- [x] **Step 4: Verify green**
 
 Run:
 
@@ -60,7 +60,7 @@ Run:
 
 Expected: all tests pass.
 
-- [ ] **Step 5: Commit crop fix**
+- [x] **Step 5: Commit crop fix**
 
 Commit message:
 
@@ -74,7 +74,7 @@ git commit -m "Fix TS2Vec crop sampler provenance"
 - Create: `configs/ts2vec_fixed_crop_smoke_h100.json` if a config wrapper is needed
 - Modify: `docs/final_submission_2026-05-02.md`
 
-- [ ] **Step 1: Run bounded H100 training**
+- [x] **Step 1: Run bounded H100 training**
 
 Run:
 
@@ -85,14 +85,14 @@ Run:
   --n-epochs 3 \
   --batch-size 8 \
   --max-steps-per-epoch 150 \
-  --collapse-sample-size 1000 \
+  --collapse-sample-size 128 \
   --alpha 0.1 \
   --max-temporal-positions 64
 ```
 
 Expected: checkpoint writes to `/artifacts/checkpoints/ts2vec_fixed_crops_candidate_eval/ts2vec_best.pt`, and the log contains epoch 0-3 rows.
 
-- [ ] **Step 2: Pull and summarize log**
+- [x] **Step 2: Pull and summarize log**
 
 Run:
 
@@ -108,7 +108,7 @@ Expected: record effective rank, mean pairwise cosine, instance loss, and tempor
 - Create: `configs/active_loop_eval_ts2vec_fixed_window_blend_scale.json`
 - Create: `docs/ts2vec_fixed_crop_eval_results.md`
 
-- [ ] **Step 1: Add fixed-checkpoint eval config**
+- [x] **Step 1: Add fixed-checkpoint eval config**
 
 Copy `configs/active_loop_eval_ts2vec_window_blend_scale.json`, change only:
 
@@ -122,13 +122,15 @@ and write output to:
 /artifacts/active/eval/ts2vec_fixed_crop_window_blend_scale
 ```
 
-- [ ] **Step 2: Run smoke eval first**
+- [x] **Step 2: Run smoke eval first**
 
 Run the active-loop Modal entrypoint with the fixed config and no full flag. Expected: two-episode smoke completes.
 
-- [ ] **Step 3: Run full eval if smoke is sane**
+- [x] **Step 3: Run medium eval if smoke is sane**
 
-Run the full fixed-checkpoint active-loop eval. Compare K=10 and K=50 balanced relative gain against the current blend table.
+Run the capped 8-episode fixed-checkpoint active-loop eval. Compare K=10 and K=50 balanced relative gain against the current checkpoint on the same slice.
+
+Outcome: fixed-crop checkpoint was mixed and is not promoted. See `docs/ts2vec_fixed_crop_revalidation_2026-05-02.md`.
 
 ### Task 4: Support-Sampling Stability
 
@@ -138,24 +140,26 @@ Run the full fixed-checkpoint active-loop eval. Compare K=10 and K=50 balanced r
 - Create: `tests/test_active_support_sampling_stability.py`
 - Create: `docs/support_sampling_stability_results.md`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create a small synthetic diagnostics table and assert the stability summary reports top-K overlap and Spearman-like rank agreement across seeded support samples.
 
-- [ ] **Step 2: Implement stability runner**
+- [x] **Step 2: Implement stability runner**
 
 Use the final blend ranker with fixed TS2Vec partial support and varied `right_support_seed` values for the 25k window support. Compute top-10, top-50, top-100 overlap, rank correlation, hygiene, and score drift.
 
-- [ ] **Step 3: Run 3-seed stability first**
+- [x] **Step 3: Run 3-seed stability first**
 
 Use seeds `[1, 2, 3]`. Promote to five seeds only if the 3-seed result is stable enough to justify extra compute.
+
+Outcome: 3-seed run completed. Overall Spearman was high, but top-10 overlap was weak, so five seeds were not run. See `docs/support_sampling_stability_results.md`.
 
 ### Task 5: Full-Support/Data-Shard Decision
 
 **Files:**
 - Create: `docs/full_support_data_shard_plan.md`
 
-- [ ] **Step 1: Decide from evidence**
+- [x] **Step 1: Decide from evidence**
 
 Proceed to data-shard implementation only if:
 
@@ -164,6 +168,8 @@ fixed TS2Vec eval >= current blend at K=10 or K=50
 support stability top-50 overlap is acceptable
 ```
 
-- [ ] **Step 2: Plan sharded data layer**
+- [x] **Step 2: Plan sharded data layer**
 
 Design large shard files with `sample_id`, `worker_id`, `source_group_id`, raw IMU or normalized arrays, and quality metadata so full 200k support can be embedded without small-file JSONL IO dominating H100 time.
+
+Outcome: do not rerun full-support TS2Vec on the current small-file layout. See `docs/full_support_data_shard_plan.md`.

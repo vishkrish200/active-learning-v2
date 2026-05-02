@@ -55,13 +55,15 @@ def run_active_loop_eval(config: dict[str, Any], *, smoke: bool = False) -> dict
 
     registry = load_clip_registry_from_config(config)
     registry_coverage = audit_clip_registry_coverage_from_config(config, registry=registry)
+    eval_config = config["evaluation"]
     episodes = load_active_episodes(_episode_path(config))
     if smoke:
         episodes = episodes[: int(config["execution"].get("smoke_max_episodes", 1))]
+    elif eval_config.get("max_episodes") is not None:
+        episodes = episodes[: int(eval_config["max_episodes"])]
     if not episodes:
         raise ValueError("Active-loop evaluation requires at least one episode.")
 
-    eval_config = config["evaluation"]
     representations = [str(rep) for rep in eval_config.get("representations", DEFAULT_REPRESENTATIONS)]
     primary_representation = str(eval_config.get("primary_representation", representations[0]))
     if primary_representation not in representations:
@@ -222,6 +224,8 @@ def validate_active_loop_eval_config(config: Mapping[str, Any]) -> None:
     for k in evaluation.get("k_values", [10, 25, 50, 100, 200, 400]):
         if int(k) <= 0:
             raise ValueError("evaluation.k_values must be positive.")
+    if evaluation.get("max_episodes") is not None and int(evaluation["max_episodes"]) <= 0:
+        raise ValueError("evaluation.max_episodes must be positive.")
     policies = [str(policy) for policy in evaluation.get("policies", [*BASELINE_POLICY_NAMES, ORACLE_POLICY_NAME])]
     supported = {*BASELINE_POLICY_NAMES, ORACLE_POLICY_NAME}
     unknown = {policy for policy in policies if policy not in supported and _parse_blend_policy(policy) is None}

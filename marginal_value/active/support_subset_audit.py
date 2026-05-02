@@ -87,6 +87,9 @@ def run_support_subset_audit(config: dict[str, Any], *, smoke: bool = False) -> 
         "right_support_max_clips": None
         if ranking.get("right_support_max_clips") is None
         else int(ranking["right_support_max_clips"]),
+        "right_support_seed": None
+        if ranking.get("right_support_seed") is None
+        else int(ranking["right_support_seed"]),
         "summaries": summaries,
         "artifacts": {
             "report": str(report_path),
@@ -154,7 +157,12 @@ def _right_support_subset(clips: Sequence[ClipRecord], *, ranking: Mapping[str, 
     max_support = ranking.get("right_support_max_clips")
     if max_support is None:
         return list(clips)
-    return list(clips[: int(max_support)])
+    max_count = int(max_support)
+    if len(clips) > max_count and ranking.get("right_support_seed") is not None:
+        rng = np.random.default_rng(int(ranking["right_support_seed"]))
+        indices = sorted(int(index) for index in rng.choice(len(clips), size=max_count, replace=False))
+        return [clips[index] for index in indices]
+    return list(clips[:max_count])
 
 
 def _deterministic_random_subset(clips: Sequence[ClipRecord], *, size: int, seed: int) -> list[ClipRecord]:

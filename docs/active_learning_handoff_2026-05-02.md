@@ -111,14 +111,15 @@ Training loop details:
 - temporal positions capped at 64 during training
 - collapse checks logged per epoch
 
-Important reviewer note: the TS2Vec checkpoint should still be re-run before
-treating it as a clean SSL result. The public `create_overlapping_crops()`
-helper previously returned two copies of the same sampled crop, while the
-training loop used a separate shifted-crop path. That helper bug has been fixed
-and the training helper now delegates to the same canonical crop primitive, but
-the current promoted checkpoint predates the fixed-provenance run. The
-downstream budgeted selector output is usable as an engineering artifact; the
-next scientific step is to train and evaluate a fresh fixed-crop checkpoint.
+Important reviewer note: the TS2Vec crop-provenance bug has been fixed in code.
+The public `create_overlapping_crops()` helper previously returned two copies of
+the same sampled crop, while the training loop used a separate shifted-crop
+path. The helper and training path now use the same canonical crop primitive.
+A bounded fixed-crop checkpoint was trained and evaluated, but it did not
+clearly beat the current checkpoint on the 8-episode medium active-loop eval.
+The downstream budgeted selector output is usable as an engineering artifact;
+do not promote the fixed checkpoint without longer training and another
+active-loop comparison.
 
 ## TS2Vec Diagnostics And Interpretation
 
@@ -268,6 +269,21 @@ n_right_support: 25000
 output_dir: /artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100
 ```
 
+Support-sampling stability:
+
+```text
+config: configs/active_support_sampling_stability_budget_cpu.json
+app: ap-OUGAsoOtT1fsWcgXhgXxi8
+seeds: 1, 2, 3
+right_support_max_clips: 25000
+report: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/support_sampling_stability_report_full.json
+```
+
+Result: overall rank Spearman was high (`mean=0.9589`, `min=0.9477`), but
+top-10 overlap was weak (`mean=0.5000`, `min=0.3000`). Top-50 overlap was
+moderate (`mean=0.6467`, `min=0.5600`). All three seeded runs stayed hygienic
+at K=10/K=50/K=100.
+
 At the end, `modal app list` showed all relevant apps stopped with 0 active
 tasks.
 
@@ -328,6 +344,10 @@ This is the honest claim:
 - old-support window novelty was approximated with a 25,000-clip support sample
 - the result is clean by top-k hygiene checks
 
+However, the exact top-10 is support-sample-sensitive. If there is time for one
+more improvement, prefer a consensus ranking over several seeded support samples
+before trying another learned model.
+
 ## Open Questions For Reviewer
 
 1. Is a 22k/25k old-support sample acceptable for the final challenge ranking,
@@ -338,5 +358,7 @@ This is the honest claim:
    example by packing raw/feature arrays into large shard files?
 4. Should the learned ridge ranker stay diagnostic, or should a non-linear
    hygienic ranker be tried after the selector is stable?
+5. Should the final submission use the current single-sample artifact or a
+   consensus ranking aggregated from the seeded stability runs?
 5. Should final submission use `worker_id` or `new_worker_id` format? Both were
    written; confirm the external evaluator's expected column.

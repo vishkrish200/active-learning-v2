@@ -149,15 +149,17 @@ docs/ranker_hygiene_fix_results.md
 
 ## Known Limitations
 
-1. TS2Vec checkpoint provenance still needs a fresh fixed-crop run.
+1. TS2Vec checkpoint provenance has been fixed in code, but the fixed
+   checkpoint is not promoted yet.
 
    The public `create_overlapping_crops()` helper previously returned two
    copies of one sampled crop. The training loop used a separate shifted-crop
    path, but the split implementation made the checkpoint provenance too muddy
-   for a clean scientific claim. The helper has been fixed and the training
-   path now delegates to the same canonical crop primitive. Do not claim clean
-   TS2Vec training validity until a fresh fixed-crop checkpoint is trained and
-   evaluated.
+   for a clean scientific claim. The helper has been fixed and a bounded
+   fixed-crop checkpoint was trained/evaluated, but it did not clearly beat the
+   current checkpoint on the 8-episode medium eval. Do not replace the current
+   final artifact with the fixed checkpoint without longer training and another
+   active-loop comparison.
 
 2. Old-support TS2Vec is partial.
 
@@ -169,7 +171,9 @@ docs/ranker_hygiene_fix_results.md
 
    The selector uses a capped 25,000 old-support `window_mean_std_pool` subset,
    not all 200,000 old clips. This was necessary because full support feature IO
-   was still slow on Modal volumes.
+   was still slow on Modal volumes. A 3-seed support-sampling stability run
+   found high overall rank correlation but weak top-10 overlap, so the exact
+   top of the ranking should be treated as sample-sensitive.
 
 4. External held-out score is unknown.
 
@@ -189,7 +193,7 @@ tests/test_active_support_subset_audit.py
 Full audit run:
 
 ```text
-Modal app: ap-4Pmv7bD4RVnc3auGW7GMVg
+Modal app: ap-Umv2UGDxZgSrLYSzoFTni0
 n_full_support: 200000
 n_partial_ts2vec_support: 22327
 n_window_support: 25000
@@ -232,12 +236,12 @@ Re-run command:
   --skip-smoke
 ```
 
-Expected outputs:
+Expected full outputs:
 
 ```text
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_report_smoke.json
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_source_groups_smoke.csv
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_workers_smoke.csv
+/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_report_full.json
+/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_source_groups_full.csv
+/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_workers_full.csv
 ```
 
 This audit checks worker/source-group coverage for:
@@ -249,6 +253,42 @@ This audit checks worker/source-group coverage for:
 
 Quality distribution is included when quality metadata is attached to the
 registry config.
+
+## Support-Sampling Stability
+
+The support sample is broad, but the exact top of the final ranking is
+sample-sensitive.
+
+3-seed stability run:
+
+```text
+config: configs/active_support_sampling_stability_budget_cpu.json
+Modal app: ap-OUGAsoOtT1fsWcgXhgXxi8
+report: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/support_sampling_stability_report_full.json
+```
+
+Summary:
+
+| Metric | Value |
+| --- | ---: |
+| rank_spearman_mean | 0.9589 |
+| rank_spearman_min | 0.9477 |
+| top10_overlap_mean | 0.5000 |
+| top10_overlap_min | 0.3000 |
+| top50_overlap_mean | 0.6467 |
+| top50_overlap_min | 0.5600 |
+| top100_overlap_mean | 0.7000 |
+| top100_overlap_min | 0.6500 |
+
+All three seeded runs had 0.000 quality and physical failure rates at K=10,
+K=50, and K=100. The result is hygienic, but the top 10 is not stable enough to
+claim an exact support-independent ordering.
+
+Detailed results:
+
+```text
+docs/support_sampling_stability_results.md
+```
 
 ## Recommended Claim
 

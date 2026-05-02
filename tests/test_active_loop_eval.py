@@ -123,6 +123,56 @@ class ActiveLoopEvalTests(unittest.TestCase):
         self.assertGreaterEqual(int(audit_for_k4["unique_source_groups_at_k"]), 1)
         self.assertEqual(fixture["heldout_worker"], "worker00002")
 
+    def test_active_loop_eval_can_cap_full_episode_count(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_active_loop_fixture(root, episode_count=3)
+            config = {
+                "execution": {
+                    "provider": "modal",
+                    "allow_local_paths_for_tests": True,
+                    "smoke_max_episodes": 1,
+                },
+                "data": {
+                    "root": str(root),
+                    "feature_glob": "cache/features/*.npz",
+                    "raw_glob": "cache/raw/*.jsonl",
+                    "quality_metadata": "quality.jsonl",
+                    "manifests": {
+                        "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+                        "new": "cache/manifests/new_urls.txt",
+                    },
+                },
+                "embeddings": {"cache_dir": str(root / "embedding_cache")},
+                "episodes": {
+                    "path": "episodes.jsonl",
+                },
+                "evaluation": {
+                    "representations": [
+                        "window_mean_std_pool",
+                        "raw_shape_stats",
+                    ],
+                    "primary_representation": "window_mean_std_pool",
+                    "policies": [
+                        "quality_only",
+                        "oracle_greedy_eval_only",
+                    ],
+                    "k_values": [1],
+                    "quality_threshold": 0.45,
+                    "random_seed": 13,
+                    "raw_shape_max_samples": 90,
+                    "max_episodes": 2,
+                },
+                "artifacts": {"output_dir": str(root / "out")},
+            }
+
+            result = run_active_loop_eval(config, smoke=False)
+            report = json.loads(Path(result["report_path"]).read_text(encoding="utf-8"))
+
+        self.assertEqual(result["mode"], "full")
+        self.assertEqual(result["n_episodes"], 2)
+        self.assertEqual(report["n_episodes"], 2)
+
     def test_modal_active_loop_eval_entrypoint_dispatches_remote_gpu_job(self):
         source = Path("modal_active_loop_eval.py").read_text(encoding="utf-8")
         config = json.loads(Path("configs/active_loop_eval_smoke_full_pretrain.json").read_text(encoding="utf-8"))
@@ -143,6 +193,50 @@ class ActiveLoopEvalTests(unittest.TestCase):
         scale_config = json.loads(Path("configs/active_loop_eval_scale_pretrain.json").read_text(encoding="utf-8"))
         self.assertEqual(scale_config["evaluation"]["k_values"], [5, 10, 25, 50, 100])
         self.assertEqual(scale_config["embeddings"]["cache_dir"], "/artifacts/active/embedding_cache/scale_pretrain")
+        fixed_config = json.loads(Path("configs/active_loop_eval_ts2vec_fixed_window_blend_scale.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            fixed_config["evaluation"]["representation_options"]["ts2vec_checkpoint_path"],
+            "/artifacts/checkpoints/ts2vec_fixed_crops_candidate_eval/ts2vec_best.pt",
+        )
+        self.assertEqual(
+            fixed_config["embeddings"]["cache_dir"],
+            "/artifacts/active/embedding_cache/ts2vec_fixed_crop_candidate_scale",
+        )
+        self.assertEqual(
+            fixed_config["artifacts"]["output_dir"],
+            "/artifacts/active/eval/ts2vec_fixed_crop_window_blend_scale",
+        )
+        validate_active_loop_eval_config(fixed_config)
+        fixed_medium_config = json.loads(
+            Path("configs/active_loop_eval_ts2vec_fixed_window_blend_medium.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(fixed_medium_config["evaluation"]["max_episodes"], 8)
+        self.assertEqual(
+            fixed_medium_config["embeddings"]["cache_dir"],
+            "/artifacts/active/embedding_cache/ts2vec_fixed_crop_candidate_medium",
+        )
+        self.assertEqual(
+            fixed_medium_config["artifacts"]["output_dir"],
+            "/artifacts/active/eval/ts2vec_fixed_crop_window_blend_medium",
+        )
+        validate_active_loop_eval_config(fixed_medium_config)
+        current_medium_config = json.loads(
+            Path("configs/active_loop_eval_ts2vec_window_blend_medium.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(current_medium_config["evaluation"]["max_episodes"], 8)
+        self.assertEqual(
+            current_medium_config["evaluation"]["representation_options"]["ts2vec_checkpoint_path"],
+            "/artifacts/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+        )
+        self.assertEqual(
+            current_medium_config["embeddings"]["cache_dir"],
+            "/artifacts/active/embedding_cache/ts2vec_candidate_medium",
+        )
+        self.assertEqual(
+            current_medium_config["artifacts"]["output_dir"],
+            "/artifacts/active/eval/ts2vec_window_blend_medium",
+        )
+        validate_active_loop_eval_config(current_medium_config)
 
     def test_blended_ts2vec_window_policy_names_validate(self):
         config = {
@@ -166,8 +260,28 @@ class ActiveLoopEvalTests(unittest.TestCase):
 
         validate_active_loop_eval_config(config)
 
+    def test_active_loop_eval_rejects_nonpositive_max_episodes(self):
+        config = {
+            "execution": {"provider": "modal", "allow_local_paths_for_tests": True},
+            "data": {
+                "root": "/tmp/unit",
+                "manifests": {"pretrain": "cache/manifests/pretrain_full_cached_urls.txt"},
+            },
+            "episodes": {"path": "episodes.jsonl"},
+            "evaluation": {
+                "representations": ["window_mean_std_pool"],
+                "primary_representation": "window_mean_std_pool",
+                "k_values": [5],
+                "max_episodes": 0,
+            },
+            "artifacts": {"output_dir": "/tmp/unit/out"},
+        }
 
-def _write_active_loop_fixture(root: Path) -> dict[str, str]:
+        with self.assertRaisesRegex(ValueError, "evaluation.max_episodes must be positive"):
+            validate_active_loop_eval_config(config)
+
+
+def _write_active_loop_fixture(root: Path, episode_count: int = 1) -> dict[str, str]:
     pretrain_urls: list[str] = []
     quality_rows: list[dict[str, float | str]] = []
     centers = {
@@ -238,7 +352,12 @@ def _write_active_loop_fixture(root: Path) -> dict[str, str]:
         },
         "low_quality_clip_ids": [hash_manifest_url(_url("pretrain", "worker00003", 0))],
     }
-    (root / "episodes.jsonl").write_text(json.dumps(episode) + "\n", encoding="utf-8")
+    episode_rows = []
+    for episode_idx in range(episode_count):
+        row = dict(episode)
+        row["episode_id"] = f"episode_{episode_idx:05d}"
+        episode_rows.append(json.dumps(row))
+    (root / "episodes.jsonl").write_text("\n".join(episode_rows) + "\n", encoding="utf-8")
     return {"heldout_worker": "worker00002"}
 
 

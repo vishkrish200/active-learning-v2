@@ -7,9 +7,11 @@ from tempfile import TemporaryDirectory
 import numpy as np
 
 from marginal_value.active.final_blend_rank import (
+    _right_support_clips_for_budgeted_rank,
     run_active_final_blend_rank,
     validate_active_final_blend_rank_config,
 )
+from marginal_value.active.registry import ClipRecord
 from marginal_value.data.split_manifest import hash_manifest_url
 
 
@@ -139,6 +141,40 @@ class ActiveFinalBlendRankTests(unittest.TestCase):
         self.assertEqual(report["n_left_support"], 2)
         self.assertEqual(report["n_query"], 3)
         self.assertEqual(len(submission), 3)
+
+    def test_budgeted_candidate_only_rank_can_seed_right_support_subset(self):
+        clips = [
+            ClipRecord(
+                sample_id=f"clip-{idx}",
+                split="pretrain",
+                url=f"https://storage.googleapis.com/unit/pretrain/worker{idx:05d}/clip.jsonl",
+                source_group_id=f"worker{idx:05d}",
+                worker_id=f"worker{idx:05d}",
+                raw_path=Path(f"/tmp/clip-{idx}.jsonl"),
+                feature_path=Path(f"/tmp/clip-{idx}.npz"),
+                quality={},
+            )
+            for idx in range(6)
+        ]
+        config = {
+            "execution": {"smoke_support_samples": 2},
+            "ranking": {
+                "right_support_max_clips": 3,
+                "right_support_seed": 11,
+            },
+        }
+
+        seeded = _right_support_clips_for_budgeted_rank(clips, config=config, smoke=False)
+        unseeded = _right_support_clips_for_budgeted_rank(
+            clips,
+            config={"execution": {"smoke_support_samples": 2}, "ranking": {"right_support_max_clips": 3}},
+            smoke=False,
+        )
+        smoke = _right_support_clips_for_budgeted_rank(clips, config=config, smoke=True)
+
+        self.assertEqual([clip.sample_id for clip in seeded], ["clip-0", "clip-4", "clip-5"])
+        self.assertEqual([clip.sample_id for clip in unseeded], ["clip-0", "clip-1", "clip-2"])
+        self.assertEqual([clip.sample_id for clip in smoke], ["clip-0", "clip-1"])
 
     def test_final_blend_rank_config_validates_required_representations(self):
         config = {
