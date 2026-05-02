@@ -1,0 +1,39 @@
+{
+  "execution": {
+    "provider": "modal",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 43200,
+    "smoke_max_clips_per_split": 128
+  },
+  "data": {
+    "root": "/data",
+    "feature_glob": "cache/features/*.npz",
+    "raw_glob": "cache/raw/*.jsonl",
+    "manifests": {
+      "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+      "new": "cache/manifests/new_urls.txt"
+    }
+  },
+  "shards": {
+    "output_dir": "/artifacts/active/full_support_shards/window_stats_v1",
+    "clip_splits": [
+      "pretrain",
+      "new"
+    ],
+    "representations": [
+      "window_mean_std_pool",
+      "window_shape_stats",
+      "raw_shape_stats",
+      "temporal_order"
+    ],
+    "sample_rate": 30.0,
+    "raw_shape_max_samples": 5400,
+    "shard_size": 2048,
+    "workers": 16,
+    "include_imu_samples": false,
+    "imu_max_samples": 5400,
+    "compress": false,
+    "progress_every_shards": 1
+  }
+}

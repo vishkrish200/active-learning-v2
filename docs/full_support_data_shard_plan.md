@@ -71,6 +71,55 @@ inference, which is the shape H100 can actually accelerate.
 7. Compare exact full-support ranking against the 3-seed budgeted stability
    result.
 
+## Implemented Logging Contract
+
+The shard builder writes both Modal logs and durable artifact logs. A smoke run
+must be reviewed before starting the full build.
+
+Durable artifact paths:
+
+```text
+/artifacts/active/full_support_shards/window_stats_v1/full_support_shard_progress_{mode}.jsonl
+/artifacts/active/full_support_shards/window_stats_v1/full_support_shard_report_{mode}.json
+/artifacts/active/full_support_shards/window_stats_v1/full_support_shards_{mode}.json
+```
+
+The progress JSONL includes:
+
+- `selection_ready`: selected clip count, shard count, representations, quality
+  metadata coverage;
+- `quality_metadata_incomplete`: emitted early if any selected clip is missing
+  quality fields;
+- `shard_start`: shard index and shard size;
+- `embedding_progress`: per-shard feature progress inherited from the embedding
+  cache layer;
+- `shard_write`: completed clips, completed fraction, throughput, ETA, and
+  shard path;
+- `report_write`: running report refresh after each shard;
+- `done`: final manifest/report/progress paths.
+
+The Modal wrapper blocks for smoke runs only. Full runs are spawned/detached
+after smoke, so the local client can disconnect while progress continues to be
+written to the artifact volume.
+
+Smoke run on 2026-05-02:
+
+```text
+Modal app: ap-y1NtTOuVrU6NUOOoWmlz0e
+Mode: smoke
+Selected clips: 256
+Shards: 1
+Elapsed: 71.5s
+Throughput: 3.58 clips/s
+Quality metadata coverage: 0 / 256 clips with all fields
+Full build launched: no
+```
+
+The zero quality-metadata coverage is intentional evidence from the smoke, not
+a silent pass. Do not treat the full shard output as quality-complete until a
+real `data.quality_metadata` source is attached or a full quality-metadata
+build is run.
+
 ## Acceptance Gates
 
 Do not promote a full-support rerun just because it is more expensive. Promote
