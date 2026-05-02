@@ -4,16 +4,16 @@ Date: 2026-05-02
 
 ## Verdict
 
-The final ranking is globally stable but top-K sensitive to the sampled
-25,000-clip window-stat old support.
+The single-seed final ranking is globally stable but top-K sensitive to the
+sampled 25,000-clip window-stat old support.
 
-This means the current final artifact is still defensible as a budgeted
-engineering selector, but it should not be described as an exact scientific
-full-support acquisition result. The most honest next improvement is either:
+This means the budgeted engineering selector is defensible, but it should not
+be described as an exact scientific full-support acquisition result. The
+recommended artifact is now the 3-seed consensus ranking, which directly
+reduces dependence on any one sampled old-support subset.
 
-1. build a consensus ranking over several support samples, or
-2. remove the support-sampling approximation with a real full-support data
-   layer.
+The next larger improvement would be to remove the support-sampling
+approximation with a real full-support data layer.
 
 ## Runs
 
@@ -24,13 +24,16 @@ Modal app: ap-Umv2UGDxZgSrLYSzoFTni0
 report: /artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_report_full.json
 ```
 
-Support-sampling stability:
+Support-sampling stability and consensus:
 
 ```text
-Modal app: ap-OUGAsoOtT1fsWcgXhgXxi8
+Modal app: ap-yhHD37KCA4PsXm2Vpv8osq
 config: configs/active_support_sampling_stability_budget_cpu.json
 report: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/support_sampling_stability_report_full.json
 markdown: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/support_sampling_stability_report_full.md
+consensus submission: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
+consensus diagnostics: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_diagnostics_full.csv
+consensus report: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_report_full.json
 seeds: 1, 2, 3
 right_support_max_clips: 25000
 ```
@@ -101,6 +104,40 @@ about exact top-ranked clips. The top 50 and top 100 are more stable but still
 sample-sensitive.
 
 Conclusion: the method is useful as a budgeted selector, but the precise very
-top of the list depends on the old-support sample. If there is time to improve
-the artifact, prefer a consensus ranking over multiple support samples before
+top of any single-seed list depends on the old-support sample. The 3-seed
+consensus ranking is therefore the recommended submission artifact before
 trying another learned model.
+
+## Consensus Ranking
+
+The consensus ranking aggregates the three seeded full rankings by mean rank,
+with Borda score and mean score as deterministic tie-breaks.
+
+Primary consensus file:
+
+```text
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
+```
+
+Consensus top-k hygiene:
+
+| K | Quality Fail | Physical Fail | Duplicate | Unique New Clusters |
+| ---: | ---: | ---: | ---: | ---: |
+| 10 | 0.0000 | 0.0000 | 0.0000 | 10 |
+| 50 | 0.0000 | 0.0000 | 0.0200 | 49 |
+| 100 | 0.0000 | 0.0000 | 0.0100 | 99 |
+
+Consensus stability diagnostics:
+
+| Metric | Value |
+| --- | ---: |
+| n_runs | 3 |
+| n_rows | 2000 |
+| rank_std_mean | 51.7567 |
+| rank_std_top10_mean | 3.7643 |
+| mean_rank_top10_mean | 8.5000 |
+
+An attempted extension to five seeds was stopped during seed 4 because that
+seed required a fresh 25k support-cache build and was mostly paying the same
+Modal-volume small-file IO cost. The 3-seed consensus is the right current
+cost/value point.

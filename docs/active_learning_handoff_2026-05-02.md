@@ -6,10 +6,10 @@ Date: 2026-05-02
 
 This project ranks 2,000 new egocentric factory-floor IMU clips by novelty
 relative to a 200,000-clip old support corpus. The current deployable output is
-a budgeted approximate blend selector:
+a 3-seed consensus over a budgeted approximate blend selector:
 
 ```text
-blend_kcenter_ts2vec_window_mean_std_pool_a05
+consensus_blend_kcenter_ts2vec_window_mean_std_pool_a05
 ```
 
 It uses TS2Vec only where it is affordable:
@@ -20,41 +20,41 @@ It uses TS2Vec only where it is affordable:
 - 25,000 old-support `window_mean_std_pool` embeddings as the cheap geometric
   support side
 
-The final ranked output was produced successfully. It is not an exact
+The final consensus ranked output was produced successfully. It is not an exact
 full-200k TS2Vec ranking, by design. Full-support TS2Vec was stopped because the
 job was IO-bound and would have cost too much.
 
 ## Final Artifacts
 
-Final ranked outputs are in the Modal artifacts volume:
+Recommended consensus ranked outputs are in the Modal artifacts volume:
 
 ```text
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_submission_full.csv
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_submission_full_worker_id.csv
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_submission_full_new_worker_id.csv
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_diagnostics_full.csv
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_report_full.json
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_worker_id.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_diagnostics_full.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_report_full.json
 ```
 
-Final run summary:
+Consensus run summary:
 
 ```text
 mode: full
 ranking_mode: budgeted_candidate_only
-selector: blend_kcenter_ts2vec_window_mean_std_pool_a05
+selector: consensus_blend_kcenter_ts2vec_window_mean_std_pool_a05
+seeds: 1, 2, 3
 n_query: 2000
 n_left_support: 22327   # partial old TS2Vec support
-n_right_support: 25000  # capped old window support
+n_right_support_per_seed: 25000  # capped old window support
 ```
 
-Top-k hygiene from the final report:
+Top-k hygiene from the consensus report:
 
 | K | Quality Fail | Physical Fail | Duplicate Rate | Unique New Clusters |
 | ---: | ---: | ---: | ---: | ---: |
 | 10 | 0.000 | 0.000 | 0.000 | 10 |
-| 50 | 0.000 | 0.000 | 0.000 | 50 |
+| 50 | 0.000 | 0.000 | 0.020 | 49 |
 | 100 | 0.000 | 0.000 | 0.010 | 99 |
-| 200 | 0.000 | 0.000 | 0.005 | 199 |
 
 ## What Existed Before This Work
 
@@ -269,20 +269,26 @@ n_right_support: 25000
 output_dir: /artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100
 ```
 
-Support-sampling stability:
+Support-sampling stability and consensus:
 
 ```text
 config: configs/active_support_sampling_stability_budget_cpu.json
-app: ap-OUGAsoOtT1fsWcgXhgXxi8
+app: ap-yhHD37KCA4PsXm2Vpv8osq
 seeds: 1, 2, 3
 right_support_max_clips: 25000
 report: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/support_sampling_stability_report_full.json
+consensus: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
 ```
 
 Result: overall rank Spearman was high (`mean=0.9589`, `min=0.9477`), but
-top-10 overlap was weak (`mean=0.5000`, `min=0.3000`). Top-50 overlap was
-moderate (`mean=0.6467`, `min=0.5600`). All three seeded runs stayed hygienic
-at K=10/K=50/K=100.
+single-seed top-10 overlap was weak (`mean=0.5000`, `min=0.3000`). Top-50
+overlap was moderate (`mean=0.6467`, `min=0.5600`). All three seeded runs, and
+the consensus ranking, stayed hygienic at K=10/K=50/K=100.
+
+An attempted extension to five seeds was stopped during seed 4 because that
+seed required a fresh 25k support-cache build and was mostly paying the same
+Modal-volume small-file IO cost. The 3-seed consensus is the current
+cost/value point.
 
 At the end, `modal app list` showed all relevant apps stopped with 0 active
 tasks.
@@ -309,15 +315,16 @@ Local test command:
 .venv/bin/python -m unittest discover -s tests
 ```
 
-Latest result:
+Latest full-test result from before the consensus patch:
 
 ```text
 Ran 314 tests in 2.916s
 OK (skipped=6)
 ```
 
-Targeted tests also passed for:
+Targeted tests now also pass for:
 
+- consensus support-sampling aggregation
 - budgeted final blend rank
 - new-only TS2Vec precompute config
 - split caps and fail-closed guardrails
@@ -325,16 +332,16 @@ Targeted tests also passed for:
 
 ## Current Recommendation
 
-Use the current budgeted output as the best available candidate ranking:
+Use the 3-seed consensus output as the best available candidate ranking:
 
 ```text
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_submission_full_new_worker_id.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
 ```
 
 Do not describe it as exact full-support TS2Vec. Describe it as:
 
 ```text
-budgeted TS2Vec/window blended k-center selector
+budgeted TS2Vec/window blended k-center consensus selector
 ```
 
 This is the honest claim:
@@ -342,11 +349,11 @@ This is the honest claim:
 - all 2,000 new candidates were embedded with TS2Vec
 - old-support TS2Vec was approximated with a 22,327-clip partial cache
 - old-support window novelty was approximated with a 25,000-clip support sample
+- the final order aggregates seeds 1, 2, and 3 by mean rank/Borda
 - the result is clean by top-k hygiene checks
 
-However, the exact top-10 is support-sample-sensitive. If there is time for one
-more improvement, prefer a consensus ranking over several seeded support samples
-before trying another learned model.
+The original single-sample output remains useful as a provenance/fallback
+artifact, but it is no longer the primary recommendation.
 
 ## Open Questions For Reviewer
 
@@ -358,7 +365,5 @@ before trying another learned model.
    example by packing raw/feature arrays into large shard files?
 4. Should the learned ridge ranker stay diagnostic, or should a non-linear
    hygienic ranker be tried after the selector is stable?
-5. Should the final submission use the current single-sample artifact or a
-   consensus ranking aggregated from the seeded stability runs?
 5. Should final submission use `worker_id` or `new_worker_id` format? Both were
    written; confirm the external evaluator's expected column.

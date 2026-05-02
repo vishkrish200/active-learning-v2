@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 import numpy as np
 
 from marginal_value.active.support_sampling_stability import (
+    build_consensus_ranking,
     run_support_sampling_stability,
     summarize_rank_stability,
     validate_support_sampling_stability_config,
@@ -14,6 +15,41 @@ from marginal_value.data.split_manifest import hash_manifest_url
 
 
 class ActiveSupportSamplingStabilityTests(unittest.TestCase):
+    def test_build_consensus_ranking_averages_seed_ranks_deterministically(self):
+        run_a = {
+            "label": "seed_1",
+            "seed": 1,
+            "diagnostics_rows": [
+                _rank_row("a", 1, 1.0, cluster=0),
+                _rank_row("b", 2, 0.9, cluster=1),
+                _rank_row("c", 3, 0.8, cluster=2),
+                _rank_row("d", 4, 0.7, cluster=3),
+            ],
+        }
+        run_b = {
+            "label": "seed_2",
+            "seed": 2,
+            "diagnostics_rows": [
+                _rank_row("a", 1, 0.95, cluster=0),
+                _rank_row("c", 2, 0.85, cluster=2),
+                _rank_row("b", 3, 0.75, cluster=1),
+                _rank_row("d", 4, 0.65, cluster=3),
+            ],
+        }
+
+        rows = build_consensus_ranking([run_a, run_b], selector_name="unit_consensus")
+
+        self.assertEqual([row["worker_id"] for row in rows], ["a", "b", "c", "d"])
+        self.assertEqual([row["rank"] for row in rows], [1, 2, 3, 4])
+        self.assertEqual(rows[0]["selector"], "unit_consensus")
+        self.assertAlmostEqual(rows[0]["consensus_mean_rank"], 1.0)
+        self.assertAlmostEqual(rows[1]["consensus_mean_rank"], 2.5)
+        self.assertAlmostEqual(rows[1]["consensus_borda_score"], 5.0)
+        self.assertAlmostEqual(rows[1]["consensus_rank_std"], 0.5)
+        self.assertEqual(rows[1]["support_seed_count"], 2)
+        self.assertGreater(rows[0]["score"], rows[1]["score"])
+        self.assertIn("CONSENSUS", rows[0]["reason_code"])
+
     def test_summarize_rank_stability_reports_overlap_rank_agreement_and_hygiene(self):
         run_a = {
             "label": "seed_1",
@@ -111,11 +147,17 @@ class ActiveSupportSamplingStabilityTests(unittest.TestCase):
 
             result = run_support_sampling_stability(config, smoke=False)
             report = json.loads(Path(result["report_path"]).read_text(encoding="utf-8"))
+            self.assertTrue(Path(result["consensus_submission_path"]).exists())
+            self.assertTrue(Path(result["consensus_diagnostics_path"]).exists())
+            self.assertTrue(Path(result["consensus_report_path"]).exists())
+            self.assertTrue(Path(result["consensus_finalized_new_worker_id_path"]).exists())
 
         self.assertEqual(result["mode"], "full")
         self.assertEqual(report["summary"]["n_runs"], 2)
         self.assertIn("top2_overlap_mean", report["summary"]["pairwise"])
         self.assertTrue(Path(result["markdown_path"]).name.endswith(".md"))
+        self.assertIn("consensus", report["summary"])
+        self.assertIn("consensus_report", report["artifacts"])
 
     def test_modal_support_sampling_stability_entrypoint_and_config_validate(self):
         source = Path("modal_active_support_sampling_stability.py").read_text(encoding="utf-8")

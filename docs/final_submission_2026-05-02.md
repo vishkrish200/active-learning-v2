@@ -4,9 +4,12 @@ Date: 2026-05-02
 
 ## Direct Verdict
 
-The current artifact is a credible external-challenge submission candidate. It
-should be described as a budgeted multi-view geometric acquisition selector, not
-as a clean scientific TS2Vec active-learning result.
+The current artifact is a credible external-challenge submission candidate. The
+recommended output is now the 3-seed consensus ranking over budgeted support
+samples, not the original single support-sample ranking.
+
+It should be described as a budgeted multi-view geometric acquisition selector,
+not as a clean scientific TS2Vec active-learning result.
 
 Recommended label:
 
@@ -17,7 +20,7 @@ Budgeted TS2Vec/window blended k-center acquisition selector
 Final selector:
 
 ```text
-blend_kcenter_ts2vec_window_mean_std_pool_a05
+consensus_blend_kcenter_ts2vec_window_mean_std_pool_a05
 ```
 
 ## Submission Files
@@ -25,20 +28,20 @@ blend_kcenter_ts2vec_window_mean_std_pool_a05
 Primary candidate file:
 
 ```text
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_submission_full_new_worker_id.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
 ```
 
 Backup ID-format file:
 
 ```text
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_submission_full_worker_id.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_worker_id.csv
 ```
 
 Diagnostics and report:
 
 ```text
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_diagnostics_full.csv
-/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/active_final_blend_report_full.json
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_diagnostics_full.csv
+/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_report_full.json
 ```
 
 Use the `new_worker_id` file as primary unless the evaluator explicitly expects
@@ -61,9 +64,10 @@ stationary_fraction <= 0.90
 max_abs_value <= 60.0
 ```
 
-The final ordering uses a quality-gated blended k-center strategy to prioritize
-clips that are both under-covered by the old corpus and nonredundant within the
-new batch.
+Each seeded ordering uses a quality-gated blended k-center strategy to
+prioritize clips that are both under-covered by the old corpus and nonredundant
+within the new batch. The final promoted ordering averages ranks across seeds
+`1, 2, 3`, with Borda score and mean novelty score as deterministic tie-breaks.
 
 This is not an exact full-200k TS2Vec search. It is a budgeted approximation
 designed to fit compute and IO constraints while still using all 2,000 new
@@ -107,7 +111,7 @@ Successful new-candidate cache:
 
 ## Final Run
 
-Successful budgeted final ranking:
+Successful single-sample budgeted final ranking:
 
 ```text
 Modal app: ap-NldNI2LjyGFNWPvuoVGiDx
@@ -117,14 +121,24 @@ n_left_support: 22327
 n_right_support: 25000
 ```
 
-Final top-k hygiene:
+Successful 3-seed consensus run:
+
+```text
+Modal app: ap-yhHD37KCA4PsXm2Vpv8osq
+mode: full
+seeds: 1, 2, 3
+n_query: 2000
+n_left_support: 22327
+n_right_support_per_seed: 25000
+```
+
+Consensus top-k hygiene:
 
 | K | Quality Fail | Physical Fail | Duplicate Rate | Unique New Clusters |
 | ---: | ---: | ---: | ---: | ---: |
 | 10 | 0.000 | 0.000 | 0.000 | 10 |
-| 50 | 0.000 | 0.000 | 0.000 | 50 |
+| 50 | 0.000 | 0.000 | 0.020 | 49 |
 | 100 | 0.000 | 0.000 | 0.010 | 99 |
-| 200 | 0.000 | 0.000 | 0.005 | 199 |
 
 ## Validation Summary
 
@@ -172,8 +186,8 @@ docs/ranker_hygiene_fix_results.md
    The selector uses a capped 25,000 old-support `window_mean_std_pool` subset,
    not all 200,000 old clips. This was necessary because full support feature IO
    was still slow on Modal volumes. A 3-seed support-sampling stability run
-   found high overall rank correlation but weak top-10 overlap, so the exact
-   top of the ranking should be treated as sample-sensitive.
+   found high overall rank correlation but weak top-10 overlap for individual
+   seeds, so the promoted artifact is a consensus over seeds `1, 2, 3`.
 
 4. External held-out score is unknown.
 
@@ -256,15 +270,16 @@ registry config.
 
 ## Support-Sampling Stability
 
-The support sample is broad, but the exact top of the final ranking is
-sample-sensitive.
+The support sample is broad, but the exact top of any single-seed ranking is
+sample-sensitive. The promoted artifact is therefore a 3-seed consensus ranking.
 
-3-seed stability run:
+3-seed stability and consensus run:
 
 ```text
 config: configs/active_support_sampling_stability_budget_cpu.json
-Modal app: ap-OUGAsoOtT1fsWcgXhgXxi8
+Modal app: ap-yhHD37KCA4PsXm2Vpv8osq
 report: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/support_sampling_stability_report_full.json
+consensus: /artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/active_final_blend_consensus_submission_full_new_worker_id.csv
 ```
 
 Summary:
@@ -280,9 +295,10 @@ Summary:
 | top100_overlap_mean | 0.7000 |
 | top100_overlap_min | 0.6500 |
 
-All three seeded runs had 0.000 quality and physical failure rates at K=10,
-K=50, and K=100. The result is hygienic, but the top 10 is not stable enough to
-claim an exact support-independent ordering.
+All three seeded runs, and the consensus ranking, had 0.000 quality and
+physical failure rates at K=10, K=50, and K=100. The single-seed top 10 is not
+stable enough to claim an exact support-independent ordering, so the consensus
+ranking is the recommended artifact.
 
 Detailed results:
 
@@ -304,3 +320,6 @@ Avoid:
 - "validated TS2Vec active learning"
 - "full-corpus learned marginal value"
 - "exact full-200k TS2Vec novelty"
+
+The original single-sample output remains useful as a provenance/fallback
+artifact, but it is no longer the primary recommendation.
