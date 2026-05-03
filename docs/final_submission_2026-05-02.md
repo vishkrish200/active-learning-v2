@@ -253,6 +253,23 @@ On the current 2,000 new candidates, artifact-gate and broad trace-gate produce
 the same top-K hygiene summary, but artifact-gate is scientifically cleaner
 because it does not treat every `mostly_stationary` clip as unacceptable.
 
+The final validation was rerun on May 3 with the same 64-episode configuration:
+
+```text
+Smoke Modal app: ap-EbPqkaoqTWFajRhzdGhrnq
+Full Modal app: ap-A3aimCvvcwJ8Cq2nanY5Fj
+n_episodes: 64
+coverage_rows: 13440
+selection_audit_rows: 2240
+embedding_cache_status: hit
+embedding_cache_clips: 26725
+trace_hygiene_cache_size: 10024
+```
+
+This rerun confirms the recommendation: freeze artifact-gate exact-window as
+the conservative primary submission candidate, and keep the plain exact-window
+blend as the coverage-forward fallback.
+
 ## Validation Summary
 
 In source-blocked simulated active-acquisition episodes, the promoted blend
@@ -450,6 +467,10 @@ The validation report adds bootstrap confidence intervals, oracle-fraction
 summaries, selection-hygiene confidence bands, and episode-level win counts for
 artifact-gate versus the plain blend, broad trace-gate, k-center quality-gated,
 and window-shape cluster-cap baselines.
+
+The latest rerun used Modal app `ap-A3aimCvvcwJ8Cq2nanY5Fj` and confirmed an
+embedding-cache hit for `26725` episode clips, so it was an evaluation-only
+confirmation rather than training or embedding recomputation.
 
 The conclusion is deliberately conservative: artifact-gate is promoted for
 top-ranked trust and artifact avoidance, not because it is a strict coverage

@@ -113,6 +113,22 @@ artifact and spike selections while staying close to the plain blend at
 K=10/K=25. It trails the plain blend at K=50/K=100, so the correct conclusion is
 cleaner conservative primary selector, not strict coverage winner.
 
+Latest 64-episode confirmation rerun:
+
+```text
+Smoke Modal app: ap-EbPqkaoqTWFajRhzdGhrnq
+Full Modal app: ap-A3aimCvvcwJ8Cq2nanY5Fj
+n_episodes: 64
+coverage_rows: 13440
+selection_audit_rows: 2240
+embedding_cache_status: hit
+embedding_cache_clips: 26725
+trace_hygiene_cache_size: 10024
+```
+
+That rerun did not train a model or recompute embeddings. It confirms the
+current package should stay frozen as the conservative primary artifact.
+
 ## Known Limitations
 
 - This is not an exact full-200k TS2Vec search.

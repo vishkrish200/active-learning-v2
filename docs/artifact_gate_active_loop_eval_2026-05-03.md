@@ -18,6 +18,31 @@ we care about top-ranked artifact risk.
 
 ## Runs
 
+Latest confirmation rerun:
+
+```text
+Smoke Modal app: ap-EbPqkaoqTWFajRhzdGhrnq
+Full Modal app: ap-A3aimCvvcwJ8Cq2nanY5Fj
+mode: full
+n_episodes: 64
+coverage_rows: 13440
+selection_audit_rows: 2240
+```
+
+The latest full rerun reused the existing 64-episode embedding cache:
+
+```text
+status: hit
+n_clips: 26725
+path: /artifacts/active/embedding_cache/ts2vec_candidate_scale/embeddings_79e4a1956e9c1c28b4d29c54.npz
+trace_hygiene_cache_size: 10024
+```
+
+The rerun reproduced the same policy table and decision below. No model
+training or embedding recomputation was launched.
+
+Earlier provenance run:
+
 Smoke:
 
 ```text
