@@ -1,0 +1,28 @@
+{
+  "execution": {
+    "provider": "modal",
+    "target_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache",
+    "timeout_seconds": 21600,
+    "smoke_samples": 32,
+    "full_samples": null,
+    "progress_every": 1000,
+    "full_selected_progress_hint": 93000,
+    "workers": 32,
+    "max_pending": 128,
+    "download_timeout_seconds": 60
+  },
+  "target": {
+    "root": "/data",
+    "source_manifest": "cache/manifests/pretrain_urls.txt",
+    "cached_manifest": "cache/manifests/pretrain_full_cached_urls.txt",
+    "feature_dir": "cache/features",
+    "raw_dir": "cache/raw"
+  },
+  "selection": {
+    "strategy": "missing_cache"
+  },
+  "artifacts": {
+    "output_dir": "/artifacts/cache/pretrain_manifest_missing_gcs"
+  }
+}
