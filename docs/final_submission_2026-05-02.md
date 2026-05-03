@@ -436,6 +436,25 @@ Detailed results:
 docs/support_sampling_stability_results.md
 ```
 
+## Active-Loop Validation With Confidence Bands
+
+The current artifact-gate recommendation is supported by the 64-episode
+active-loop evaluation summarized in:
+
+```text
+docs/active_loop_validation_report_2026-05-03.md
+docs/active_loop_validation_report_2026-05-03.json
+```
+
+The validation report adds bootstrap confidence intervals, oracle-fraction
+summaries, selection-hygiene confidence bands, and episode-level win counts for
+artifact-gate versus the plain blend, broad trace-gate, k-center quality-gated,
+and window-shape cluster-cap baselines.
+
+The conclusion is deliberately conservative: artifact-gate is promoted for
+top-ranked trust and artifact avoidance, not because it is a strict coverage
+winner over the plain blend at every K.
+
 ## Recommended Claim
 
 Use this wording:
