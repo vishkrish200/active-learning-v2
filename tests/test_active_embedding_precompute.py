@@ -66,7 +66,9 @@ class ActiveEmbeddingPrecomputeTests(unittest.TestCase):
         config = json.loads(Path("configs/active_embedding_precompute_scale_pretrain.json").read_text(encoding="utf-8"))
 
         self.assertIn("marginal-value-active-embedding-precompute", source)
+        self.assertIn("wait_full: bool = False", source)
         self.assertIn("remote_active_embedding_precompute.remote(config, smoke=True)", source)
+        self.assertIn("remote_active_embedding_precompute.remote(config, smoke=False)", source)
         self.assertIn("remote_active_embedding_precompute.spawn(config, smoke=False)", source)
         self.assertIn("run_active_embedding_precompute(config, smoke=smoke, on_shard_written=artifacts_volume.commit)", source)
         self.assertIn('gpu="H100"', source)

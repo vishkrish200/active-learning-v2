@@ -90,6 +90,11 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
         self.assertIn("modal volume put imu-novelty-subset-data", commands)
         self.assertIn("modal_build_full_support_shards.py", commands)
         self.assertIn("modal_active_embedding_precompute.py", commands)
+        self.assertIn(
+            'modal_active_embedding_precompute.py --config-path "$RUN_DIR/configs/active_embedding_precompute_ts2vec_new.json" --run-full --skip-smoke --wait-full',
+            commands,
+        )
+        self.assertNotIn("spawned by its Modal wrapper", commands)
         self.assertIn("modal_active_exact_window_blend_rank.py", commands)
         self.assertIn("modal_active_spike_hygiene_ablation.py", commands)
         self.assertIn("does not use hidden targets", readme)

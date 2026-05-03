@@ -494,12 +494,7 @@ modal volume put {data_volume} "$RUN_DIR/manifests/pretrain_urls.txt" {remote_ma
 modal volume put {data_volume} "$RUN_DIR/manifests/new_urls.txt" {remote_manifest_dir}/new_urls.txt --force
 
 modal run modal_build_full_support_shards.py --config-path "$RUN_DIR/configs/build_full_support_window_shards.json" --run-full --wait-full
-modal run modal_active_embedding_precompute.py --config-path "$RUN_DIR/configs/active_embedding_precompute_ts2vec_new.json" --run-full --skip-smoke
-
-# The TS2Vec query embedding precompute is spawned by its Modal wrapper.
-# Wait until that Modal call has finished before launching ranking.
-# Expected query shard directory:
-#   {plan["query_shard_dir"]}
+modal run modal_active_embedding_precompute.py --config-path "$RUN_DIR/configs/active_embedding_precompute_ts2vec_new.json" --run-full --skip-smoke --wait-full
 
 modal run modal_active_exact_window_blend_rank.py --config-path "$RUN_DIR/configs/active_exact_window_blend_rank.json" --run-full --skip-smoke --wait-full
 modal run modal_active_spike_hygiene_ablation.py --config-path "$RUN_DIR/configs/active_spike_hygiene_ablation_artifact_gate.json"

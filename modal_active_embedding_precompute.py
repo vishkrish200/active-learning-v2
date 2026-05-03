@@ -47,11 +47,20 @@ def active_embedding_precompute(
     config_path: str = "configs/active_embedding_precompute_scale_pretrain.json",
     run_full: bool = False,
     skip_smoke: bool = False,
+    wait_full: bool = False,
 ) -> None:
     if skip_smoke and not run_full:
         raise ValueError("--skip-smoke is only valid when --run-full is also set.")
+    if wait_full and not run_full:
+        raise ValueError("--wait-full is only valid when --run-full is also set.")
     config = json.loads(Path(config_path).read_text(encoding="utf-8"))
-    log_event("modal_active_embedding_precompute", "local_dispatch_start", run_full=run_full, skip_smoke=skip_smoke)
+    log_event(
+        "modal_active_embedding_precompute",
+        "local_dispatch_start",
+        run_full=run_full,
+        skip_smoke=skip_smoke,
+        wait_full=wait_full,
+    )
     if skip_smoke:
         log_event("modal_active_embedding_precompute", "local_smoke_skipped", reason="previous_smoke_passed")
     else:
@@ -59,9 +68,32 @@ def active_embedding_precompute(
         print(f"Remote active embedding precompute smoke completed: {smoke_result}")
     if not run_full:
         print("Full active embedding precompute was not launched. Re-run with --run-full after reviewing smoke output.")
-        log_event("modal_active_embedding_precompute", "local_dispatch_done", run_full=run_full, skip_smoke=skip_smoke)
+        log_event(
+            "modal_active_embedding_precompute",
+            "local_dispatch_done",
+            run_full=run_full,
+            skip_smoke=skip_smoke,
+            wait_full=wait_full,
+        )
+        return
+    if wait_full:
+        full_result = remote_active_embedding_precompute.remote(config, smoke=False)
+        print(f"Remote active embedding precompute full completed: {full_result}")
+        log_event(
+            "modal_active_embedding_precompute",
+            "local_dispatch_done",
+            run_full=run_full,
+            skip_smoke=skip_smoke,
+            wait_full=wait_full,
+        )
         return
     full_call = remote_active_embedding_precompute.spawn(config, smoke=False)
     call_id = getattr(full_call, "object_id", str(full_call))
     print(f"Remote active embedding precompute full spawned: {call_id}")
-    log_event("modal_active_embedding_precompute", "local_dispatch_done", run_full=run_full, skip_smoke=skip_smoke)
+    log_event(
+        "modal_active_embedding_precompute",
+        "local_dispatch_done",
+        run_full=run_full,
+        skip_smoke=skip_smoke,
+        wait_full=wait_full,
+    )
