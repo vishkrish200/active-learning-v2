@@ -455,6 +455,44 @@ The conclusion is deliberately conservative: artifact-gate is promoted for
 top-ranked trust and artifact avoidance, not because it is a strict coverage
 winner over the plain blend at every K.
 
+## Evaluator-Facing Package
+
+The final package wrapper is:
+
+```bash
+python -m marginal_value.active.run_final \
+  --config-path configs/final_package_artifact_gate.json
+```
+
+It packages existing promoted artifacts into:
+
+```text
+artifacts/final_selector/artifact_gate_exact_window
+```
+
+and writes:
+
+```text
+ranked_new_clips.csv
+ranked_new_clips_new_worker_id.csv
+ranked_new_clips_worker_id.csv
+diagnostics.csv
+selector_config.json
+feature_schema.json
+selector_report.json
+support_audit.json
+stability_report.json
+validation_report.json
+final_package_report.json
+README_final.md
+```
+
+The package README is tracked at:
+
+```text
+docs/README_final.md
+```
+
 ## Recommended Claim
 
 Use this wording:

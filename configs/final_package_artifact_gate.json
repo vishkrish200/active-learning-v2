@@ -1,0 +1,34 @@
+{
+  "method": {
+    "name": "artifact-gate exact-window blend",
+    "primary_submission_id_column": "new_worker_id",
+    "claim": "Partial-TS2Vec / exact-window blended k-center selector with artifact-aware trace rerank.",
+    "known_limitations": [
+      "This is not an exact full-200k TS2Vec search.",
+      "The TS2Vec old-support view is partial, not exact full-support.",
+      "The window-stat old-support view is exact full-support.",
+      "The final artifact should not be described as validated clean TS2Vec active learning.",
+      "The external held-out evaluator remains the real test."
+    ]
+  },
+  "inputs": {
+    "old_manifest": "cache/manifests/pretrain_full_cached_urls.txt",
+    "new_manifest": "cache/manifests/new_urls.txt"
+  },
+  "source_artifacts": {
+    "source_dir": "/artifacts/active/final_blend_rank/exact_full_window_a05/artifact_hygiene_ablation",
+    "primary_submission": "spike_hygiene_ablation_artifact_gate_submission_full_new_worker_id.csv",
+    "backup_worker_submission": "spike_hygiene_ablation_artifact_gate_submission_full_worker_id.csv",
+    "diagnostics": "spike_hygiene_ablation_artifact_gate_diagnostics_full.csv",
+    "selector_report": "spike_hygiene_ablation_report_full.json",
+    "validation_report": "docs/active_loop_validation_report_2026-05-03.json",
+    "support_audit": "/artifacts/active/final_blend_rank/budget_ts2vec_window_a05_h100/support_subset_audit/support_subset_audit_report_full.json",
+    "stability_report": "/artifacts/active/final_blend_rank/support_sampling_stability_a05_cpu/support_sampling_stability_report_full.json"
+  },
+  "artifacts": {
+    "output_dir": "artifacts/final_selector/artifact_gate_exact_window"
+  },
+  "validation": {
+    "expected_count": 2000
+  }
+}
