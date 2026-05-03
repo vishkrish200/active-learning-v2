@@ -105,3 +105,15 @@ tests/test_active_run_hidden_test.py
 The tests check manifest validation, duplicate rejection, generated config
 paths, Modal commands, final package config wiring, and the explicit
 no-hidden-targets documentation.
+
+The prepared package can also be validated without launching Modal:
+
+```bash
+python -m marginal_value.active.run_hidden_test \
+  --run-dir artifacts/hidden_test_run \
+  --validate-only
+```
+
+This checks that the copied manifests, run plan, generated Modal configs, query
+TS2Vec shard path, exact-window rank config, artifact-gate config, and final
+package config are mutually consistent before any remote compute is started.

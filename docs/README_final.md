@@ -51,6 +51,17 @@ running the script. This path rebuilds exact window-stat support for the
 supplied old manifest and computes frozen TS2Vec embeddings for the supplied
 new manifest; it does not train a model or use hidden targets.
 
+Before launching Modal, run the local self-check:
+
+```bash
+python -m marginal_value.active.run_hidden_test \
+  --run-dir artifacts/hidden_test_run \
+  --validate-only
+```
+
+This verifies manifest counts and cross-stage config wiring without spending
+remote compute.
+
 ## Expected Package Files
 
 ```text

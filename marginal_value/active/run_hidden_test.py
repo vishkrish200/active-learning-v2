@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from marginal_value.active.embedding_cache import _cache_metadata, _shard_dir
+from marginal_value.active.embedding_precompute import validate_active_embedding_precompute_config
+from marginal_value.active.exact_window_blend_rank import validate_active_exact_window_blend_rank_config
 from marginal_value.active.registry import ClipRecord
+from marginal_value.active.spike_hygiene_ablation import validate_spike_hygiene_ablation_config
+from marginal_value.data.build_full_support_shards import validate_build_full_support_shards_config
 from marginal_value.data.split_manifest import hash_manifest_url, read_manifest_urls
 from marginal_value.logging_utils import log_event
 
@@ -152,18 +156,97 @@ def validate_hidden_test_run_package(run_dir: str | Path) -> dict[str, Any]:
     if int(plan["new_manifest_count"]) != len(new_urls):
         raise ValueError("Hidden-test run plan new_manifest_count does not match copied manifest.")
     _validate_manifest_disjoint(old_urls, new_urls)
+    stage_config_validation = _validate_stage_configs(root, plan)
     return {
         "status": "prepared",
         "run_dir": str(root),
         "old_manifest_count": len(old_urls),
         "new_manifest_count": len(new_urls),
         "query_shard_dir": str(plan["query_shard_dir"]),
+        "stage_config_validation": stage_config_validation,
     }
 
 
 def load_hidden_test_config(path: str | Path) -> dict[str, Any]:
     with Path(path).open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def _validate_stage_configs(root: Path, plan: Mapping[str, Any]) -> dict[str, Any]:
+    configs = _read_stage_configs(root / "configs")
+    build = configs["build_full_support_window_shards"]
+    precompute = configs["active_embedding_precompute_ts2vec_new"]
+    exact = configs["active_exact_window_blend_rank"]
+    ablation = configs["active_spike_hygiene_ablation_artifact_gate"]
+    package = configs["final_package_artifact_gate"]
+
+    validate_build_full_support_shards_config(build)
+    validate_active_embedding_precompute_config(precompute)
+    validate_active_exact_window_blend_rank_config(exact)
+    validate_spike_hygiene_ablation_config(ablation)
+    _validate_final_package_config_shape(package)
+
+    expected_pretrain = f"{str(plan['remote_manifest_dir']).rstrip('/')}/pretrain_urls.txt"
+    expected_new = f"{str(plan['remote_manifest_dir']).rstrip('/')}/new_urls.txt"
+    for label, config in (("build", build), ("exact", exact), ("ablation", ablation)):
+        manifests = config["data"]["manifests"]
+        if manifests.get("pretrain") != expected_pretrain:
+            raise ValueError(f"{label} config pretrain manifest does not match run plan.")
+        if manifests.get("new") != expected_new:
+            raise ValueError(f"{label} config new manifest does not match run plan.")
+    if precompute["data"]["manifests"].get("new") != expected_new:
+        raise ValueError("precompute config new manifest does not match run plan.")
+
+    query_cache_dir = str(precompute["embeddings"]["cache_dir"]).rstrip("/")
+    query_shard_dir = str(plan["query_shard_dir"])
+    if not query_shard_dir.startswith(f"{query_cache_dir}/embeddings_") or not query_shard_dir.endswith("_shards"):
+        raise ValueError("query_shard_dir is not compatible with precompute embeddings.cache_dir.")
+    if str(exact["ranking"]["left_query_shard_dir"]) != query_shard_dir:
+        raise ValueError("exact ranking.left_query_shard_dir does not match the run plan query_shard_dir.")
+    if str(exact["ranking"]["right_support_shard_dir"]) != str(build["shards"]["output_dir"]):
+        raise ValueError("exact ranking.right_support_shard_dir must match build shards.output_dir.")
+
+    exact_output_dir = str(exact["artifacts"]["output_dir"]).rstrip("/")
+    expected_diagnostics = f"{exact_output_dir}/active_exact_window_blend_diagnostics_full.csv"
+    if str(ablation["artifacts"]["exact_diagnostics_path"]) != expected_diagnostics:
+        raise ValueError("ablation artifacts.exact_diagnostics_path does not match exact ranking output.")
+    if str(package["source_artifacts"]["source_dir"]) != str(ablation["artifacts"]["output_dir"]):
+        raise ValueError("final package source_artifacts.source_dir must match ablation artifacts.output_dir.")
+    if int(package["validation"]["expected_count"]) != int(plan["new_manifest_count"]):
+        raise ValueError("final package validation.expected_count does not match new manifest count.")
+
+    return {
+        "status": "valid",
+        "validated_configs": sorted(configs),
+    }
+
+
+def _read_stage_configs(config_dir: Path) -> dict[str, dict[str, Any]]:
+    names = {
+        "build_full_support_window_shards": "build_full_support_window_shards.json",
+        "active_embedding_precompute_ts2vec_new": "active_embedding_precompute_ts2vec_new.json",
+        "active_exact_window_blend_rank": "active_exact_window_blend_rank.json",
+        "active_spike_hygiene_ablation_artifact_gate": "active_spike_hygiene_ablation_artifact_gate.json",
+        "final_package_artifact_gate": "final_package_artifact_gate.json",
+    }
+    configs: dict[str, dict[str, Any]] = {}
+    for key, filename in names.items():
+        path = config_dir / filename
+        configs[key] = json.loads(path.read_text(encoding="utf-8"))
+    return configs
+
+
+def _validate_final_package_config_shape(config: Mapping[str, Any]) -> None:
+    source = _required_mapping(config, "source_artifacts")
+    artifacts = _required_mapping(config, "artifacts")
+    validation = _required_mapping(config, "validation")
+    for key in ("source_dir", "primary_submission", "backup_worker_submission", "diagnostics", "selector_report"):
+        if not str(source.get(key, "")).strip():
+            raise ValueError(f"final package source_artifacts.{key} is required.")
+    if not str(artifacts.get("output_dir", "")).strip():
+        raise ValueError("final package artifacts.output_dir is required.")
+    if int(validation.get("expected_count", 0)) <= 0:
+        raise ValueError("final package validation.expected_count must be positive.")
 
 
 def _stage_configs(

@@ -74,6 +74,7 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
         self.assertEqual(validation["status"], "prepared")
         self.assertEqual(validation["old_manifest_count"], 2)
         self.assertEqual(validation["new_manifest_count"], 2)
+        self.assertEqual(validation["stage_config_validation"]["status"], "valid")
         self.assertTrue(copied_old_manifest_exists)
         self.assertTrue(copied_new_manifest_exists)
         self.assertEqual(exact_config["data"]["manifests"]["pretrain"], "cache/manifests/hidden_test/unit_run/pretrain_urls.txt")
@@ -115,6 +116,31 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
                         "artifacts": {"run_dir": str(root / "hidden_run")},
                     }
                 )
+
+    def test_validate_hidden_test_run_package_rejects_cross_stage_query_shard_mismatch(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            old_manifest = root / "old_urls.txt"
+            new_manifest = root / "new_urls.txt"
+            old_manifest.write_text("https://storage.googleapis.com/unit/pretrain/a.jsonl\n", encoding="utf-8")
+            new_manifest.write_text("https://storage.googleapis.com/unit/new/a.jsonl\n", encoding="utf-8")
+            run_dir = root / "hidden_run"
+            prepare_hidden_test_run(
+                {
+                    "inputs": {
+                        "old_manifest": str(old_manifest),
+                        "new_manifest": str(new_manifest),
+                    },
+                    "artifacts": {"run_dir": str(run_dir)},
+                }
+            )
+            exact_config_path = run_dir / "configs" / "active_exact_window_blend_rank.json"
+            exact_config = json.loads(exact_config_path.read_text(encoding="utf-8"))
+            exact_config["ranking"]["left_query_shard_dir"] = "/artifacts/active/hidden_test/bad/query_shards"
+            exact_config_path.write_text(json.dumps(exact_config, indent=2, sort_keys=True), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "left_query_shard_dir"):
+                validate_hidden_test_run_package(run_dir)
 
 
 if __name__ == "__main__":
