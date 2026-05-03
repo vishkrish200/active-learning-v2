@@ -97,6 +97,21 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
         self.assertNotIn("spawned by its Modal wrapper", commands)
         self.assertIn("modal_active_exact_window_blend_rank.py", commands)
         self.assertIn("modal_active_spike_hygiene_ablation.py", commands)
+        self.assertIn('mkdir -p "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"', commands)
+        self.assertIn(
+            "spike_hygiene_ablation_artifact_gate_submission_full_new_worker_id.csv",
+            commands,
+        )
+        self.assertIn(
+            "spike_hygiene_ablation_artifact_gate_submission_full_worker_id.csv",
+            commands,
+        )
+        self.assertIn("spike_hygiene_ablation_artifact_gate_diagnostics_full.csv", commands)
+        self.assertIn("spike_hygiene_ablation_report_full.json", commands)
+        self.assertNotIn(
+            'modal volume get activelearning-imu-rebuild-cache active/hidden_test/unit_run/artifact_hygiene_ablation "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"',
+            commands,
+        )
         self.assertIn("does not use hidden targets", readme)
 
     def test_prepare_hidden_test_run_rejects_duplicate_manifest_urls(self):

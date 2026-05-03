@@ -500,7 +500,12 @@ modal run modal_active_exact_window_blend_rank.py --config-path "$RUN_DIR/config
 modal run modal_active_spike_hygiene_ablation.py --config-path "$RUN_DIR/configs/active_spike_hygiene_ablation_artifact_gate.json"
 
 rm -rf "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"
-modal volume get {artifacts_volume} {source_artifact_volume_path} "$RUN_DIR/source_artifacts/artifact_hygiene_ablation" --force
+mkdir -p "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"
+modal volume get {artifacts_volume} {source_artifact_volume_path}/spike_hygiene_ablation_artifact_gate_submission_full_new_worker_id.csv "$RUN_DIR/source_artifacts/artifact_hygiene_ablation/spike_hygiene_ablation_artifact_gate_submission_full_new_worker_id.csv" --force
+modal volume get {artifacts_volume} {source_artifact_volume_path}/spike_hygiene_ablation_artifact_gate_submission_full_worker_id.csv "$RUN_DIR/source_artifacts/artifact_hygiene_ablation/spike_hygiene_ablation_artifact_gate_submission_full_worker_id.csv" --force
+modal volume get {artifacts_volume} {source_artifact_volume_path}/spike_hygiene_ablation_artifact_gate_diagnostics_full.csv "$RUN_DIR/source_artifacts/artifact_hygiene_ablation/spike_hygiene_ablation_artifact_gate_diagnostics_full.csv" --force
+modal volume get {artifacts_volume} {source_artifact_volume_path}/spike_hygiene_ablation_report_full.json "$RUN_DIR/source_artifacts/artifact_hygiene_ablation/spike_hygiene_ablation_report_full.json" --force
+modal volume get {artifacts_volume} {source_artifact_volume_path}/spike_hygiene_ablation_report_full.md "$RUN_DIR/source_artifacts/artifact_hygiene_ablation/spike_hygiene_ablation_report_full.md" --force
 
 python3 -m marginal_value.active.run_final \\
   --config-path "$RUN_DIR/configs/final_package_artifact_gate.json" \\
