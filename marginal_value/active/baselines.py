@@ -158,6 +158,58 @@ def blended_kcenter_greedy_quality_gated_order(
     return [*selected, *fallback]
 
 
+def trace_hygiene_rerank_order(
+    base_order: Sequence[int],
+    rows: Sequence[Mapping[str, object]],
+    *,
+    spike_rate_threshold: float = 0.025,
+) -> list[int]:
+    """Move trace-failed rows behind trace-pass rows while preserving base order."""
+
+    return _trace_rerank_order(
+        base_order,
+        rows,
+        failed=lambda row: _trace_hygiene_failed(row, spike_rate_threshold=spike_rate_threshold),
+    )
+
+
+def trace_artifact_rerank_order(
+    base_order: Sequence[int],
+    rows: Sequence[Mapping[str, object]],
+) -> list[int]:
+    """Move likely trace artifacts behind trace-pass rows while preserving base order."""
+
+    return _trace_rerank_order(
+        base_order,
+        rows,
+        failed=_trace_artifact_failed,
+    )
+
+
+def _trace_rerank_order(
+    base_order: Sequence[int],
+    rows: Sequence[Mapping[str, object]],
+    *,
+    failed,
+) -> list[int]:
+    ordered = [int(idx) for idx in base_order]
+    if len(set(ordered)) != len(ordered):
+        raise ValueError("base_order must not contain duplicate indices.")
+    missing = [idx for idx in range(len(rows)) if idx not in set(ordered)]
+    full_order = [*ordered, *missing]
+    rank_by_idx = {int(idx): order_idx for order_idx, idx in enumerate(full_order)}
+    return [
+        int(idx)
+        for idx in sorted(
+            full_order,
+            key=lambda idx: (
+                failed(rows[int(idx)]),
+                rank_by_idx[int(idx)],
+            ),
+        )
+    ]
+
+
 def learned_score_quality_gated_kcenter_order(
     support_embeddings: np.ndarray,
     candidate_embeddings: np.ndarray,
@@ -357,6 +409,18 @@ def _passes_quality_gates(
     if max_abs_value is not None and _safe_float(row.get("max_abs_value", 0.0)) > max_abs_value:
         return False
     return True
+
+
+def _trace_hygiene_failed(row: Mapping[str, object], *, spike_rate_threshold: float) -> bool:
+    if _safe_float(row.get("quality__spike_rate", 0.0)) > float(spike_rate_threshold):
+        return True
+    verdict = str(row.get("trace__verdict", "")).strip().lower()
+    return verdict in {"likely_artifact", "mostly_stationary"}
+
+
+def _trace_artifact_failed(row: Mapping[str, object]) -> bool:
+    verdict = str(row.get("trace__verdict", "")).strip().lower()
+    return verdict == "likely_artifact"
 
 
 def _safe_float(value: object, default: float = 0.0) -> float:

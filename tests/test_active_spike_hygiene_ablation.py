@@ -41,6 +41,20 @@ class ActiveSpikeHygieneAblationTests(unittest.TestCase):
         self.assertEqual(trace_gate[0]["trace_hygiene_pass"], True)
         self.assertEqual(trace_gate[1]["trace_hygiene_pass"], False)
 
+    def test_artifact_gate_only_demotes_likely_artifact_verdicts(self):
+        rows = [
+            _row("a", 1, spike=0.01, cluster="c1", trace_verdict="likely_artifact"),
+            _row("b", 2, spike=0.01, cluster="c2", trace_verdict="plausible_motion"),
+            _row("c", 3, spike=0.04, cluster="c3", trace_verdict="plausible_motion"),
+            _row("d", 4, spike=0.01, cluster="c4", trace_verdict="mostly_stationary"),
+        ]
+
+        artifact_gate = build_spike_ablation_rows(rows, mode="artifact_gate", spike_rate_threshold=0.025)
+
+        self.assertEqual([row["sample_id"] for row in artifact_gate], ["b", "c", "d", "a"])
+        self.assertEqual(artifact_gate[0]["trace_artifact_pass"], True)
+        self.assertEqual(artifact_gate[-1]["trace_artifact_pass"], False)
+
     def test_spike_hygiene_ablation_runner_writes_reports(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -90,6 +104,19 @@ class ActiveSpikeHygieneAblationTests(unittest.TestCase):
                     },
                 }
             )
+
+    def test_artifact_gate_exact_window_config_is_valid(self):
+        config = json.loads(Path("configs/active_spike_hygiene_ablation_artifact_gate_exact_window.json").read_text())
+
+        validate_spike_hygiene_ablation_config(config)
+        self.assertEqual(
+            config["artifacts"]["exact_diagnostics_path"],
+            "/artifacts/active/final_blend_rank/exact_full_window_a05/spike_hygiene_ablation/spike_hygiene_ablation_enriched_current_full.csv",
+        )
+        self.assertEqual(
+            config["artifacts"]["output_dir"],
+            "/artifacts/active/final_blend_rank/exact_full_window_a05/artifact_hygiene_ablation",
+        )
 
 
 def _row(

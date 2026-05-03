@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 
+from marginal_value.active.baselines import trace_artifact_rerank_order, trace_hygiene_rerank_order
 from marginal_value.active.evaluate_active_loop import (
     ORACLE_POLICY_NAME,
     run_active_loop_eval,
@@ -120,6 +121,8 @@ class ActiveLoopEvalTests(unittest.TestCase):
         self.assertIn("heldout_novel", role_mix)
         self.assertIn("low_quality", role_mix)
         self.assertGreaterEqual(float(audit_for_k4["low_quality_rate_at_k"]), 0.0)
+        self.assertGreaterEqual(float(audit_for_k4["trace_fail_rate_at_k"]), 0.0)
+        self.assertGreaterEqual(float(audit_for_k4["trace_artifact_fail_rate_at_k"]), 0.0)
         self.assertGreaterEqual(int(audit_for_k4["unique_source_groups_at_k"]), 1)
         self.assertEqual(fixture["heldout_worker"], "worker00002")
 
@@ -237,6 +240,30 @@ class ActiveLoopEvalTests(unittest.TestCase):
             "/artifacts/active/eval/ts2vec_window_blend_medium",
         )
         validate_active_loop_eval_config(current_medium_config)
+        trace_gate_config = json.loads(
+            Path("configs/active_loop_eval_trace_gate_window_blend_scale.json").read_text(encoding="utf-8")
+        )
+        self.assertIn(
+            "trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
+            trace_gate_config["evaluation"]["policies"],
+        )
+        self.assertEqual(
+            trace_gate_config["artifacts"]["output_dir"],
+            "/artifacts/active/eval/trace_gate_ts2vec_window_blend_scale",
+        )
+        validate_active_loop_eval_config(trace_gate_config)
+        artifact_gate_config = json.loads(
+            Path("configs/active_loop_eval_artifact_gate_window_blend_scale.json").read_text(encoding="utf-8")
+        )
+        self.assertIn(
+            "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
+            artifact_gate_config["evaluation"]["policies"],
+        )
+        self.assertEqual(
+            artifact_gate_config["artifacts"]["output_dir"],
+            "/artifacts/active/eval/artifact_gate_ts2vec_window_blend_scale",
+        )
+        validate_active_loop_eval_config(artifact_gate_config)
 
     def test_blended_ts2vec_window_policy_names_validate(self):
         config = {
@@ -252,6 +279,8 @@ class ActiveLoopEvalTests(unittest.TestCase):
                 "policies": [
                     "blend_old_novelty_ts2vec_window_mean_std_pool_a03",
                     "blend_kcenter_ts2vec_window_mean_std_pool_a07",
+                    "trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
+                    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
                 ],
                 "k_values": [5],
             },
@@ -259,6 +288,58 @@ class ActiveLoopEvalTests(unittest.TestCase):
         }
 
         validate_active_loop_eval_config(config)
+
+    def test_trace_hygiene_rerank_demotes_trace_failed_rows_after_base_order(self):
+        rows = [
+            {
+                "sample_id": "spike",
+                "quality_score": 0.99,
+                "quality__spike_rate": 0.030,
+                "trace__verdict": "likely_artifact",
+            },
+            {
+                "sample_id": "clean",
+                "quality_score": 0.91,
+                "quality__spike_rate": 0.000,
+                "trace__verdict": "plausible_motion",
+            },
+            {
+                "sample_id": "stationary",
+                "quality_score": 0.95,
+                "quality__spike_rate": 0.000,
+                "trace__verdict": "mostly_stationary",
+            },
+        ]
+
+        order = trace_hygiene_rerank_order([0, 1, 2], rows, spike_rate_threshold=0.025)
+
+        self.assertEqual(order, [1, 0, 2])
+
+    def test_trace_artifact_rerank_only_demotes_likely_artifacts(self):
+        rows = [
+            {
+                "sample_id": "stationary",
+                "quality_score": 0.95,
+                "quality__spike_rate": 0.000,
+                "trace__verdict": "mostly_stationary",
+            },
+            {
+                "sample_id": "clean",
+                "quality_score": 0.91,
+                "quality__spike_rate": 0.000,
+                "trace__verdict": "plausible_motion",
+            },
+            {
+                "sample_id": "artifact",
+                "quality_score": 0.99,
+                "quality__spike_rate": 0.030,
+                "trace__verdict": "likely_artifact",
+            },
+        ]
+
+        order = trace_artifact_rerank_order([2, 0, 1], rows)
+
+        self.assertEqual(order, [0, 1, 2])
 
     def test_active_loop_eval_rejects_nonpositive_max_episodes(self):
         config = {

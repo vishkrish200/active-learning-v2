@@ -16,6 +16,8 @@ from marginal_value.active.baselines import (
     old_novelty_only_order,
     quality_only_order,
     random_valid_order,
+    trace_artifact_rerank_order,
+    trace_hygiene_rerank_order,
     window_shape_deterministic_baseline_order,
 )
 from marginal_value.active.embedding_cache import (
@@ -30,9 +32,11 @@ from marginal_value.active.registry import (
     audit_clip_registry_coverage_from_config,
     load_clip_registry_from_config,
 )
+from marginal_value.active.topk_audit_pack import summarize_trace
 from marginal_value.indexing.cosine_search import mean_nearest_cosine_distance
 from marginal_value.indexing.knn_features import normalize_rows
 from marginal_value.logging_utils import log_event
+from marginal_value.preprocessing.quality import compute_quality_features, load_modal_jsonl_imu
 
 
 ORACLE_POLICY_NAME = "oracle_greedy_eval_only"
@@ -92,6 +96,7 @@ def run_active_loop_eval(config: dict[str, Any], *, smoke: bool = False) -> dict
     coverage_rows: list[dict[str, object]] = []
     selection_rows: list[dict[str, object]] = []
     episode_diagnostics = _empty_episode_diagnostics()
+    trace_hygiene_cache: dict[str, dict[str, object]] = {}
     progress_every = max(1, len(episodes) // 10)
     for episode_offset, episode in enumerate(episodes):
         episode_index = episode_offset + 1
@@ -108,6 +113,10 @@ def run_active_loop_eval(config: dict[str, Any], *, smoke: bool = False) -> dict
             old_novelty_k=int(eval_config.get("old_novelty_k", 10)),
             cluster_similarity_threshold=float(eval_config.get("cluster_similarity_threshold", 0.995)),
             max_selected=max(k_values),
+            trace_hygiene_cache=trace_hygiene_cache,
+            trace_hygiene_sample_rate=float(eval_config.get("sample_rate", 30.0)),
+            trace_hygiene_max_samples=eval_config.get("trace_hygiene_max_samples", 5400),
+            trace_hygiene_spike_rate_threshold=float(eval_config.get("trace_hygiene_spike_rate_threshold", 0.025)),
         )
         log_event(
             "active_loop_eval",
@@ -147,6 +156,9 @@ def run_active_loop_eval(config: dict[str, Any], *, smoke: bool = False) -> dict
                         policy_name=policy_name,
                         k=int(k),
                         quality_threshold=quality_threshold,
+                        trace_hygiene_spike_rate_threshold=float(
+                            eval_config.get("trace_hygiene_spike_rate_threshold", 0.025)
+                        ),
                     )
                 )
         if episode_index == len(episodes) or episode_index % progress_every == 0:
@@ -175,6 +187,7 @@ def run_active_loop_eval(config: dict[str, Any], *, smoke: bool = False) -> dict
         "registry_coverage": _deduplicate_coverage_aliases(registry_coverage),
         "registry_coverage_summary": _registry_coverage_summary(registry_coverage),
         "embedding_cache": embedding_result.report(),
+        "trace_hygiene_cache_size": int(len(trace_hygiene_cache)),
         "episode_diagnostics": _finalize_episode_diagnostics(episode_diagnostics),
         "policies": _policy_summary(coverage_rows),
         "artifacts": {
@@ -267,6 +280,10 @@ def _policy_orders_for_episode(
     old_novelty_k: int,
     cluster_similarity_threshold: float,
     max_selected: int,
+    trace_hygiene_cache: dict[str, dict[str, object]] | None = None,
+    trace_hygiene_sample_rate: float = 30.0,
+    trace_hygiene_max_samples: object | None = 5400,
+    trace_hygiene_spike_rate_threshold: float = 0.025,
 ) -> tuple[dict[str, list[int]], list[dict[str, object]]]:
     support_ids = list(episode.support_clip_ids)
     candidate_ids = list(episode.candidate_clip_ids)
@@ -285,6 +302,14 @@ def _policy_orders_for_episode(
         old_novelty=old_novelty,
         cluster_ids=_candidate_clusters(candidate_embeddings, similarity_threshold=cluster_similarity_threshold),
     )
+    if any(_requires_trace_hygiene(policy) for policy in policies):
+        candidate_rows = _enrich_trace_hygiene_rows(
+            candidate_rows,
+            registry=registry,
+            trace_hygiene_cache=trace_hygiene_cache if trace_hygiene_cache is not None else {},
+            sample_rate=trace_hygiene_sample_rate,
+            max_samples=trace_hygiene_max_samples,
+        )
 
     orders: dict[str, list[int]] = {}
     for policy in policies:
@@ -323,6 +348,32 @@ def _policy_orders_for_episode(
                     alpha=float(blend_policy["alpha"]),
                     quality_threshold=quality_threshold,
                 )
+            elif blend_policy["kind"] == "trace_gate_kcenter":
+                base_order = blended_kcenter_greedy_quality_gated_order(
+                    left_support,
+                    left_candidates,
+                    right_support,
+                    right_candidates,
+                    candidate_rows,
+                    alpha=float(blend_policy["alpha"]),
+                    quality_threshold=quality_threshold,
+                )
+                orders[policy] = trace_hygiene_rerank_order(
+                    base_order,
+                    candidate_rows,
+                    spike_rate_threshold=trace_hygiene_spike_rate_threshold,
+                )
+            elif blend_policy["kind"] == "artifact_gate_kcenter":
+                base_order = blended_kcenter_greedy_quality_gated_order(
+                    left_support,
+                    left_candidates,
+                    right_support,
+                    right_candidates,
+                    candidate_rows,
+                    alpha=float(blend_policy["alpha"]),
+                    quality_threshold=quality_threshold,
+                )
+                orders[policy] = trace_artifact_rerank_order(base_order, candidate_rows)
             else:
                 raise ValueError(f"Unsupported blended policy kind: {blend_policy['kind']}")
         elif policy == "random_valid":
@@ -519,6 +570,42 @@ def _candidate_rows(
     return rows
 
 
+def _enrich_trace_hygiene_rows(
+    rows: Sequence[Mapping[str, object]],
+    *,
+    registry: ClipRegistry,
+    trace_hygiene_cache: dict[str, dict[str, object]],
+    sample_rate: float,
+    max_samples: object | None,
+) -> list[dict[str, object]]:
+    enriched: list[dict[str, object]] = []
+    max_sample_count = None if max_samples is None else int(max_samples)
+    for row in rows:
+        out = dict(row)
+        sample_id = str(out["sample_id"])
+        cached = trace_hygiene_cache.get(sample_id)
+        if cached is None:
+            clip = registry.by_sample_id[sample_id]
+            samples, timestamps = load_modal_jsonl_imu(clip.raw_path, max_samples=max_sample_count)
+            quality = compute_quality_features(samples, timestamps=timestamps, sample_rate=float(sample_rate))
+            trace = summarize_trace(samples, timestamps=timestamps, quality=quality, sample_rate=float(sample_rate))
+            cached = {
+                "quality__spike_rate": float(quality.get("spike_rate", 0.0)),
+                "quality__extreme_value_fraction": float(quality.get("extreme_value_fraction", 0.0)),
+                "quality__high_frequency_energy": float(quality.get("high_frequency_energy", 0.0)),
+                "trace__verdict": str(trace.get("verdict", "")),
+                "trace__flags": "|".join(str(flag) for flag in trace.get("flags", [])),
+                "trace__acc_norm_p95": float(trace.get("acc_norm_p95", 0.0)),
+                "trace__gyro_norm_p95": float(trace.get("gyro_norm_p95", 0.0)),
+                "trace__acc_jerk_p95": float(trace.get("acc_jerk_p95", 0.0)),
+                "trace__gyro_jerk_p95": float(trace.get("gyro_jerk_p95", 0.0)),
+            }
+            trace_hygiene_cache[sample_id] = cached
+        out.update(cached)
+        enriched.append(out)
+    return enriched
+
+
 def _selection_audit_row(
     *,
     episode: ActiveEpisode,
@@ -528,6 +615,7 @@ def _selection_audit_row(
     policy_name: str,
     k: int,
     quality_threshold: float,
+    trace_hygiene_spike_rate_threshold: float = 0.025,
 ) -> dict[str, object]:
     selected_rows = [candidate_rows[int(idx)] for idx in selected_indices]
     selected_count = len(selected_rows)
@@ -535,6 +623,19 @@ def _selection_audit_row(
     source_groups = {str(row.get("source_group_id", "")) for row in selected_rows}
     clusters = {str(row.get("new_cluster_id", "")) for row in selected_rows}
     low_quality_count = sum(_safe_float(row.get("quality_score", 1.0)) < quality_threshold for row in selected_rows)
+    spike_count = sum(
+        _safe_float(row.get("quality__spike_rate", 0.0)) > float(trace_hygiene_spike_rate_threshold)
+        for row in selected_rows
+    )
+    trace_count = sum(
+        _safe_float(row.get("quality__spike_rate", 0.0)) > float(trace_hygiene_spike_rate_threshold)
+        or str(row.get("trace__verdict", "")).strip().lower() in {"likely_artifact", "mostly_stationary"}
+        for row in selected_rows
+    )
+    trace_artifact_count = sum(
+        str(row.get("trace__verdict", "")).strip().lower() == "likely_artifact"
+        for row in selected_rows
+    )
     artifact_count = sum(
         _safe_float(row.get("quality_score", 1.0)) < quality_threshold
         or str(row.get("candidate_role", "")) == "low_quality"
@@ -551,6 +652,9 @@ def _selection_audit_row(
         "selected_count": int(selected_count),
         "artifact_rate_at_k": _fraction(artifact_count, selected_count),
         "low_quality_rate_at_k": _fraction(low_quality_count, selected_count),
+        "spike_fail_rate_at_k": _fraction(spike_count, selected_count),
+        "trace_fail_rate_at_k": _fraction(trace_count, selected_count),
+        "trace_artifact_fail_rate_at_k": _fraction(trace_artifact_count, selected_count),
         "duplicate_rate_at_k": 1.0 - _fraction(len(clusters), selected_count),
         "candidate_role_mix_json": json.dumps(dict(sorted(role_counts.items())), sort_keys=True),
         "unique_source_groups_at_k": int(len(source_groups)),
@@ -864,6 +968,8 @@ def _parse_blend_policy(policy: str) -> dict[str, object] | None:
     prefixes = {
         "blend_old_novelty_ts2vec_window_mean_std_pool_a": "old_novelty",
         "blend_kcenter_ts2vec_window_mean_std_pool_a": "kcenter",
+        "trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a": "trace_gate_kcenter",
+        "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a": "artifact_gate_kcenter",
     }
     for prefix, kind in prefixes.items():
         if not policy.startswith(prefix):
@@ -880,3 +986,8 @@ def _parse_blend_policy(policy: str) -> dict[str, object] | None:
             "representations": BLEND_POLICY_REPRESENTATIONS,
         }
     return None
+
+
+def _requires_trace_hygiene(policy: str) -> bool:
+    parsed = _parse_blend_policy(str(policy))
+    return parsed is not None and parsed.get("kind") in {"trace_gate_kcenter", "artifact_gate_kcenter"}

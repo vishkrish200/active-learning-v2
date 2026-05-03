@@ -61,7 +61,8 @@ def run_spike_hygiene_ablation(config: dict[str, Any], *, smoke: bool = False) -
     )
 
     registry_lookup: dict[str, Any] = {}
-    if config.get("data"):
+    needs_registry_lookup = any(not _has_spike_features(row) for row in rows)
+    if needs_registry_lookup and config.get("data"):
         registry = load_clip_registry_from_config(config)
         registry_lookup = registry.by_sample_id
 
@@ -74,11 +75,13 @@ def run_spike_hygiene_ablation(config: dict[str, Any], *, smoke: bool = False) -
     hard_rows = build_spike_ablation_rows(enriched_rows, mode="hard_gate", spike_rate_threshold=spike_rate_threshold)
     soft_rows = build_spike_ablation_rows(enriched_rows, mode="soft_penalty", spike_rate_threshold=spike_rate_threshold)
     trace_rows = build_spike_ablation_rows(enriched_rows, mode="trace_gate", spike_rate_threshold=spike_rate_threshold)
+    artifact_rows = build_spike_ablation_rows(enriched_rows, mode="artifact_gate", spike_rate_threshold=spike_rate_threshold)
 
     enriched_path = output_dir / f"spike_hygiene_ablation_enriched_current_{mode}.csv"
     hard_path = output_dir / f"spike_hygiene_ablation_hard_gate_diagnostics_{mode}.csv"
     soft_path = output_dir / f"spike_hygiene_ablation_soft_penalty_diagnostics_{mode}.csv"
     trace_path = output_dir / f"spike_hygiene_ablation_trace_gate_diagnostics_{mode}.csv"
+    artifact_path = output_dir / f"spike_hygiene_ablation_artifact_gate_diagnostics_{mode}.csv"
     report_path = output_dir / f"spike_hygiene_ablation_report_{mode}.json"
     markdown_path = output_dir / f"spike_hygiene_ablation_report_{mode}.md"
 
@@ -86,12 +89,14 @@ def run_spike_hygiene_ablation(config: dict[str, Any], *, smoke: bool = False) -
     _write_rows(hard_path, hard_rows)
     _write_rows(soft_path, soft_rows)
     _write_rows(trace_path, trace_rows)
+    _write_rows(artifact_path, artifact_rows)
 
     artifacts_out: dict[str, str] = {
         "enriched_current_diagnostics": str(enriched_path),
         "hard_gate_diagnostics": str(hard_path),
         "soft_penalty_diagnostics": str(soft_path),
         "trace_gate_diagnostics": str(trace_path),
+        "artifact_gate_diagnostics": str(artifact_path),
         "report": str(report_path),
         "markdown": str(markdown_path),
     }
@@ -99,6 +104,7 @@ def run_spike_hygiene_ablation(config: dict[str, Any], *, smoke: bool = False) -
         artifacts_out.update(_write_submission_artifacts(config, output_dir, hard_rows, mode=mode, label="hard_gate"))
         artifacts_out.update(_write_submission_artifacts(config, output_dir, soft_rows, mode=mode, label="soft_penalty"))
         artifacts_out.update(_write_submission_artifacts(config, output_dir, trace_rows, mode=mode, label="trace_gate"))
+        artifacts_out.update(_write_submission_artifacts(config, output_dir, artifact_rows, mode=mode, label="artifact_gate"))
 
     summary = {
         "current": summarize_spike_ranking(
@@ -121,6 +127,12 @@ def run_spike_hygiene_ablation(config: dict[str, Any], *, smoke: bool = False) -
         ),
         "trace_gate": summarize_spike_ranking(
             trace_rows,
+            baseline_rows=enriched_rows,
+            top_k_values=top_k_values,
+            spike_rate_threshold=spike_rate_threshold,
+        ),
+        "artifact_gate": summarize_spike_ranking(
+            artifact_rows,
             baseline_rows=enriched_rows,
             top_k_values=top_k_values,
             spike_rate_threshold=spike_rate_threshold,
@@ -148,6 +160,9 @@ def run_spike_hygiene_ablation(config: dict[str, Any], *, smoke: bool = False) -
         "hard_gate_top50_spike_fail_rate": summary["hard_gate"]["topk"].get("50", {}).get("spike_fail_rate", 0.0),
         "soft_penalty_top50_spike_fail_rate": summary["soft_penalty"]["topk"].get("50", {}).get("spike_fail_rate", 0.0),
         "trace_gate_top50_trace_fail_rate": summary["trace_gate"]["topk"].get("50", {}).get("trace_fail_rate", 0.0),
+        "artifact_gate_top50_trace_artifact_fail_rate": summary["artifact_gate"]["topk"]
+        .get("50", {})
+        .get("trace_artifact_fail_rate", 0.0),
     }
     log_event("spike_hygiene_ablation", "done", **result)
     return result
@@ -210,6 +225,7 @@ def build_spike_ablation_rows(
         spike_rate = _float(out.get("quality__spike_rate"), 0.0)
         spike_pass = spike_rate <= spike_rate_threshold
         trace_pass = spike_pass and not _trace_artifact_fail(out)
+        trace_artifact_pass = not _trace_likely_artifact_fail(out)
         multiplier = spike_penalty_multiplier(
             spike_rate,
             threshold=spike_rate_threshold,
@@ -220,6 +236,7 @@ def build_spike_ablation_rows(
         out["spike_rate_threshold"] = float(spike_rate_threshold)
         out["spike_hygiene_pass"] = bool(spike_pass)
         out["trace_hygiene_pass"] = bool(trace_pass)
+        out["trace_artifact_pass"] = bool(trace_artifact_pass)
         out["spike_penalty_multiplier"] = float(multiplier)
         out["original_rank"] = _optional_int(out.get("original_rank")) or _optional_int(out.get("rank")) or 1_000_000
         out["original_score"] = _float(out.get("score", out.get("rerank_score", out.get("final_score"))), 0.0)
@@ -246,6 +263,14 @@ def build_spike_ablation_rows(
         ranked.sort(
             key=lambda row: (
                 not bool(row["trace_hygiene_pass"]),
+                _optional_int(row.get("original_rank")) or 1_000_000,
+                _sample_id(row),
+            )
+        )
+    elif mode == "artifact_gate":
+        ranked.sort(
+            key=lambda row: (
+                not bool(row["trace_artifact_pass"]),
                 _optional_int(row.get("original_rank")) or 1_000_000,
                 _sample_id(row),
             )
@@ -304,6 +329,7 @@ def summarize_spike_ranking(
                 len(subset),
             ),
             "trace_fail_rate": _fraction(sum(1 for row in subset if _trace_artifact_fail(row)), len(subset)),
+            "trace_artifact_fail_rate": _fraction(sum(1 for row in subset if _trace_likely_artifact_fail(row)), len(subset)),
             "quality_fail_rate": _fraction(sum(1 for row in subset if _float(row.get("quality_score"), 1.0) < 0.85), len(subset)),
             "physical_fail_rate": _fraction(
                 sum(
@@ -416,14 +442,15 @@ def _markdown_report(report: Mapping[str, Any]) -> str:
         "",
         "## Top-K Summary",
         "",
-        "| Variant | K | Spike Fail | Trace Fail | Current Overlap | Unique Clusters | Mean Original Rank | Removed Top-50 Spike | Removed Top-50 Trace |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Variant | K | Spike Fail | Trace Fail | Likely Artifact Fail | Current Overlap | Unique Clusters | Mean Original Rank | Removed Top-50 Spike | Removed Top-50 Trace |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for variant, summary in report["summary"].items():
         for k, row in summary["topk"].items():
             lines.append(
                 f"| {variant} | {k} | {float(row['spike_fail_rate']):.4f} | "
                 f"{float(row['trace_fail_rate']):.4f} | "
+                f"{float(row['trace_artifact_fail_rate']):.4f} | "
                 f"{float(row['overlap_with_current']):.4f} | {int(row['unique_clusters'])} | "
                 f"{float(row['mean_original_rank']):.2f} | {int(summary['baseline_top50_spike_fail_removed_count'])} | "
                 f"{int(summary['baseline_top50_trace_fail_removed_count'])} |"
@@ -469,6 +496,11 @@ def _spike_verdict(row: Mapping[str, Any], *, spike_rate_threshold: float) -> st
 def _trace_artifact_fail(row: Mapping[str, Any]) -> bool:
     verdict = str(row.get("trace__verdict", "")).strip().lower()
     return verdict in {"likely_artifact", "mostly_stationary"}
+
+
+def _trace_likely_artifact_fail(row: Mapping[str, Any]) -> bool:
+    verdict = str(row.get("trace__verdict", "")).strip().lower()
+    return verdict == "likely_artifact"
 
 
 def _read_csv(path: str | Path) -> list[dict[str, str]]:
