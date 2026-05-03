@@ -147,6 +147,60 @@ class CacheManifestUrlsTests(unittest.TestCase):
             self.assertEqual(report["cached_both_count"], 1)
             self.assertIn('"acc"', (raw_dir / f"{sample_id}.jsonl").read_text(encoding="utf-8"))
 
+    def test_cache_manifest_urls_fail_if_incomplete_raises_after_writing_report(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            server_root = root / "server"
+            target = root / "data"
+            artifacts = root / "artifacts"
+            server_root.mkdir()
+            urls, server = _start_fixture_server(server_root, ["clip001.txt"])
+            self.addCleanup(server.shutdown)
+            self.addCleanup(server.server_close)
+            missing_url = urls[0].replace("clip001.txt", "missing.jsonl")
+            (target / "cache" / "manifests").mkdir(parents=True)
+            (target / "cache" / "manifests" / "pretrain_urls.txt").write_text(
+                urls[0] + "\n" + missing_url + "\n",
+                encoding="utf-8",
+            )
+            config = _config(target, artifacts)
+            config["execution"]["fail_if_incomplete"] = True
+
+            with self.assertRaisesRegex(RuntimeError, "incomplete"):
+                cache_manifest_urls(config, smoke=False)
+
+            report = json.loads((artifacts / "manifest_url_cache_full.json").read_text(encoding="utf-8"))
+            cached_manifest = (target / "cache" / "manifests" / "pretrain_full_cached_urls.txt").read_text(
+                encoding="utf-8"
+            ).splitlines()
+            self.assertEqual(report["failed"], 1)
+            self.assertEqual(report["cached_both_count"], 1)
+            self.assertEqual(cached_manifest, [urls[0]])
+
+    def test_cache_manifest_urls_fail_if_incomplete_is_not_enforced_for_smoke(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            server_root = root / "server"
+            target = root / "data"
+            artifacts = root / "artifacts"
+            server_root.mkdir()
+            urls, server = _start_fixture_server(server_root, ["clip001.txt", "clip002.txt", "clip003.txt"])
+            self.addCleanup(server.shutdown)
+            self.addCleanup(server.server_close)
+            (target / "cache" / "manifests").mkdir(parents=True)
+            (target / "cache" / "manifests" / "pretrain_urls.txt").write_text(
+                "\n".join(urls) + "\n",
+                encoding="utf-8",
+            )
+            config = _config(target, artifacts)
+            config["execution"]["smoke_samples"] = 1
+            config["execution"]["fail_if_incomplete"] = True
+
+            result = cache_manifest_urls(config, smoke=True)
+
+            self.assertEqual(result["cached_both_count"], 1)
+            self.assertTrue((target / "cache" / "manifests" / "pretrain_full_cached_urls.smoke.txt").exists())
+
     def test_cache_manifest_urls_rejects_non_modal_provider(self):
         config = _config(Path("/data"), Path("/artifacts"))
         config["execution"]["provider"] = "local"
@@ -160,6 +214,8 @@ class CacheManifestUrlsTests(unittest.TestCase):
         self.assertIn("remote_cache_manifest_urls.remote", source)
         self.assertIn("cache_manifest_urls", source)
         self.assertIn('"numpy==2.2.6"', source)
+        self.assertIn('os.environ.get("MV_DATA_VOLUME", DATA_VOLUME_NAME)', source)
+        self.assertIn('os.environ.get("MV_ARTIFACTS_VOLUME", ARTIFACTS_VOLUME_NAME)', source)
 
 
 def _start_fixture_server(server_root: Path, names: list[str]) -> tuple[list[str], ThreadingHTTPServer]:

@@ -13,6 +13,7 @@ from marginal_value.active.exact_window_blend_rank import validate_active_exact_
 from marginal_value.active.registry import ClipRecord
 from marginal_value.active.spike_hygiene_ablation import validate_spike_hygiene_ablation_config
 from marginal_value.data.build_full_support_shards import validate_build_full_support_shards_config
+from marginal_value.data.cache_manifest_urls import validate_manifest_url_cache_config
 from marginal_value.data.split_manifest import hash_manifest_url, read_manifest_urls
 from marginal_value.logging_utils import log_event
 
@@ -66,6 +67,8 @@ def prepare_hidden_test_run(config: Mapping[str, Any]) -> dict[str, Any]:
     remote_artifact_dir = str(modal.get("remote_artifact_dir", f"/artifacts/active/hidden_test/{run_id}"))
     remote_old_manifest = f"{remote_manifest_dir.rstrip('/')}/pretrain_urls.txt"
     remote_new_manifest = f"{remote_manifest_dir.rstrip('/')}/new_urls.txt"
+    remote_cached_old_manifest = f"{remote_manifest_dir.rstrip('/')}/pretrain_cached_urls.txt"
+    remote_cached_new_manifest = f"{remote_manifest_dir.rstrip('/')}/new_cached_urls.txt"
     query_cache_dir = f"{remote_artifact_dir.rstrip('/')}/query_ts2vec"
 
     representation_options = _ts2vec_representation_options(method)
@@ -75,6 +78,7 @@ def prepare_hidden_test_run(config: Mapping[str, Any]) -> dict[str, Any]:
         representation_options=representation_options,
     )
     output_dirs = {
+        "manifest_url_cache": f"{remote_artifact_dir.rstrip('/')}/manifest_url_cache",
         "window_shards": f"{remote_artifact_dir.rstrip('/')}/window_shards",
         "exact_window_rank": f"{remote_artifact_dir.rstrip('/')}/exact_window_rank",
         "artifact_hygiene_ablation": f"{remote_artifact_dir.rstrip('/')}/artifact_hygiene_ablation",
@@ -85,6 +89,8 @@ def prepare_hidden_test_run(config: Mapping[str, Any]) -> dict[str, Any]:
         artifacts_volume=artifacts_volume,
         remote_old_manifest=remote_old_manifest,
         remote_new_manifest=remote_new_manifest,
+        remote_cached_old_manifest=remote_cached_old_manifest,
+        remote_cached_new_manifest=remote_cached_new_manifest,
         query_cache_dir=query_cache_dir,
         query_shard_dir=str(query_shard_dir),
         output_dirs=output_dirs,
@@ -140,6 +146,8 @@ def validate_hidden_test_run_package(run_dir: str | Path) -> dict[str, Any]:
         root / "manifests" / "new_urls.txt",
         root / "commands.sh",
         root / "README_hidden_test.md",
+        root / "configs" / "cache_old_manifest_urls.json",
+        root / "configs" / "cache_new_manifest_urls.json",
         root / "configs" / "build_full_support_window_shards.json",
         root / "configs" / "active_embedding_precompute_ts2vec_new.json",
         root / "configs" / "active_exact_window_blend_rank.json",
@@ -174,20 +182,37 @@ def load_hidden_test_config(path: str | Path) -> dict[str, Any]:
 
 def _validate_stage_configs(root: Path, plan: Mapping[str, Any]) -> dict[str, Any]:
     configs = _read_stage_configs(root / "configs")
+    cache_old = configs["cache_old_manifest_urls"]
+    cache_new = configs["cache_new_manifest_urls"]
     build = configs["build_full_support_window_shards"]
     precompute = configs["active_embedding_precompute_ts2vec_new"]
     exact = configs["active_exact_window_blend_rank"]
     ablation = configs["active_spike_hygiene_ablation_artifact_gate"]
     package = configs["final_package_artifact_gate"]
 
+    validate_manifest_url_cache_config(cache_old)
+    validate_manifest_url_cache_config(cache_new)
     validate_build_full_support_shards_config(build)
     validate_active_embedding_precompute_config(precompute)
     validate_active_exact_window_blend_rank_config(exact)
     validate_spike_hygiene_ablation_config(ablation)
     _validate_final_package_config_shape(package)
 
-    expected_pretrain = f"{str(plan['remote_manifest_dir']).rstrip('/')}/pretrain_urls.txt"
-    expected_new = f"{str(plan['remote_manifest_dir']).rstrip('/')}/new_urls.txt"
+    expected_source_pretrain = f"{str(plan['remote_manifest_dir']).rstrip('/')}/pretrain_urls.txt"
+    expected_source_new = f"{str(plan['remote_manifest_dir']).rstrip('/')}/new_urls.txt"
+    expected_pretrain = f"{str(plan['remote_manifest_dir']).rstrip('/')}/pretrain_cached_urls.txt"
+    expected_new = f"{str(plan['remote_manifest_dir']).rstrip('/')}/new_cached_urls.txt"
+    if cache_old["target"].get("source_manifest") != expected_source_pretrain:
+        raise ValueError("cache_old config source_manifest does not match run plan.")
+    if cache_old["target"].get("cached_manifest") != expected_pretrain:
+        raise ValueError("cache_old config cached_manifest does not match run plan.")
+    if cache_new["target"].get("source_manifest") != expected_source_new:
+        raise ValueError("cache_new config source_manifest does not match run plan.")
+    if cache_new["target"].get("cached_manifest") != expected_new:
+        raise ValueError("cache_new config cached_manifest does not match run plan.")
+    for label, config in (("cache_old", cache_old), ("cache_new", cache_new)):
+        if not bool(config["execution"].get("fail_if_incomplete", False)):
+            raise ValueError(f"{label} config must fail if the fresh manifest cache is incomplete.")
     for label, config in (("build", build), ("exact", exact), ("ablation", ablation)):
         manifests = config["data"]["manifests"]
         if manifests.get("pretrain") != expected_pretrain:
@@ -223,6 +248,8 @@ def _validate_stage_configs(root: Path, plan: Mapping[str, Any]) -> dict[str, An
 
 def _read_stage_configs(config_dir: Path) -> dict[str, dict[str, Any]]:
     names = {
+        "cache_old_manifest_urls": "cache_old_manifest_urls.json",
+        "cache_new_manifest_urls": "cache_new_manifest_urls.json",
         "build_full_support_window_shards": "build_full_support_window_shards.json",
         "active_embedding_precompute_ts2vec_new": "active_embedding_precompute_ts2vec_new.json",
         "active_exact_window_blend_rank": "active_exact_window_blend_rank.json",
@@ -255,6 +282,8 @@ def _stage_configs(
     artifacts_volume: str,
     remote_old_manifest: str,
     remote_new_manifest: str,
+    remote_cached_old_manifest: str,
+    remote_cached_new_manifest: str,
     query_cache_dir: str,
     query_shard_dir: str,
     output_dirs: Mapping[str, str],
@@ -272,13 +301,57 @@ def _stage_configs(
         "feature_glob": "cache/features/*.npz",
         "raw_glob": "cache/raw/*.jsonl",
         "manifests": {
-            "pretrain": remote_old_manifest,
-            "new": remote_new_manifest,
+            "pretrain": remote_cached_old_manifest,
+            "new": remote_cached_new_manifest,
         },
     }
     exact_output_dir = output_dirs["exact_window_rank"]
     artifact_gate_dir = output_dirs["artifact_hygiene_ablation"]
     return {
+        "cache_old_manifest_urls": {
+            "execution": {
+                "provider": "modal",
+                "target_volume": data_volume,
+                "artifacts_volume": artifacts_volume,
+                "smoke_samples": int(method.get("cache_smoke_samples", 8)),
+                "progress_every": int(method.get("cache_progress_every", 1000)),
+                "workers": int(method.get("cache_workers", 16)),
+                "max_pending": int(method.get("cache_max_pending", 128)),
+                "download_timeout_seconds": float(method.get("cache_download_timeout_seconds", 60.0)),
+                "fail_if_incomplete": True,
+            },
+            "target": {
+                "root": "/data",
+                "source_manifest": remote_old_manifest,
+                "cached_manifest": remote_cached_old_manifest,
+                "feature_dir": "cache/features",
+                "raw_dir": "cache/raw",
+            },
+            "selection": {"strategy": "missing_cache"},
+            "artifacts": {"output_dir": f"{output_dirs['manifest_url_cache'].rstrip('/')}/pretrain"},
+        },
+        "cache_new_manifest_urls": {
+            "execution": {
+                "provider": "modal",
+                "target_volume": data_volume,
+                "artifacts_volume": artifacts_volume,
+                "smoke_samples": int(method.get("cache_smoke_samples", 8)),
+                "progress_every": int(method.get("cache_progress_every", 1000)),
+                "workers": int(method.get("cache_workers", 16)),
+                "max_pending": int(method.get("cache_max_pending", 128)),
+                "download_timeout_seconds": float(method.get("cache_download_timeout_seconds", 60.0)),
+                "fail_if_incomplete": True,
+            },
+            "target": {
+                "root": "/data",
+                "source_manifest": remote_new_manifest,
+                "cached_manifest": remote_cached_new_manifest,
+                "feature_dir": "cache/features",
+                "raw_dir": "cache/raw",
+            },
+            "selection": {"strategy": "missing_cache"},
+            "artifacts": {"output_dir": f"{output_dirs['manifest_url_cache'].rstrip('/')}/new"},
+        },
         "build_full_support_window_shards": {
             "execution": {
                 **common_execution,
@@ -308,7 +381,7 @@ def _stage_configs(
             },
             "data": {
                 **common_data,
-                "manifests": {"new": remote_new_manifest},
+                "manifests": {"new": remote_cached_new_manifest},
             },
             "embeddings": {"cache_dir": query_cache_dir},
             "precompute": {
@@ -393,8 +466,8 @@ def _stage_configs(
             },
             "artifacts": {"output_dir": "final_package"},
             "inputs": {
-                "old_manifest": remote_old_manifest,
-                "new_manifest": remote_new_manifest,
+                "old_manifest": remote_cached_old_manifest,
+                "new_manifest": remote_cached_new_manifest,
             },
             "validation": {"expected_count": int(new_count)},
             "method": {
@@ -416,6 +489,8 @@ def _stage_configs(
 
 def _write_configs(config_dir: Path, configs: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
     names = {
+        "cache_old_manifest_urls": "cache_old_manifest_urls.json",
+        "cache_new_manifest_urls": "cache_new_manifest_urls.json",
         "build_full_support_window_shards": "build_full_support_window_shards.json",
         "active_embedding_precompute_ts2vec_new": "active_embedding_precompute_ts2vec_new.json",
         "active_exact_window_blend_rank": "active_exact_window_blend_rank.json",
@@ -482,16 +557,22 @@ def _commands_text(plan: Mapping[str, Any]) -> str:
 set -euo pipefail
 
 # Run this file from the prepared hidden-test run directory.
-# It does not train a model; it rebuilds exact window-stat support for the
-# provided manifests, embeds the new clips with the frozen TS2Vec checkpoint,
-# ranks, applies the artifact gate, and packages CSVs.
+# It does not train a model; it caches raw/features from the provided
+# manifests, rebuilds exact window-stat support, embeds the new clips with the
+# frozen TS2Vec checkpoint, ranks, applies the artifact gate, and packages CSVs.
 
 RUN_DIR="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"
 REPO_ROOT="${{REPO_ROOT:-$(git -C "$RUN_DIR" rev-parse --show-toplevel 2>/dev/null || pwd)}}"
 cd "$REPO_ROOT"
 
-modal volume put {data_volume} "$RUN_DIR/manifests/pretrain_urls.txt" {remote_manifest_dir}/pretrain_urls.txt --force
-modal volume put {data_volume} "$RUN_DIR/manifests/new_urls.txt" {remote_manifest_dir}/new_urls.txt --force
+export MV_DATA_VOLUME="{data_volume}"
+export MV_ARTIFACTS_VOLUME="{artifacts_volume}"
+
+modal volume put "$MV_DATA_VOLUME" "$RUN_DIR/manifests/pretrain_urls.txt" {remote_manifest_dir}/pretrain_urls.txt --force
+modal volume put "$MV_DATA_VOLUME" "$RUN_DIR/manifests/new_urls.txt" {remote_manifest_dir}/new_urls.txt --force
+
+modal run modal_cache_manifest_urls.py --config-path "$RUN_DIR/configs/cache_old_manifest_urls.json" --run-full
+modal run modal_cache_manifest_urls.py --config-path "$RUN_DIR/configs/cache_new_manifest_urls.json" --run-full
 
 modal run modal_build_full_support_shards.py --config-path "$RUN_DIR/configs/build_full_support_window_shards.json" --run-full --wait-full
 modal run modal_active_embedding_precompute.py --config-path "$RUN_DIR/configs/active_embedding_precompute_ts2vec_new.json" --run-full --skip-smoke --wait-full
@@ -529,12 +610,13 @@ or evaluator feedback.
 ## What It Does
 
 1. Uploads the copied manifests to `{plan["data_volume"]}`.
-2. Rebuilds exact `window_mean_std_pool` support shards for the provided old and
+2. Caches raw JSONL and feature NPZ files for the supplied old/new manifest URLs.
+3. Rebuilds exact `window_mean_std_pool` support shards for the cached old and
    new manifests.
-3. Computes frozen-checkpoint TS2Vec embeddings for the new clips only.
-4. Runs the partial-TS2Vec / exact-window blended k-center selector.
-5. Applies the artifact-aware hygiene rerank.
-6. Packages submission CSVs and diagnostics under `final_package/`.
+4. Computes frozen-checkpoint TS2Vec embeddings for the new clips only.
+5. Runs the partial-TS2Vec / exact-window blended k-center selector.
+6. Applies the artifact-aware hygiene rerank.
+7. Packages submission CSVs and diagnostics under `final_package/`.
 
 ## Inputs
 

@@ -62,6 +62,8 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
             precompute_config = json.loads(
                 (run_dir / "configs" / "active_embedding_precompute_ts2vec_new.json").read_text()
             )
+            cache_old_config = json.loads((run_dir / "configs" / "cache_old_manifest_urls.json").read_text())
+            cache_new_config = json.loads((run_dir / "configs" / "cache_new_manifest_urls.json").read_text())
             package_config = json.loads((run_dir / "configs" / "final_package_artifact_gate.json").read_text())
             commands = (run_dir / "commands.sh").read_text(encoding="utf-8")
             readme = (run_dir / "README_hidden_test.md").read_text(encoding="utf-8")
@@ -75,10 +77,25 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
         self.assertEqual(validation["old_manifest_count"], 2)
         self.assertEqual(validation["new_manifest_count"], 2)
         self.assertEqual(validation["stage_config_validation"]["status"], "valid")
+        self.assertIn("cache_old_manifest_urls", validation["stage_config_validation"]["validated_configs"])
+        self.assertIn("cache_new_manifest_urls", validation["stage_config_validation"]["validated_configs"])
         self.assertTrue(copied_old_manifest_exists)
         self.assertTrue(copied_new_manifest_exists)
-        self.assertEqual(exact_config["data"]["manifests"]["pretrain"], "cache/manifests/hidden_test/unit_run/pretrain_urls.txt")
-        self.assertEqual(exact_config["data"]["manifests"]["new"], "cache/manifests/hidden_test/unit_run/new_urls.txt")
+        self.assertEqual(cache_old_config["target"]["source_manifest"], "cache/manifests/hidden_test/unit_run/pretrain_urls.txt")
+        self.assertEqual(cache_old_config["target"]["cached_manifest"], "cache/manifests/hidden_test/unit_run/pretrain_cached_urls.txt")
+        self.assertTrue(cache_old_config["execution"]["fail_if_incomplete"])
+        self.assertEqual(cache_new_config["target"]["source_manifest"], "cache/manifests/hidden_test/unit_run/new_urls.txt")
+        self.assertEqual(cache_new_config["target"]["cached_manifest"], "cache/manifests/hidden_test/unit_run/new_cached_urls.txt")
+        self.assertTrue(cache_new_config["execution"]["fail_if_incomplete"])
+        self.assertEqual(
+            exact_config["data"]["manifests"]["pretrain"],
+            "cache/manifests/hidden_test/unit_run/pretrain_cached_urls.txt",
+        )
+        self.assertEqual(exact_config["data"]["manifests"]["new"], "cache/manifests/hidden_test/unit_run/new_cached_urls.txt")
+        self.assertEqual(
+            precompute_config["data"]["manifests"]["new"],
+            "cache/manifests/hidden_test/unit_run/new_cached_urls.txt",
+        )
         self.assertEqual(exact_config["ranking"]["left_support_shard_dir"], "/artifacts/frozen/ts2vec_support_shards")
         self.assertIn("/artifacts/active/hidden_test/unit_run/query_ts2vec/embeddings_", exact_config["ranking"]["left_query_shard_dir"])
         self.assertTrue(exact_config["ranking"]["left_query_shard_dir"].endswith("_shards"))
@@ -87,7 +104,15 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
             package_config["source_artifacts"]["source_dir"],
             "/artifacts/active/hidden_test/unit_run/artifact_hygiene_ablation",
         )
-        self.assertIn("modal volume put imu-novelty-subset-data", commands)
+        self.assertIn('export MV_DATA_VOLUME="imu-novelty-subset-data"', commands)
+        self.assertIn('export MV_ARTIFACTS_VOLUME="activelearning-imu-rebuild-cache"', commands)
+        self.assertIn('modal volume put "$MV_DATA_VOLUME"', commands)
+        self.assertIn('modal_cache_manifest_urls.py --config-path "$RUN_DIR/configs/cache_old_manifest_urls.json" --run-full', commands)
+        self.assertIn('modal_cache_manifest_urls.py --config-path "$RUN_DIR/configs/cache_new_manifest_urls.json" --run-full', commands)
+        self.assertLess(
+            commands.index("modal_cache_manifest_urls.py --config-path"),
+            commands.index("modal_build_full_support_shards.py"),
+        )
         self.assertIn("modal_build_full_support_shards.py", commands)
         self.assertIn("modal_active_embedding_precompute.py", commands)
         self.assertIn(
@@ -112,6 +137,7 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
             'modal volume get activelearning-imu-rebuild-cache active/hidden_test/unit_run/artifact_hygiene_ablation "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"',
             commands,
         )
+        self.assertIn("Caches raw JSONL and feature NPZ files", readme)
         self.assertIn("does not use hidden targets", readme)
 
     def test_prepare_hidden_test_run_rejects_duplicate_manifest_urls(self):

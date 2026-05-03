@@ -47,9 +47,11 @@ python -m marginal_value.active.run_hidden_test \
 Then inspect `artifacts/hidden_test_run/README_hidden_test.md` and run
 `artifacts/hidden_test_run/commands.sh` when ready. If the run directory is
 outside the git checkout, set `REPO_ROOT=/path/to/active-learning-v2` before
-running the script. This path rebuilds exact window-stat support for the
-supplied old manifest and computes frozen TS2Vec embeddings for the supplied
-new manifest; it does not train a model or use hidden targets.
+running the script. This path first caches raw JSONL and feature NPZ files from
+the supplied old/new manifest URLs, fails closed if the full cache is
+incomplete, rebuilds exact window-stat support for the cached old manifest, and
+computes frozen TS2Vec embeddings for the cached new manifest. It does not train
+a model or use hidden targets.
 
 Before launching Modal, run the local self-check:
 

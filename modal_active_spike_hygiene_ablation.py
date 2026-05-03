@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import modal
@@ -23,8 +24,11 @@ image = (
     .add_local_python_source("marginal_value")
 )
 
-data_volume = modal.Volume.from_name(DATA_VOLUME_NAME, create_if_missing=False)
-artifacts_volume = modal.Volume.from_name(ARTIFACTS_VOLUME_NAME, create_if_missing=False)
+data_volume = modal.Volume.from_name(os.environ.get("MV_DATA_VOLUME", DATA_VOLUME_NAME), create_if_missing=True)
+artifacts_volume = modal.Volume.from_name(
+    os.environ.get("MV_ARTIFACTS_VOLUME", ARTIFACTS_VOLUME_NAME),
+    create_if_missing=True,
+)
 
 
 @app.function(

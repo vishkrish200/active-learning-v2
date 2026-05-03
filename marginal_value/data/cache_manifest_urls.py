@@ -205,6 +205,14 @@ def cache_manifest_urls(config: dict[str, Any], *, smoke: bool = False) -> dict[
     }
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     log_event("cache_manifest_urls", "done", **report)
+    if not smoke and bool(config["execution"].get("fail_if_incomplete", False)):
+        if failed or len(cached_urls) != len(urls):
+            raise RuntimeError(
+                "Manifest URL cache incomplete: "
+                f"{len(cached_urls)}/{len(urls)} URLs have raw JSONL and feature NPZ; "
+                f"{failed} downloads or feature extractions failed. "
+                f"Report written to {report_path}."
+            )
     return report
 
 

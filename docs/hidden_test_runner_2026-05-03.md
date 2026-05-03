@@ -18,8 +18,10 @@ The generated pipeline is:
 
 ```text
 old manifest + new manifest
-  -> exact window-stat shard build for supplied old/new clips
-  -> frozen TS2Vec embedding precompute for supplied new clips
+  -> raw JSONL + feature cache for supplied old/new URL manifests
+  -> fail-closed cached manifests containing only fully cached clips
+  -> exact window-stat shard build for cached old/new clips
+  -> frozen TS2Vec embedding precompute for cached new clips
   -> partial-TS2Vec / exact-window blended k-center ranking
   -> artifact-aware hygiene rerank
   -> final evaluator-facing CSV package
@@ -36,6 +38,10 @@ This upgrade makes the claim sharper:
 
 - the old/new manifests are explicit inputs;
 - generated configs are bound to those manifests;
+- raw JSONL and window features are cached from the supplied manifest URLs
+  before ranking begins;
+- cache stages fail closed if any full-run manifest URL cannot produce both raw
+  JSONL and feature NPZ;
 - the exact window-stat support view is rebuilt for the supplied old corpus;
 - the expected new-query TS2Vec shard directory is derived deterministically
   from the supplied new manifest and checkpoint metadata;
@@ -49,6 +55,11 @@ This is not heavy training and not a new model.
 It still does not make TS2Vec a full-support exact search. The TS2Vec
 old-support side remains the frozen partial cache. The window-stat old-support
 side is exact for the supplied old manifest.
+
+It also still assumes the frozen TS2Vec checkpoint and partial old-support
+TS2Vec cache are available on the configured artifacts volume. The fresh
+old/new raw-data assumption is removed; the generated commands cache those from
+the supplied manifests.
 
 Correct claim:
 
@@ -102,9 +113,9 @@ The local package preparation is covered by:
 tests/test_active_run_hidden_test.py
 ```
 
-The tests check manifest validation, duplicate rejection, generated config
-paths, Modal commands, final package config wiring, and the explicit
-no-hidden-targets documentation.
+The tests check manifest validation, duplicate rejection, fresh cache config
+wiring, generated config paths, Modal commands, final package config wiring,
+and the explicit no-hidden-targets documentation.
 
 The prepared package can also be validated without launching Modal:
 
