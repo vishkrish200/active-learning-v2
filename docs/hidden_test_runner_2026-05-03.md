@@ -21,6 +21,7 @@ old manifest + new manifest
   -> raw JSONL + feature cache for supplied old/new URL manifests
   -> fail-closed cached manifests containing only fully cached clips
   -> exact window-stat shard build for cached old/new clips
+  -> exact-window old-novelty baseline CSV
   -> frozen TS2Vec embedding precompute for cached new clips
   -> partial-TS2Vec / exact-window blended k-center ranking
   -> artifact-aware hygiene rerank
@@ -43,6 +44,8 @@ This upgrade makes the claim sharper:
 - cache stages fail closed if any full-run manifest URL cannot produce both raw
   JSONL and feature NPZ;
 - the exact window-stat support view is rebuilt for the supplied old corpus;
+- a cold-runnable exact-window old-novelty baseline is emitted without any
+  TS2Vec old-support dependency;
 - the expected new-query TS2Vec shard directory is derived deterministically
   from the supplied new manifest and checkpoint metadata;
 - the runner documents that it does not use hidden targets, labels, candidate
@@ -60,6 +63,11 @@ It also still assumes the frozen TS2Vec checkpoint and partial old-support
 TS2Vec cache are available on the configured artifacts volume. The fresh
 old/new raw-data assumption is removed; the generated commands cache those from
 the supplied manifests.
+
+If the TS2Vec cache dependency is undesirable for a reviewer, use the generated
+`final_package_exact_window_old_novelty/ranked_new_clips.csv` baseline. That
+baseline is exact full-window old-corpus novelty over the supplied old manifest
+and does not require TS2Vec support embeddings.
 
 Correct claim:
 
@@ -97,6 +105,12 @@ Primary package output:
 
 ```text
 artifacts/hidden_test_run/final_package/ranked_new_clips.csv
+```
+
+Cold-runnable exact-window baseline:
+
+```text
+artifacts/hidden_test_run/final_package_exact_window_old_novelty/ranked_new_clips.csv
 ```
 
 Backup ID-format output:

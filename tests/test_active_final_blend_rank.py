@@ -307,6 +307,59 @@ class ActiveFinalBlendRankTests(unittest.TestCase):
         self.assertEqual(report["topk_quality"]["k2"]["quality_failure_rate"], 0.0)
         self.assertEqual(len(diagnostics), 3)
 
+    def test_exact_window_old_novelty_mode_uses_only_full_window_shards(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            urls = _write_fixture(root)
+            shard_result = run_build_full_support_shards(_window_shard_config(root), smoke=True)
+            config = {
+                "execution": {
+                    "provider": "modal",
+                    "allow_local_paths_for_tests": True,
+                    "smoke_query_samples": 3,
+                    "smoke_window_support_samples": 3,
+                },
+                "data": {
+                    "root": str(root),
+                    "feature_glob": "cache/features/*.npz",
+                    "raw_glob": "cache/raw/*.jsonl",
+                    "quality_metadata": "quality.jsonl",
+                    "manifests": {
+                        "pretrain": "cache/manifests/pretrain_full_cached_urls.txt",
+                        "new": "cache/manifests/new_urls.txt",
+                    },
+                },
+                "ranking": {
+                    "selector_mode": "old_novelty_only",
+                    "support_split": "pretrain",
+                    "query_split": "new",
+                    "left_representation": "window_mean_std_pool",
+                    "right_representation": "window_mean_std_pool",
+                    "right_support_shard_manifest": shard_result["manifest_path"],
+                    "old_novelty_k": 1,
+                    "quality_threshold": 0.85,
+                    "max_stationary_fraction": 0.90,
+                    "max_abs_value": 60.0,
+                    "cluster_similarity_threshold": 0.995,
+                    "top_k_values": [2, 3],
+                },
+                "artifacts": {"output_dir": str(root / "old_novelty_out")},
+            }
+
+            validate_active_exact_window_blend_rank_config(config)
+            result = run_active_exact_window_blend_rank(config, smoke=True)
+            report = json.loads(Path(result["report_path"]).read_text(encoding="utf-8"))
+            diagnostics = _read_csv(Path(result["diagnostics_path"]))
+
+        self.assertEqual(result["ranking_mode"], "exact_window_old_novelty_only")
+        self.assertEqual(report["selector"], "exact_window_old_novelty_window_mean_std_pool")
+        self.assertEqual(report["left_support_cache"]["status"], "not_used")
+        self.assertEqual(report["query_embedding_cache"]["status"], "full_support_shard_hit")
+        self.assertEqual(report["n_left_support"], 0)
+        self.assertEqual(report["n_right_support"], 3)
+        self.assertEqual(report["topk_quality"]["k2"]["quality_failure_rate"], 0.0)
+        self.assertEqual(diagnostics[-1]["sample_id"], hash_manifest_url(urls["low_quality_new"]))
+
     def test_modal_exact_window_blend_rank_entrypoint_and_config_validate(self):
         source = Path("modal_active_exact_window_blend_rank.py").read_text(encoding="utf-8")
         config = json.loads(Path("configs/active_exact_window_blend_rank.json").read_text(encoding="utf-8"))

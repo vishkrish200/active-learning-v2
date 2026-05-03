@@ -59,12 +59,16 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
             )
             validation = validate_hidden_test_run_package(run_dir)
             exact_config = json.loads((run_dir / "configs" / "active_exact_window_blend_rank.json").read_text())
+            old_novelty_config = json.loads((run_dir / "configs" / "active_exact_window_old_novelty_rank.json").read_text())
             precompute_config = json.loads(
                 (run_dir / "configs" / "active_embedding_precompute_ts2vec_new.json").read_text()
             )
             cache_old_config = json.loads((run_dir / "configs" / "cache_old_manifest_urls.json").read_text())
             cache_new_config = json.loads((run_dir / "configs" / "cache_new_manifest_urls.json").read_text())
             package_config = json.loads((run_dir / "configs" / "final_package_artifact_gate.json").read_text())
+            old_novelty_package_config = json.loads(
+                (run_dir / "configs" / "final_package_exact_window_old_novelty.json").read_text()
+            )
             commands = (run_dir / "commands.sh").read_text(encoding="utf-8")
             readme = (run_dir / "README_hidden_test.md").read_text(encoding="utf-8")
             copied_old_manifest_exists = (run_dir / "manifests" / "pretrain_urls.txt").exists()
@@ -79,6 +83,7 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
         self.assertEqual(validation["stage_config_validation"]["status"], "valid")
         self.assertIn("cache_old_manifest_urls", validation["stage_config_validation"]["validated_configs"])
         self.assertIn("cache_new_manifest_urls", validation["stage_config_validation"]["validated_configs"])
+        self.assertIn("active_exact_window_old_novelty_rank", validation["stage_config_validation"]["validated_configs"])
         self.assertTrue(copied_old_manifest_exists)
         self.assertTrue(copied_new_manifest_exists)
         self.assertEqual(cache_old_config["target"]["source_manifest"], "cache/manifests/hidden_test/unit_run/pretrain_urls.txt")
@@ -100,10 +105,23 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
         self.assertIn("/artifacts/active/hidden_test/unit_run/query_ts2vec/embeddings_", exact_config["ranking"]["left_query_shard_dir"])
         self.assertTrue(exact_config["ranking"]["left_query_shard_dir"].endswith("_shards"))
         self.assertEqual(precompute_config["embeddings"]["cache_dir"], "/artifacts/active/hidden_test/unit_run/query_ts2vec")
+        self.assertEqual(old_novelty_config["ranking"]["selector_mode"], "old_novelty_only")
+        self.assertEqual(old_novelty_config["ranking"]["left_representation"], "window_mean_std_pool")
+        self.assertEqual(old_novelty_config["ranking"]["right_support_shard_dir"], "/artifacts/active/hidden_test/unit_run/window_shards")
+        self.assertNotIn("left_support_shard_dir", old_novelty_config["ranking"])
+        self.assertEqual(
+            old_novelty_config["data"]["manifests"]["pretrain"],
+            "cache/manifests/hidden_test/unit_run/pretrain_cached_urls.txt",
+        )
         self.assertEqual(
             package_config["source_artifacts"]["source_dir"],
             "/artifacts/active/hidden_test/unit_run/artifact_hygiene_ablation",
         )
+        self.assertEqual(
+            old_novelty_package_config["source_artifacts"]["source_dir"],
+            "/artifacts/active/hidden_test/unit_run/exact_window_old_novelty_rank",
+        )
+        self.assertIn("exact-window old-novelty baseline", old_novelty_package_config["method"]["name"])
         self.assertIn('export MV_DATA_VOLUME="imu-novelty-subset-data"', commands)
         self.assertIn('export MV_ARTIFACTS_VOLUME="activelearning-imu-rebuild-cache"', commands)
         self.assertIn('modal volume put "$MV_DATA_VOLUME"', commands)
@@ -114,6 +132,14 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
             commands.index("modal_build_full_support_shards.py"),
         )
         self.assertIn("modal_build_full_support_shards.py", commands)
+        self.assertIn(
+            'modal_active_exact_window_blend_rank.py --config-path "$RUN_DIR/configs/active_exact_window_old_novelty_rank.json" --run-full --skip-smoke --wait-full',
+            commands,
+        )
+        self.assertLess(
+            commands.index("active_exact_window_old_novelty_rank.json"),
+            commands.index("active_embedding_precompute_ts2vec_new.json"),
+        )
         self.assertIn("modal_active_embedding_precompute.py", commands)
         self.assertIn(
             'modal_active_embedding_precompute.py --config-path "$RUN_DIR/configs/active_embedding_precompute_ts2vec_new.json" --run-full --skip-smoke --wait-full',
@@ -133,11 +159,14 @@ class ActiveRunHiddenTestTests(unittest.TestCase):
         )
         self.assertIn("spike_hygiene_ablation_artifact_gate_diagnostics_full.csv", commands)
         self.assertIn("spike_hygiene_ablation_report_full.json", commands)
+        self.assertIn("final_package_exact_window_old_novelty", commands)
+        self.assertIn("active_exact_window_blend_submission_full_new_worker_id.csv", commands)
         self.assertNotIn(
             'modal volume get activelearning-imu-rebuild-cache active/hidden_test/unit_run/artifact_hygiene_ablation "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"',
             commands,
         )
         self.assertIn("Caches raw JSONL and feature NPZ files", readme)
+        self.assertIn("exact-window old-novelty baseline", readme)
         self.assertIn("does not use hidden targets", readme)
 
     def test_prepare_hidden_test_run_rejects_duplicate_manifest_urls(self):

@@ -80,6 +80,7 @@ def prepare_hidden_test_run(config: Mapping[str, Any]) -> dict[str, Any]:
     output_dirs = {
         "manifest_url_cache": f"{remote_artifact_dir.rstrip('/')}/manifest_url_cache",
         "window_shards": f"{remote_artifact_dir.rstrip('/')}/window_shards",
+        "exact_window_old_novelty_rank": f"{remote_artifact_dir.rstrip('/')}/exact_window_old_novelty_rank",
         "exact_window_rank": f"{remote_artifact_dir.rstrip('/')}/exact_window_rank",
         "artifact_hygiene_ablation": f"{remote_artifact_dir.rstrip('/')}/artifact_hygiene_ablation",
     }
@@ -149,10 +150,12 @@ def validate_hidden_test_run_package(run_dir: str | Path) -> dict[str, Any]:
         root / "configs" / "cache_old_manifest_urls.json",
         root / "configs" / "cache_new_manifest_urls.json",
         root / "configs" / "build_full_support_window_shards.json",
+        root / "configs" / "active_exact_window_old_novelty_rank.json",
         root / "configs" / "active_embedding_precompute_ts2vec_new.json",
         root / "configs" / "active_exact_window_blend_rank.json",
         root / "configs" / "active_spike_hygiene_ablation_artifact_gate.json",
         root / "configs" / "final_package_artifact_gate.json",
+        root / "configs" / "final_package_exact_window_old_novelty.json",
     ]
     missing = [str(path) for path in required_files if not path.exists()]
     if missing:
@@ -185,18 +188,22 @@ def _validate_stage_configs(root: Path, plan: Mapping[str, Any]) -> dict[str, An
     cache_old = configs["cache_old_manifest_urls"]
     cache_new = configs["cache_new_manifest_urls"]
     build = configs["build_full_support_window_shards"]
+    old_novelty = configs["active_exact_window_old_novelty_rank"]
     precompute = configs["active_embedding_precompute_ts2vec_new"]
     exact = configs["active_exact_window_blend_rank"]
     ablation = configs["active_spike_hygiene_ablation_artifact_gate"]
     package = configs["final_package_artifact_gate"]
+    old_novelty_package = configs["final_package_exact_window_old_novelty"]
 
     validate_manifest_url_cache_config(cache_old)
     validate_manifest_url_cache_config(cache_new)
     validate_build_full_support_shards_config(build)
+    validate_active_exact_window_blend_rank_config(old_novelty)
     validate_active_embedding_precompute_config(precompute)
     validate_active_exact_window_blend_rank_config(exact)
     validate_spike_hygiene_ablation_config(ablation)
     _validate_final_package_config_shape(package)
+    _validate_final_package_config_shape(old_novelty_package)
 
     expected_source_pretrain = f"{str(plan['remote_manifest_dir']).rstrip('/')}/pretrain_urls.txt"
     expected_source_new = f"{str(plan['remote_manifest_dir']).rstrip('/')}/new_urls.txt"
@@ -213,7 +220,7 @@ def _validate_stage_configs(root: Path, plan: Mapping[str, Any]) -> dict[str, An
     for label, config in (("cache_old", cache_old), ("cache_new", cache_new)):
         if not bool(config["execution"].get("fail_if_incomplete", False)):
             raise ValueError(f"{label} config must fail if the fresh manifest cache is incomplete.")
-    for label, config in (("build", build), ("exact", exact), ("ablation", ablation)):
+    for label, config in (("build", build), ("old_novelty", old_novelty), ("exact", exact), ("ablation", ablation)):
         manifests = config["data"]["manifests"]
         if manifests.get("pretrain") != expected_pretrain:
             raise ValueError(f"{label} config pretrain manifest does not match run plan.")
@@ -230,6 +237,12 @@ def _validate_stage_configs(root: Path, plan: Mapping[str, Any]) -> dict[str, An
         raise ValueError("exact ranking.left_query_shard_dir does not match the run plan query_shard_dir.")
     if str(exact["ranking"]["right_support_shard_dir"]) != str(build["shards"]["output_dir"]):
         raise ValueError("exact ranking.right_support_shard_dir must match build shards.output_dir.")
+    if str(old_novelty["ranking"].get("selector_mode")) != "old_novelty_only":
+        raise ValueError("old_novelty ranking.selector_mode must be old_novelty_only.")
+    if str(old_novelty["ranking"]["right_support_shard_dir"]) != str(build["shards"]["output_dir"]):
+        raise ValueError("old_novelty ranking.right_support_shard_dir must match build shards.output_dir.")
+    if "left_support_shard_dir" in old_novelty["ranking"]:
+        raise ValueError("old_novelty config must not depend on a partial left support shard.")
 
     exact_output_dir = str(exact["artifacts"]["output_dir"]).rstrip("/")
     expected_diagnostics = f"{exact_output_dir}/active_exact_window_blend_diagnostics_full.csv"
@@ -237,8 +250,12 @@ def _validate_stage_configs(root: Path, plan: Mapping[str, Any]) -> dict[str, An
         raise ValueError("ablation artifacts.exact_diagnostics_path does not match exact ranking output.")
     if str(package["source_artifacts"]["source_dir"]) != str(ablation["artifacts"]["output_dir"]):
         raise ValueError("final package source_artifacts.source_dir must match ablation artifacts.output_dir.")
+    if str(old_novelty_package["source_artifacts"]["source_dir"]) != str(old_novelty["artifacts"]["output_dir"]):
+        raise ValueError("old-novelty final package source_artifacts.source_dir must match old-novelty output.")
     if int(package["validation"]["expected_count"]) != int(plan["new_manifest_count"]):
         raise ValueError("final package validation.expected_count does not match new manifest count.")
+    if int(old_novelty_package["validation"]["expected_count"]) != int(plan["new_manifest_count"]):
+        raise ValueError("old-novelty final package validation.expected_count does not match new manifest count.")
 
     return {
         "status": "valid",
@@ -251,10 +268,12 @@ def _read_stage_configs(config_dir: Path) -> dict[str, dict[str, Any]]:
         "cache_old_manifest_urls": "cache_old_manifest_urls.json",
         "cache_new_manifest_urls": "cache_new_manifest_urls.json",
         "build_full_support_window_shards": "build_full_support_window_shards.json",
+        "active_exact_window_old_novelty_rank": "active_exact_window_old_novelty_rank.json",
         "active_embedding_precompute_ts2vec_new": "active_embedding_precompute_ts2vec_new.json",
         "active_exact_window_blend_rank": "active_exact_window_blend_rank.json",
         "active_spike_hygiene_ablation_artifact_gate": "active_spike_hygiene_ablation_artifact_gate.json",
         "final_package_artifact_gate": "final_package_artifact_gate.json",
+        "final_package_exact_window_old_novelty": "final_package_exact_window_old_novelty.json",
     }
     configs: dict[str, dict[str, Any]] = {}
     for key, filename in names.items():
@@ -373,6 +392,37 @@ def _stage_configs(
                 "progress_every_shards": 1,
             },
         },
+        "active_exact_window_old_novelty_rank": {
+            "execution": {
+                **common_execution,
+                "timeout_seconds": int(method.get("old_novelty_ranking_timeout_seconds", 7200)),
+                "smoke_query_samples": int(method.get("smoke_query_samples", 64)),
+                "smoke_window_support_samples": int(method.get("smoke_window_support_samples", 512)),
+            },
+            "data": common_data,
+            "embeddings": {"cache_dir": query_cache_dir},
+            "ranking": {
+                "selector_mode": "old_novelty_only",
+                "support_split": "pretrain",
+                "query_split": "new",
+                "left_representation": "window_mean_std_pool",
+                "right_representation": "window_mean_std_pool",
+                "old_novelty_k": int(method.get("old_novelty_k", 10)),
+                "quality_threshold": float(method.get("quality_threshold", 0.85)),
+                "max_stationary_fraction": float(method.get("max_stationary_fraction", 0.90)),
+                "max_abs_value": float(method.get("max_abs_value", 60.0)),
+                "cluster_similarity_threshold": float(method.get("cluster_similarity_threshold", 0.995)),
+                "right_support_shard_dir": output_dirs["window_shards"],
+                "max_query_clips": int(method.get("max_query_clips", DEFAULT_MAX_QUERY_CLIPS)),
+                "fail_if_query_exceeds_max": True,
+                "top_k_values": [int(value) for value in method.get("top_k_values", DEFAULT_TOP_K_VALUES)],
+            },
+            "quality": {
+                "sample_rate": float(method.get("sample_rate", 30.0)),
+                "max_samples_per_clip": int(method.get("raw_shape_max_samples", 5400)),
+            },
+            "artifacts": {"output_dir": output_dirs["exact_window_old_novelty_rank"]},
+        },
         "active_embedding_precompute_ts2vec_new": {
             "execution": {
                 **common_execution,
@@ -484,6 +534,34 @@ def _stage_configs(
                 ],
             },
         },
+        "final_package_exact_window_old_novelty": {
+            "source_artifacts": {
+                "source_dir": output_dirs["exact_window_old_novelty_rank"],
+                "primary_submission": "active_exact_window_blend_submission_full_new_worker_id.csv",
+                "backup_worker_submission": "active_exact_window_blend_submission_full_worker_id.csv",
+                "diagnostics": "active_exact_window_blend_diagnostics_full.csv",
+                "selector_report": "active_exact_window_blend_report_full.json",
+            },
+            "artifacts": {"output_dir": "final_package_exact_window_old_novelty"},
+            "inputs": {
+                "old_manifest": remote_cached_old_manifest,
+                "new_manifest": remote_cached_new_manifest,
+            },
+            "validation": {"expected_count": int(new_count)},
+            "method": {
+                "name": "exact-window old-novelty baseline",
+                "primary_submission_id_column": "new_worker_id",
+                "claim": (
+                    "Quality-gated old-corpus novelty ranking using exact full-window-stat "
+                    "support rebuilt from the supplied old manifest."
+                ),
+                "known_limitations": [
+                    "This baseline does not use TS2Vec.",
+                    "It is included as a cold-runnable provenance baseline for held-out evaluation.",
+                    "It ranks by exact full-window old-corpus novelty rather than learned temporal embeddings.",
+                ],
+            },
+        },
     }
 
 
@@ -492,10 +570,12 @@ def _write_configs(config_dir: Path, configs: Mapping[str, Mapping[str, Any]]) -
         "cache_old_manifest_urls": "cache_old_manifest_urls.json",
         "cache_new_manifest_urls": "cache_new_manifest_urls.json",
         "build_full_support_window_shards": "build_full_support_window_shards.json",
+        "active_exact_window_old_novelty_rank": "active_exact_window_old_novelty_rank.json",
         "active_embedding_precompute_ts2vec_new": "active_embedding_precompute_ts2vec_new.json",
         "active_exact_window_blend_rank": "active_exact_window_blend_rank.json",
         "active_spike_hygiene_ablation_artifact_gate": "active_spike_hygiene_ablation_artifact_gate.json",
         "final_package_artifact_gate": "final_package_artifact_gate.json",
+        "final_package_exact_window_old_novelty": "final_package_exact_window_old_novelty.json",
     }
     written: dict[str, str] = {}
     for key, filename in names.items():
@@ -522,6 +602,7 @@ def _run_plan(
     config_paths: Mapping[str, str],
 ) -> dict[str, Any]:
     artifact_gate_dir = output_dirs["artifact_hygiene_ablation"]
+    old_novelty_dir = output_dirs["exact_window_old_novelty_rank"]
     return {
         "status": "prepared",
         "run_id": run_id,
@@ -537,6 +618,8 @@ def _run_plan(
         "query_shard_dir": query_shard_dir,
         "source_artifact_dir": artifact_gate_dir,
         "source_artifact_volume_path": _artifacts_volume_path(artifact_gate_dir),
+        "old_novelty_source_artifact_dir": old_novelty_dir,
+        "old_novelty_source_artifact_volume_path": _artifacts_volume_path(old_novelty_dir),
         "config_paths": dict(config_paths),
         "final_outputs": {
             "primary_submission": "final_package/ranked_new_clips.csv",
@@ -544,6 +627,9 @@ def _run_plan(
             "backup_worker_submission": "final_package/ranked_new_clips_worker_id.csv",
             "diagnostics": "final_package/diagnostics.csv",
             "selector_report": "final_package/selector_report.json",
+            "exact_window_old_novelty_primary": "final_package_exact_window_old_novelty/ranked_new_clips.csv",
+            "exact_window_old_novelty_new_worker": "final_package_exact_window_old_novelty/ranked_new_clips_new_worker_id.csv",
+            "exact_window_old_novelty_worker": "final_package_exact_window_old_novelty/ranked_new_clips_worker_id.csv",
         },
     }
 
@@ -553,6 +639,7 @@ def _commands_text(plan: Mapping[str, Any]) -> str:
     artifacts_volume = str(plan["artifacts_volume"])
     remote_manifest_dir = str(plan["remote_manifest_dir"]).rstrip("/")
     source_artifact_volume_path = str(plan["source_artifact_volume_path"])
+    old_novelty_volume_path = str(plan["old_novelty_source_artifact_volume_path"])
     return f"""#!/usr/bin/env bash
 set -euo pipefail
 
@@ -575,10 +662,18 @@ modal run modal_cache_manifest_urls.py --config-path "$RUN_DIR/configs/cache_old
 modal run modal_cache_manifest_urls.py --config-path "$RUN_DIR/configs/cache_new_manifest_urls.json" --run-full
 
 modal run modal_build_full_support_shards.py --config-path "$RUN_DIR/configs/build_full_support_window_shards.json" --run-full --wait-full
+modal run modal_active_exact_window_blend_rank.py --config-path "$RUN_DIR/configs/active_exact_window_old_novelty_rank.json" --run-full --skip-smoke --wait-full
 modal run modal_active_embedding_precompute.py --config-path "$RUN_DIR/configs/active_embedding_precompute_ts2vec_new.json" --run-full --skip-smoke --wait-full
 
 modal run modal_active_exact_window_blend_rank.py --config-path "$RUN_DIR/configs/active_exact_window_blend_rank.json" --run-full --skip-smoke --wait-full
 modal run modal_active_spike_hygiene_ablation.py --config-path "$RUN_DIR/configs/active_spike_hygiene_ablation_artifact_gate.json"
+
+rm -rf "$RUN_DIR/source_artifacts/exact_window_old_novelty"
+mkdir -p "$RUN_DIR/source_artifacts/exact_window_old_novelty"
+modal volume get {artifacts_volume} {old_novelty_volume_path}/active_exact_window_blend_submission_full_new_worker_id.csv "$RUN_DIR/source_artifacts/exact_window_old_novelty/active_exact_window_blend_submission_full_new_worker_id.csv" --force
+modal volume get {artifacts_volume} {old_novelty_volume_path}/active_exact_window_blend_submission_full_worker_id.csv "$RUN_DIR/source_artifacts/exact_window_old_novelty/active_exact_window_blend_submission_full_worker_id.csv" --force
+modal volume get {artifacts_volume} {old_novelty_volume_path}/active_exact_window_blend_diagnostics_full.csv "$RUN_DIR/source_artifacts/exact_window_old_novelty/active_exact_window_blend_diagnostics_full.csv" --force
+modal volume get {artifacts_volume} {old_novelty_volume_path}/active_exact_window_blend_report_full.json "$RUN_DIR/source_artifacts/exact_window_old_novelty/active_exact_window_blend_report_full.json" --force
 
 rm -rf "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"
 mkdir -p "$RUN_DIR/source_artifacts/artifact_hygiene_ablation"
@@ -592,6 +687,12 @@ python3 -m marginal_value.active.run_final \\
   --config-path "$RUN_DIR/configs/final_package_artifact_gate.json" \\
   --source-dir "$RUN_DIR/source_artifacts/artifact_hygiene_ablation" \\
   --output-dir "$RUN_DIR/final_package" \\
+  --expected-count {int(plan["new_manifest_count"])}
+
+python3 -m marginal_value.active.run_final \\
+  --config-path "$RUN_DIR/configs/final_package_exact_window_old_novelty.json" \\
+  --source-dir "$RUN_DIR/source_artifacts/exact_window_old_novelty" \\
+  --output-dir "$RUN_DIR/final_package_exact_window_old_novelty" \\
   --expected-count {int(plan["new_manifest_count"])}
 """
 
@@ -613,10 +714,12 @@ or evaluator feedback.
 2. Caches raw JSONL and feature NPZ files for the supplied old/new manifest URLs.
 3. Rebuilds exact `window_mean_std_pool` support shards for the cached old and
    new manifests.
-4. Computes frozen-checkpoint TS2Vec embeddings for the new clips only.
-5. Runs the partial-TS2Vec / exact-window blended k-center selector.
-6. Applies the artifact-aware hygiene rerank.
-7. Packages submission CSVs and diagnostics under `final_package/`.
+4. Emits an exact-window old-novelty baseline that does not depend on TS2Vec.
+5. Computes frozen-checkpoint TS2Vec embeddings for the new clips only.
+6. Runs the partial-TS2Vec / exact-window blended k-center selector.
+7. Applies the artifact-aware hygiene rerank.
+8. Packages submission CSVs and diagnostics under `final_package/` and
+   `final_package_exact_window_old_novelty/`.
 
 ## Inputs
 
@@ -642,6 +745,10 @@ or evaluator feedback.
 Primary output after the command finishes:
 
 `{plan["final_outputs"]["primary_submission"]}`
+
+Cold-runnable exact-window baseline:
+
+`{plan["final_outputs"]["exact_window_old_novelty_primary"]}`
 """
 
 

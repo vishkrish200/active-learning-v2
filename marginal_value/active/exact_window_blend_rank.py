@@ -66,42 +66,57 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
 
     left_rep = str(ranking_config["left_representation"])
     right_rep = str(ranking_config.get("right_representation", "window_mean_std_pool"))
+    selector_mode = str(ranking_config.get("selector_mode", "blend_kcenter"))
+    if selector_mode not in {"blend_kcenter", "old_novelty_only"}:
+        raise ValueError("ranking.selector_mode must be 'blend_kcenter' or 'old_novelty_only'.")
     if right_rep != "window_mean_std_pool":
         raise ValueError("Exact-window blend currently requires right_representation='window_mean_std_pool'.")
+    uses_left_cache = selector_mode != "old_novelty_only"
 
     support_ids_allowed = {clip.sample_id for clip in all_support_clips}
-    log_event(
-        "active_exact_window_blend_rank",
-        "left_support_load_start",
-        mode=mode,
-        representation=left_rep,
-        shard_dir=str(ranking_config["left_support_shard_dir"]),
-    )
-    partial_left = _load_partial_embedding_shards(
-        Path(str(ranking_config["left_support_shard_dir"])),
-        representations=[left_rep],
-        allowed_sample_ids=support_ids_allowed,
-        max_shards=_optional_int(ranking_config.get("left_support_max_shards")),
-    )
-    left_support = partial_left["embeddings"][left_rep]
-    left_support_ids = list(partial_left["sample_ids"])
-    if smoke:
-        smoke_support = int(config["execution"].get("smoke_left_support_samples", config["execution"].get("smoke_window_support_samples", 256)))
-        left_support = left_support[:smoke_support]
-        left_support_ids = left_support_ids[:smoke_support]
-    min_left_support = 1 if smoke else int(ranking_config.get("min_left_support_clips", 1))
-    if len(left_support) < min_left_support:
-        raise ValueError(
-            f"Exact-window ranking found only {len(left_support)} cached '{left_rep}' support embeddings; "
-            f"required at least {min_left_support}."
+    if uses_left_cache:
+        log_event(
+            "active_exact_window_blend_rank",
+            "left_support_load_start",
+            mode=mode,
+            representation=left_rep,
+            shard_dir=str(ranking_config["left_support_shard_dir"]),
         )
-    log_event(
-        "active_exact_window_blend_rank",
-        "left_support_load_done",
-        mode=mode,
-        representation=left_rep,
-        n_left_support=len(left_support),
-    )
+        partial_left = _load_partial_embedding_shards(
+            Path(str(ranking_config["left_support_shard_dir"])),
+            representations=[left_rep],
+            allowed_sample_ids=support_ids_allowed,
+            max_shards=_optional_int(ranking_config.get("left_support_max_shards")),
+        )
+        left_support = partial_left["embeddings"][left_rep]
+        left_support_ids = list(partial_left["sample_ids"])
+        if smoke:
+            smoke_support = int(config["execution"].get("smoke_left_support_samples", config["execution"].get("smoke_window_support_samples", 256)))
+            left_support = left_support[:smoke_support]
+            left_support_ids = left_support_ids[:smoke_support]
+        min_left_support = 1 if smoke else int(ranking_config.get("min_left_support_clips", 1))
+        if len(left_support) < min_left_support:
+            raise ValueError(
+                f"Exact-window ranking found only {len(left_support)} cached '{left_rep}' support embeddings; "
+                f"required at least {min_left_support}."
+            )
+        log_event(
+            "active_exact_window_blend_rank",
+            "left_support_load_done",
+            mode=mode,
+            representation=left_rep,
+            n_left_support=len(left_support),
+        )
+    else:
+        left_support_ids = []
+        left_support = np.empty((0, 0), dtype="float32")
+        log_event(
+            "active_exact_window_blend_rank",
+            "left_support_load_skipped",
+            mode=mode,
+            selector_mode=selector_mode,
+            reason="exact-window old-novelty mode uses full window shards only",
+        )
 
     shard_manifest_path = _right_support_manifest_path(ranking_config, mode=mode)
     log_event(
@@ -139,43 +154,51 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
         n_right_query=len(right_query),
     )
 
-    left_query_shard_dir = _left_query_shard_dir(ranking_config, mode=mode)
-    log_event(
-        "active_exact_window_blend_rank",
-        "left_query_load_start",
-        mode=mode,
-        representation=left_rep,
-        n_query=len(query_clips),
-        shard_dir=str(left_query_shard_dir),
-    )
-    partial_query = _load_partial_embedding_shards(
-        left_query_shard_dir,
-        representations=[left_rep],
-        allowed_sample_ids=set(query_ids),
-        max_shards=_optional_int(ranking_config.get("left_query_max_shards")),
-    )
-    left_query = _matrix_for_ids(
-        partial_query["sample_ids"],
-        partial_query["embeddings"][left_rep],
-        query_ids,
-        label=f"{left_rep} query shard",
-    )
-    query_cache_report = {
-        "status": "partial_shard_hit",
-        "path": str(left_query_shard_dir),
-        "n_clips": int(len(partial_query["sample_ids"])),
-    }
-    log_event(
-        "active_exact_window_blend_rank",
-        "left_query_load_done",
-        mode=mode,
-        representation=left_rep,
-        n_query=len(left_query),
-        cache_report=query_cache_report,
-    )
-
-    old_k_left = min(max(1, int(ranking_config.get("old_novelty_k", 10))), len(left_support_ids))
     old_k_right = min(max(1, int(ranking_config.get("old_novelty_k", 10))), len(right_support_ids))
+    if uses_left_cache:
+        left_query_shard_dir = _left_query_shard_dir(ranking_config, mode=mode)
+        log_event(
+            "active_exact_window_blend_rank",
+            "left_query_load_start",
+            mode=mode,
+            representation=left_rep,
+            n_query=len(query_clips),
+            shard_dir=str(left_query_shard_dir),
+        )
+        partial_query = _load_partial_embedding_shards(
+            left_query_shard_dir,
+            representations=[left_rep],
+            allowed_sample_ids=set(query_ids),
+            max_shards=_optional_int(ranking_config.get("left_query_max_shards")),
+        )
+        left_query = _matrix_for_ids(
+            partial_query["sample_ids"],
+            partial_query["embeddings"][left_rep],
+            query_ids,
+            label=f"{left_rep} query shard",
+        )
+        query_cache_report = {
+            "status": "partial_shard_hit",
+            "path": str(left_query_shard_dir),
+            "n_clips": int(len(partial_query["sample_ids"])),
+        }
+        log_event(
+            "active_exact_window_blend_rank",
+            "left_query_load_done",
+            mode=mode,
+            representation=left_rep,
+            n_query=len(left_query),
+            cache_report=query_cache_report,
+        )
+        old_k_left = min(max(1, int(ranking_config.get("old_novelty_k", 10))), len(left_support_ids))
+    else:
+        left_query = right_query
+        old_k_left = 0
+        query_cache_report = {
+            "status": "full_support_shard_hit",
+            "path": str(shard_manifest_path),
+            "n_clips": int(len(right_query)),
+        }
     log_event(
         "active_exact_window_blend_rank",
         "novelty_compute_start",
@@ -186,8 +209,11 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
         n_right_support=len(right_support),
         n_query=len(query_clips),
     )
-    _left_order, left_novelty = old_novelty_only_order(left_support, left_query, k=old_k_left)
     _right_order, right_novelty = old_novelty_only_order(right_support, right_query, k=old_k_right)
+    if uses_left_cache:
+        _left_order, left_novelty = old_novelty_only_order(left_support, left_query, k=old_k_left)
+    else:
+        left_novelty = right_novelty
     rows = _candidate_rows(
         clips=query_clips,
         left_representation=left_rep,
@@ -214,24 +240,37 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
     quality_threshold = float(ranking_config.get("quality_threshold", 0.85))
     max_stationary_fraction = _optional_float(ranking_config.get("max_stationary_fraction", 0.90))
     max_abs_value = _optional_float(ranking_config.get("max_abs_value", 60.0))
-    order = blended_kcenter_greedy_quality_gated_order(
-        left_support,
-        left_query,
-        right_support,
-        right_query,
-        rows,
-        alpha=alpha,
-        quality_threshold=quality_threshold,
-        max_stationary_fraction=max_stationary_fraction,
-        max_abs_value=max_abs_value,
-    )
-    ranked_rows = _ranked_rows(rows, order, selector_name=f"exact_window_{_selector_name(left_rep, right_rep, alpha)}")
+    if selector_mode == "old_novelty_only":
+        order = _quality_gated_old_novelty_order(
+            rows,
+            right_novelty,
+            quality_threshold=quality_threshold,
+            max_stationary_fraction=max_stationary_fraction,
+            max_abs_value=max_abs_value,
+        )
+        selector = f"exact_window_old_novelty_{right_rep}"
+        ranking_mode = "exact_window_old_novelty_only"
+    else:
+        order = blended_kcenter_greedy_quality_gated_order(
+            left_support,
+            left_query,
+            right_support,
+            right_query,
+            rows,
+            alpha=alpha,
+            quality_threshold=quality_threshold,
+            max_stationary_fraction=max_stationary_fraction,
+            max_abs_value=max_abs_value,
+        )
+        selector = f"exact_window_{_selector_name(left_rep, right_rep, alpha)}"
+        ranking_mode = "partial_left_exact_window_right"
+    ranked_rows = _ranked_rows(rows, order, selector_name=selector)
     log_event(
         "active_exact_window_blend_rank",
         "ranking_done",
         mode=mode,
         n_ranked=len(ranked_rows),
-        selector=f"exact_window_{_selector_name(left_rep, right_rep, alpha)}",
+        selector=selector,
     )
 
     submission_path = output_dir / f"active_exact_window_blend_submission_{mode}.csv"
@@ -266,8 +305,8 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
     )
     report = {
         "mode": mode,
-        "selector": f"exact_window_{_selector_name(left_rep, right_rep, alpha)}",
-        "ranking_mode": "partial_left_exact_window_right",
+        "selector": selector,
+        "ranking_mode": ranking_mode,
         "support_split": support_split,
         "query_split": query_split,
         "n_left_support": int(len(left_support)),
@@ -282,8 +321,8 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
         "max_stationary_fraction": max_stationary_fraction,
         "max_abs_value": max_abs_value,
         "left_support_cache": {
-            "status": "partial_shard_hit",
-            "path": str(ranking_config["left_support_shard_dir"]),
+            "status": "partial_shard_hit" if uses_left_cache else "not_used",
+            "path": str(ranking_config.get("left_support_shard_dir", "")),
             "n_clips": int(len(left_support)),
         },
         "right_support_cache": {
@@ -315,7 +354,7 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
     result = {
         "mode": mode,
         "selector": report["selector"],
-        "ranking_mode": "partial_left_exact_window_right",
+        "ranking_mode": ranking_mode,
         "n_left_support": int(len(left_support)),
         "n_right_support": int(len(right_support)),
         "n_query": int(len(query_clips)),
@@ -347,15 +386,21 @@ def validate_active_exact_window_blend_rank_config(config: Mapping[str, Any]) ->
             raise ValueError(f"data.manifests must include split '{split}'.")
     left_rep = str(ranking.get("left_representation", ""))
     right_rep = str(ranking.get("right_representation", "window_mean_std_pool"))
+    selector_mode = str(ranking.get("selector_mode", "blend_kcenter"))
+    if selector_mode not in {"blend_kcenter", "old_novelty_only"}:
+        raise ValueError("ranking.selector_mode must be blend_kcenter or old_novelty_only.")
     unsupported = {left_rep, right_rep} - set(SUPPORTED_REPRESENTATIONS)
     if unsupported:
         raise ValueError(f"Unsupported exact-window blend representations: {sorted(unsupported)}")
     if right_rep != "window_mean_std_pool":
         raise ValueError("ranking.right_representation must be window_mean_std_pool.")
-    if not str(ranking.get("left_support_shard_dir", "")).strip():
-        raise ValueError("ranking.left_support_shard_dir is required.")
-    if not any(str(ranking.get(key, "")).strip() for key in ("left_query_shard_dir", "candidate_query_shard_dir", "candidate_cache_shard_dir")):
-        raise ValueError("ranking.left_query_shard_dir is required for cached query embeddings.")
+    if selector_mode == "old_novelty_only" and left_rep != "window_mean_std_pool":
+        raise ValueError("ranking.left_representation must be window_mean_std_pool in old_novelty_only mode.")
+    if selector_mode != "old_novelty_only":
+        if not str(ranking.get("left_support_shard_dir", "")).strip():
+            raise ValueError("ranking.left_support_shard_dir is required.")
+        if not any(str(ranking.get(key, "")).strip() for key in ("left_query_shard_dir", "candidate_query_shard_dir", "candidate_cache_shard_dir")):
+            raise ValueError("ranking.left_query_shard_dir is required for cached query embeddings.")
     if not str(ranking.get("right_support_shard_manifest", ranking.get("right_support_shard_dir", ""))).strip():
         raise ValueError("ranking.right_support_shard_manifest or ranking.right_support_shard_dir is required.")
     if int(ranking.get("min_left_support_clips", 1)) <= 0:
@@ -473,6 +518,39 @@ def _apply_full_query_cap(clips: Sequence[object], ranking_config: Mapping[str, 
     return list(clips[:max_count])
 
 
+def _quality_gated_old_novelty_order(
+    rows: Sequence[Mapping[str, object]],
+    novelty: np.ndarray,
+    *,
+    quality_threshold: float,
+    max_stationary_fraction: float | None,
+    max_abs_value: float | None,
+) -> list[int]:
+    eligible: list[int] = []
+    fallback: list[int] = []
+    for idx, row in enumerate(rows):
+        quality_pass = _safe_float(row.get("quality_score", 0.0)) >= float(quality_threshold)
+        stationary_pass = (
+            max_stationary_fraction is None
+            or _safe_float(row.get("stationary_fraction", 0.0)) <= float(max_stationary_fraction)
+        )
+        abs_value_pass = max_abs_value is None or _safe_float(row.get("max_abs_value", 0.0)) <= float(max_abs_value)
+        if quality_pass and stationary_pass and abs_value_pass:
+            eligible.append(int(idx))
+        else:
+            fallback.append(int(idx))
+    ranked_eligible = sorted(eligible, key=lambda idx: (-float(novelty[int(idx)]), _sample_key(rows[int(idx)], int(idx))))
+    ranked_fallback = sorted(
+        fallback,
+        key=lambda idx: (
+            -_safe_float(rows[int(idx)].get("quality_score", 0.0)),
+            -float(novelty[int(idx)]),
+            _sample_key(rows[int(idx)], int(idx)),
+        ),
+    )
+    return [*ranked_eligible, *ranked_fallback]
+
+
 def _comparison_report(
     ranked_rows: Sequence[Mapping[str, object]],
     comparison_config: object,
@@ -523,6 +601,10 @@ def _rank_spearman(left_ids: Sequence[str], right_ids: Sequence[str]) -> float:
 
 def _fraction(numerator: int, denominator: int) -> float:
     return float(numerator / denominator) if denominator else 0.0
+
+
+def _sample_key(row: Mapping[str, object], idx: int) -> tuple[str, int]:
+    return (str(row.get("sample_id", row.get("worker_id", ""))), int(idx))
 
 
 def _required_mapping(config: Mapping[str, Any], key: str) -> Mapping[str, Any]:

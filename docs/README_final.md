@@ -53,6 +53,11 @@ incomplete, rebuilds exact window-stat support for the cached old manifest, and
 computes frozen TS2Vec embeddings for the cached new manifest. It does not train
 a model or use hidden targets.
 
+The hidden-test package also emits a cold-runnable exact-window old-novelty
+baseline under `final_package_exact_window_old_novelty/`. That baseline depends
+only on the supplied manifests and exact rebuilt window-stat shards; it does not
+need the partial TS2Vec old-support cache.
+
 Before launching Modal, run the local self-check:
 
 ```bash
