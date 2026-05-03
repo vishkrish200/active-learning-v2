@@ -31,6 +31,26 @@ The default output directory is:
 artifacts/final_selector/artifact_gate_exact_window
 ```
 
+## Hidden-Test Run Preparation
+
+For a fresh old/new manifest pair, prepare a manifest-bound Modal run package
+with:
+
+```bash
+python -m marginal_value.active.run_hidden_test \
+  --old-manifest /path/to/pretrain_urls.txt \
+  --new-manifest /path/to/new_urls.txt \
+  --run-dir artifacts/hidden_test_run \
+  --run-id external_eval_001
+```
+
+Then inspect `artifacts/hidden_test_run/README_hidden_test.md` and run
+`artifacts/hidden_test_run/commands.sh` when ready. If the run directory is
+outside the git checkout, set `REPO_ROOT=/path/to/active-learning-v2` before
+running the script. This path rebuilds exact window-stat support for the
+supplied old manifest and computes frozen TS2Vec embeddings for the supplied
+new manifest; it does not train a model or use hidden targets.
+
 ## Expected Package Files
 
 ```text
