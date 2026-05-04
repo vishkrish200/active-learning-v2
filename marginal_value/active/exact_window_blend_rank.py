@@ -75,18 +75,22 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
 
     support_ids_allowed = {clip.sample_id for clip in all_support_clips}
     if uses_left_cache:
+        max_left_shards = _optional_int(ranking_config.get("left_support_max_shards"))
+        if smoke and ranking_config.get("smoke_left_support_max_shards") is not None:
+            max_left_shards = int(ranking_config["smoke_left_support_max_shards"])
         log_event(
             "active_exact_window_blend_rank",
             "left_support_load_start",
             mode=mode,
             representation=left_rep,
             shard_dir=str(ranking_config["left_support_shard_dir"]),
+            max_shards=max_left_shards,
         )
         partial_left = _load_partial_embedding_shards(
             Path(str(ranking_config["left_support_shard_dir"])),
             representations=[left_rep],
             allowed_sample_ids=support_ids_allowed,
-            max_shards=_optional_int(ranking_config.get("left_support_max_shards")),
+            max_shards=max_left_shards,
         )
         left_support = partial_left["embeddings"][left_rep]
         left_support_ids = list(partial_left["sample_ids"])
@@ -107,9 +111,15 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
             representation=left_rep,
             n_left_support=len(left_support),
         )
+        left_support_cache_status = (
+            "full_support_shard_hit"
+            if (not smoke and support_ids_allowed.issubset(set(left_support_ids)))
+            else "partial_shard_hit"
+        )
     else:
         left_support_ids = []
         left_support = np.empty((0, 0), dtype="float32")
+        left_support_cache_status = "not_used"
         log_event(
             "active_exact_window_blend_rank",
             "left_support_load_skipped",
@@ -263,7 +273,11 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
             max_abs_value=max_abs_value,
         )
         selector = f"exact_window_{_selector_name(left_rep, right_rep, alpha)}"
-        ranking_mode = "partial_left_exact_window_right"
+        ranking_mode = (
+            "full_left_exact_window_right"
+            if left_support_cache_status == "full_support_shard_hit"
+            else "partial_left_exact_window_right"
+        )
     ranked_rows = _ranked_rows(rows, order, selector_name=selector)
     log_event(
         "active_exact_window_blend_rank",
@@ -321,7 +335,7 @@ def run_active_exact_window_blend_rank(config: dict[str, Any], *, smoke: bool = 
         "max_stationary_fraction": max_stationary_fraction,
         "max_abs_value": max_abs_value,
         "left_support_cache": {
-            "status": "partial_shard_hit" if uses_left_cache else "not_used",
+            "status": left_support_cache_status,
             "path": str(ranking_config.get("left_support_shard_dir", "")),
             "n_clips": int(len(left_support)),
         },

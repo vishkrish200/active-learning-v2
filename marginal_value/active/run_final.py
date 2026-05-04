@@ -71,6 +71,7 @@ def package_final_submission(config: Mapping[str, Any]) -> dict[str, Any]:
             "validation_report": "validation_report.json",
             "support_audit": "support_audit.json",
             "stability_report": "stability_report.json",
+            "exact_selector_report": "exact_selector_report.json",
         },
     )
     selector_config = _selector_config(
@@ -259,9 +260,9 @@ Backup ID-format file: `{Path(str(artifacts["backup_worker_submission"])).name}`
 {claim}
 
 This package ranks all new clips using the currently promoted conservative
-selector. It combines partial TS2Vec old-support novelty, exact full-support
-window-stat novelty, quality/physical-validity gates, k-center-style redundancy
-control, and an artifact-aware trace rerank.
+selector configuration recorded in `selector_config.json`. It applies
+quality/physical-validity gates, k-center-style redundancy control, and an
+artifact-aware trace rerank.
 
 ## Inputs
 
@@ -295,7 +296,7 @@ ranked CSV.
 
 ```bash
 python -m marginal_value.active.run_final \\
-  --config-path configs/final_package_artifact_gate.json
+  --config-path <final-package-config>
 ```
 
 This command packages existing promoted artifacts. It does not launch Modal,

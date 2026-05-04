@@ -290,3 +290,14 @@ it uses:
 
 This run has now been completed; the estimate is retained here as provenance
 for the compute decision.
+
+## Follow-Up Exact Ranking
+
+The full old-support TS2Vec cache was imported into the Modal artifact volume
+and used in the exact full-support TS2Vec/window final ranking.
+
+Follow-up results are documented in:
+
+```text
+docs/exact_full_ts2vec_window_results_2026-05-04.md
+```
