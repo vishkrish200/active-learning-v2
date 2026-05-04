@@ -2,6 +2,49 @@
 
 Date: 2026-05-02
 
+## 2026-05-04 Update
+
+This note is retained as provenance for the earlier partial-TS2Vec /
+exact-window package. It is no longer the current primary submission
+recommendation.
+
+Current primary package:
+
+```text
+artifact-gate exact-full TS2Vec / exact-window blend
+```
+
+Current package config:
+
+```text
+configs/final_package_exact_full_ts2vec_artifact_gate.json
+```
+
+Current package directory:
+
+```text
+artifacts/final_selector/exact_full_ts2vec_artifact_gate
+```
+
+Current primary CSV:
+
+```text
+artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips.csv
+```
+
+The May 4 upgrade precomputed TS2Vec embeddings for all 200,000 old-support
+clips and reran the blend with exact full-support TS2Vec plus exact full-support
+`window_mean_std_pool`. The artifact-gated exact-full result is highly
+consistent with this earlier package while removing the partial old-support
+TS2Vec caveat.
+
+See:
+
+```text
+docs/exact_full_ts2vec_window_results_2026-05-04.md
+docs/README_final.md
+```
+
 ## Direct Verdict
 
 The current artifact is a credible external-challenge submission candidate. The

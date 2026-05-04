@@ -218,3 +218,9 @@ Remaining caveat:
   retrained fixed-crop checkpoint. The method should be described as an exact
   full-support TS2Vec/window geometric selector, not as validated clean TS2Vec
   active learning.
+
+Recommended follow-up plan:
+
+```text
+docs/next_steps_after_exact_full_2026-05-04.md
+```

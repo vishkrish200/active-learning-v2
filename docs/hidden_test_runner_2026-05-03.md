@@ -2,6 +2,27 @@
 
 Date: 2026-05-03
 
+## 2026-05-04 Note
+
+The current primary package for the provided public challenge manifests is now
+the exact-full TS2Vec / exact-window artifact-gated package documented in:
+
+```text
+docs/exact_full_ts2vec_window_results_2026-05-04.md
+docs/README_final.md
+```
+
+This hidden-test runner is still useful when a reviewer supplies a fresh
+old/new manifest pair, but it should be read carefully:
+
+- if the old manifest is the same public 200,000-clip old corpus, the current
+  exact-full TS2Vec support cache can be used;
+- if the old manifest is arbitrary or private, exact full-support TS2Vec would
+  require a fresh old-support TS2Vec precompute for that manifest;
+- the generated exact-window old-novelty baseline remains the cold-runnable
+  fallback because it rebuilds full window-stat support directly from the
+  supplied old manifest.
+
 ## What Changed
 
 Added a local hidden-test preparation path:

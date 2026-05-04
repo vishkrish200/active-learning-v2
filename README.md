@@ -23,6 +23,42 @@ Heavy training components from the full plan, such as PatchTST/TS2Vec pretrainin
 python3 -m unittest discover -s tests
 ```
 
+## Current Evaluator-Facing Package
+
+The current strongest package for the provided challenge manifests is:
+
+```text
+artifact-gate exact-full TS2Vec / exact-window blend
+```
+
+Package it with:
+
+```bash
+python3 -m marginal_value.active.run_final \
+  --config-path configs/final_package_exact_full_ts2vec_artifact_gate.json
+```
+
+Primary output:
+
+```text
+artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips.csv
+```
+
+This package ranks all 2,000 new clips against both exact full-support views:
+200,000 old-support TS2Vec embeddings and 200,000 old-support
+`window_mean_std_pool` embeddings. It also applies quality/physical-validity
+gates, k-center-style redundancy control, and an artifact-aware trace rerank.
+
+Current method note:
+
+```text
+docs/exact_full_ts2vec_window_results_2026-05-04.md
+```
+
+Important caveat: this is an exact full-support geometric selector using the
+current promoted TS2Vec checkpoint. It should not be described as validated
+clean TS2Vec active learning or as a learned active-acquisition policy.
+
 ## Rank CSV Directories
 
 Each worker CSV should contain six IMU channels. Timestamp columns are optional but recommended.
