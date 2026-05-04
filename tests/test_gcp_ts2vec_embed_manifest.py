@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
+from marginal_value.data.split_manifest import hash_manifest_url
 from marginal_value.gcp.ts2vec_embed_manifest import (
     _load_jsonl_imu_url,
     _sample_id_from_url,
@@ -17,11 +18,13 @@ from marginal_value.gcp.ts2vec_embed_manifest import (
 
 class GcpTS2VecEmbedManifestTests(unittest.TestCase):
     def test_sample_id_from_url(self) -> None:
-        self.assertEqual(
-            _sample_id_from_url("https://storage.googleapis.com/bucket/path/abc123.jsonl"),
-            "abc123",
-        )
-        self.assertEqual(_sample_id_from_url("gs://bucket/path/worker_clip.jsonl"), "worker_clip")
+        url = "https://storage.googleapis.com/bucket/path/abc123.jsonl"
+        self.assertEqual(_sample_id_from_url(url), hash_manifest_url(url))
+
+    def test_sample_id_from_url_includes_worker_path(self) -> None:
+        left = "https://storage.googleapis.com/bucket/pretrain/worker00001/clip001.txt"
+        right = "https://storage.googleapis.com/bucket/pretrain/worker00002/clip001.txt"
+        self.assertNotEqual(_sample_id_from_url(left), _sample_id_from_url(right))
 
     def test_load_jsonl_imu_url_from_local_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -72,4 +75,3 @@ class GcpTS2VecEmbedManifestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

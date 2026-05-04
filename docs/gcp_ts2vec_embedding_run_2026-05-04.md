@@ -81,8 +81,21 @@ gs://active-learning-v2-802636843791/configs/active_exact_window_blend_rank.json
 gs://active-learning-v2-802636843791/configs/final_package_artifact_gate.json
 ```
 
-After adding the GCP runner, upload a fresh source archive from the new commit
-before launching any long job.
+After adding the GCP runner, a fresh source archive was uploaded from commit
+`3eb4ce57b0a0`:
+
+```text
+gs://active-learning-v2-802636843791/source/active-learning-v2-codex-ts2vec-pipeline-3eb4ce57b0a0.tar.gz
+```
+
+A later smoke run exposed that old-corpus clip filenames repeat across workers
+(`worker00001/clip001.txt`, `worker00002/clip001.txt`, ...). The GCP runner now
+uses the repo's canonical SHA-256 manifest URL sample IDs instead of filename
+stems. The patched source archive used for the passing smoke/probe is:
+
+```text
+gs://active-learning-v2-802636843791/source/active-learning-v2-codex-ts2vec-pipeline-sampleidfix.tar.gz
+```
 
 ## GCP-Native Embedding Runner
 
@@ -126,9 +139,102 @@ python -m marginal_value.gcp.ts2vec_embed_manifest \
   --load-workers 16
 ```
 
-## Next Step
+## Runtime Fix
 
-Launch a short L4 smoke run with `--limit 128`. If it writes shards and manifest
-to GCS cleanly, run a larger bounded batch such as `--limit 5000` before the
-full 200k job.
+The stock GCP Deep Learning VM PyTorch image was not usable for the TS2Vec
+forward pass. It imported CUDA successfully, but failed during real model
+execution with:
 
+```text
+Invalid handle. Cannot load symbol cublasLtCreate
+```
+
+The working path is to keep the GCP NVIDIA driver image, but create a clean
+Python virtualenv and install a stable PyTorch CUDA wheel:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y python3.12-venv
+python3 -m venv /workspace/venv
+source /workspace/venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install numpy pandas
+python -m pip install --index-url https://download.pytorch.org/whl/cu124 torch==2.5.1
+```
+
+Verified on L4:
+
+```text
+torch: 2.5.1+cu124
+torch.version.cuda: 12.4
+torch.cuda.is_available: True
+GPU matmul: OK
+```
+
+## Completed GCP Probes
+
+### 16-clip smoke
+
+```text
+output: gs://active-learning-v2-802636843791/embeddings/ts2vec_old_support_stabletorch_smoke
+status: passed
+n_clips: 16
+n_shards: 2
+```
+
+### 128-clip full-length smoke
+
+```text
+output: gs://active-learning-v2-802636843791/embeddings/ts2vec_old_support_stabletorch_smoke_128
+log: gs://active-learning-v2-802636843791/logs/ts2vec_stabletorch_smoke_128_fixed_ids.log
+status: passed
+n_clips: 128
+n_shards: 2
+sample_ids_unique: 128 / 128
+embedding_shape_per_shard: (64, 320)
+finite_embeddings: true
+elapsed_seconds: ~15
+```
+
+### 5,000-clip throughput probe
+
+```text
+output: gs://active-learning-v2-802636843791/embeddings/ts2vec_old_support_stabletorch_probe_5k
+log: gs://active-learning-v2-802636843791/logs/ts2vec_stabletorch_probe_5k.log
+status: passed
+n_clips: 5000
+n_shards: 10
+sample_ids_unique: 5000 / 5000
+embedding_dim: 320
+finite_embeddings: true
+elapsed_seconds: 301.796
+```
+
+The 5k probe ran at roughly 1,000 full-length clips per minute on one L4 after
+the Python environment was already built.
+
+## Full-Run Estimate
+
+At the measured 5k-probe throughput, embedding all 200,000 old-support clips on
+one L4 is approximately:
+
+```text
+200000 / 5000 * 301.796s = ~3.35 hours active embedding time
+```
+
+Allowing for startup, PyTorch install, occasional GCS retries, and validation,
+a practical single-L4 estimate is:
+
+```text
+time: ~4-5 hours
+cost: likely single-digit USD to low-teens USD, depending on exact G2/L4 pricing
+```
+
+The next run should be the full old-support job, not more smoke tests, provided
+it uses:
+
+- clean `torch==2.5.1+cu124` virtualenv;
+- canonical hashed sample IDs;
+- shard-level GCS uploads;
+- log upload on exit;
+- explicit VM deletion after completion.

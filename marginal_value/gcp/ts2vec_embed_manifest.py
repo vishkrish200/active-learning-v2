@@ -8,11 +8,11 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence
-from urllib.parse import urlparse
 from urllib.request import urlopen
 
 import numpy as np
 
+from marginal_value.data.split_manifest import hash_manifest_url
 from marginal_value.logging_utils import log_event
 from marginal_value.models.ts2vec_inference import TS2VecInference
 from marginal_value.preprocessing.quality import _sample_from_jsonl_record
@@ -32,6 +32,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         raise ValueError(f"No URLs found in manifest: {args.manifest}")
 
     sample_ids = [_sample_id_from_url(url) for url in urls]
+    if len(set(sample_ids)) != len(sample_ids):
+        raise ValueError(
+            "Manifest sample_id collision detected. "
+            "TS2Vec support shards require one stable unique sample_id per URL."
+        )
     output_dir = Path(args.output_dir)
     shard_dir = output_dir / args.shard_dir_name
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -165,13 +170,10 @@ def _read_text(path_or_url: str) -> str:
 
 
 def _sample_id_from_url(url: str) -> str:
-    path = urlparse(url).path if "://" in url else url
-    name = Path(path).name
-    if name.endswith(".jsonl"):
-        name = name[:-6]
-    if not name:
+    value = url.strip()
+    if not value:
         raise ValueError(f"Could not derive sample_id from URL: {url}")
-    return name
+    return hash_manifest_url(value)
 
 
 def _embed_url_batch(
@@ -290,4 +292,3 @@ def _gcloud_cp(local_path: Path, gcs_path: str) -> None:
 
 if __name__ == "__main__":
     main()
-
