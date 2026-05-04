@@ -1,0 +1,2327 @@
+{
+  "artifacts": {
+    "json": "docs/active_loop_validation_report_2026-05-03.json",
+    "markdown": "docs/active_loop_validation_report_2026-05-03.md"
+  },
+  "compare_policies": [
+    "blend_kcenter_ts2vec_window_mean_std_pool_a05",
+    "trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
+    "kcenter_greedy_quality_gated",
+    "window_shape_stats_q85_stat90_abs60_clustercap2"
+  ],
+  "coverage_by_episode_path": "/artifacts/active/eval/artifact_gate_ts2vec_window_blend_scale/coverage_gain_by_episode_full.csv",
+  "k_values": [
+    5,
+    10,
+    25,
+    50,
+    100
+  ],
+  "mode": "full",
+  "n_bootstrap": 2000,
+  "policies": [
+    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
+    "blend_kcenter_ts2vec_window_mean_std_pool_a05",
+    "trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
+    "kcenter_greedy_quality_gated",
+    "window_shape_stats_q85_stat90_abs60_clustercap2",
+    "old_novelty_only",
+    "oracle_greedy_eval_only"
+  ],
+  "policy_comparisons": {
+    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05_vs_blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "episode_count": 64,
+        "primary_win_count": 52,
+        "primary_win_rate": 0.8125,
+        "relative_gain_delta": {
+          "ci_high": 0.0034219967469561936,
+          "ci_low": -0.004049632378567526,
+          "mean": -0.00010396189431454393,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "episode_count": 64,
+        "primary_win_count": 25,
+        "primary_win_rate": 0.390625,
+        "relative_gain_delta": {
+          "ci_high": -0.00698719424035809,
+          "ci_low": -0.022723809588435586,
+          "mean": -0.014027711366799324,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "episode_count": 64,
+        "primary_win_count": 36,
+        "primary_win_rate": 0.5625,
+        "relative_gain_delta": {
+          "ci_high": 0.005159253195135426,
+          "ci_low": -0.006590579654019607,
+          "mean": -0.0005338839901430359,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "episode_count": 64,
+        "primary_win_count": 60,
+        "primary_win_rate": 0.9375,
+        "relative_gain_delta": {
+          "ci_high": 0.011899757596325642,
+          "ci_low": 0.00010171029679480018,
+          "mean": 0.004554649209439765,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "episode_count": 64,
+        "primary_win_count": 27,
+        "primary_win_rate": 0.421875,
+        "relative_gain_delta": {
+          "ci_high": 0.001171221377424702,
+          "ci_low": -0.012138689768169848,
+          "mean": -0.005509447332648012,
+          "n": 64
+        }
+      }
+    },
+    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05_vs_kcenter_greedy_quality_gated": {
+      "coverage@10": {
+        "episode_count": 64,
+        "primary_win_count": 36,
+        "primary_win_rate": 0.5625,
+        "relative_gain_delta": {
+          "ci_high": 0.0709413803414601,
+          "ci_low": 0.017863807732881435,
+          "mean": 0.04281783655973153,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "episode_count": 64,
+        "primary_win_count": 42,
+        "primary_win_rate": 0.65625,
+        "relative_gain_delta": {
+          "ci_high": 0.04482632159596092,
+          "ci_low": 0.004240794380811284,
+          "mean": 0.023124956750906162,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "episode_count": 64,
+        "primary_win_count": 39,
+        "primary_win_rate": 0.609375,
+        "relative_gain_delta": {
+          "ci_high": 0.06458210464704044,
+          "ci_low": 0.017890628130521287,
+          "mean": 0.03927621106162749,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "episode_count": 64,
+        "primary_win_count": 34,
+        "primary_win_rate": 0.53125,
+        "relative_gain_delta": {
+          "ci_high": 0.0532546503579998,
+          "ci_low": -0.003333447085273552,
+          "mean": 0.024266406349510133,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "episode_count": 64,
+        "primary_win_count": 39,
+        "primary_win_rate": 0.609375,
+        "relative_gain_delta": {
+          "ci_high": 0.052856070015267674,
+          "ci_low": 0.008036504449880287,
+          "mean": 0.028773014860191702,
+          "n": 64
+        }
+      }
+    },
+    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05_vs_trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "episode_count": 64,
+        "primary_win_count": 54,
+        "primary_win_rate": 0.84375,
+        "relative_gain_delta": {
+          "ci_high": 0.014277978890446616,
+          "ci_low": 0.0003545954705630545,
+          "mean": 0.0065355384406023545,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "episode_count": 64,
+        "primary_win_count": 45,
+        "primary_win_rate": 0.703125,
+        "relative_gain_delta": {
+          "ci_high": 0.021189533518216327,
+          "ci_low": 0.0054339793710514945,
+          "mean": 0.012577541916201727,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "episode_count": 64,
+        "primary_win_count": 52,
+        "primary_win_rate": 0.8125,
+        "relative_gain_delta": {
+          "ci_high": 0.018838190184477042,
+          "ci_low": 0.002508709024399616,
+          "mean": 0.00998727755528051,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "episode_count": 64,
+        "primary_win_count": 60,
+        "primary_win_rate": 0.9375,
+        "relative_gain_delta": {
+          "ci_high": 0.004618946989443727,
+          "ci_low": -0.0030112370465365562,
+          "mean": 0.0006775530586069298,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "episode_count": 64,
+        "primary_win_count": 50,
+        "primary_win_rate": 0.78125,
+        "relative_gain_delta": {
+          "ci_high": 0.019773862568412744,
+          "ci_low": 0.004471218842219041,
+          "mean": 0.011547206052883886,
+          "n": 64
+        }
+      }
+    },
+    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05_vs_window_shape_stats_q85_stat90_abs60_clustercap2": {
+      "coverage@10": {
+        "episode_count": 64,
+        "primary_win_count": 54,
+        "primary_win_rate": 0.84375,
+        "relative_gain_delta": {
+          "ci_high": 0.06562503564432834,
+          "ci_low": 0.033769235667456,
+          "mean": 0.048901614969797114,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "episode_count": 64,
+        "primary_win_count": 30,
+        "primary_win_rate": 0.46875,
+        "relative_gain_delta": {
+          "ci_high": 0.0009677046094165914,
+          "ci_low": -0.017592062047865144,
+          "mean": -0.008132550540598166,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "episode_count": 64,
+        "primary_win_count": 48,
+        "primary_win_rate": 0.75,
+        "relative_gain_delta": {
+          "ci_high": 0.03666993108239443,
+          "ci_low": 0.00991637529456676,
+          "mean": 0.02351573045879738,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "episode_count": 64,
+        "primary_win_count": 55,
+        "primary_win_rate": 0.859375,
+        "relative_gain_delta": {
+          "ci_high": 0.0633122424108827,
+          "ci_low": 0.03384368782698446,
+          "mean": 0.04766179028383424,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "episode_count": 64,
+        "primary_win_count": 43,
+        "primary_win_rate": 0.671875,
+        "relative_gain_delta": {
+          "ci_high": 0.022870032959574634,
+          "ci_low": -0.0021229454254193592,
+          "mean": 0.009809043115146144,
+          "n": 64
+        }
+      }
+    }
+  },
+  "policy_summaries": {
+    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "absolute_gain": {
+          "ci_high": 0.005735825243900762,
+          "ci_low": 0.004058639416762162,
+          "mean": 0.00487862408044748,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.6153703327811587,
+          "ci_low": 0.511825257928478,
+          "mean": 0.5668785285985308,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.1916859024377538,
+          "ci_low": 0.13074512618234282,
+          "mean": 0.16044394015601848,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "absolute_gain": {
+          "ci_high": 0.00952690529738902,
+          "ci_low": 0.007801291767973453,
+          "mean": 0.00863792992895469,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.9000274620994257,
+          "ci_low": 0.8576617636525982,
+          "mean": 0.8804942620054138,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.3393597497377457,
+          "ci_low": 0.28326795783999514,
+          "mean": 0.31088979976088604,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "absolute_gain": {
+          "ci_high": 0.0077265190247271685,
+          "ci_low": 0.005895425317721675,
+          "mean": 0.006769674515817315,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.727034621404991,
+          "ci_low": 0.6513768448113162,
+          "mean": 0.6913117613357436,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.25585682493588535,
+          "ci_low": 0.19489724061345784,
+          "mean": 0.22369683538791377,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "absolute_gain": {
+          "ci_high": 0.004311119740596041,
+          "ci_low": 0.0026896854999358764,
+          "mean": 0.003449376072967425,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.5603209693928383,
+          "ci_low": 0.42301155018097664,
+          "mean": 0.49068347458335304,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.1463740897794428,
+          "ci_low": 0.08773832481085052,
+          "mean": 0.11567837036005416,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "absolute_gain": {
+          "ci_high": 0.008735495317378082,
+          "ci_low": 0.00695905250060605,
+          "mean": 0.007804694608785212,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.8119063120390165,
+          "ci_low": 0.7596603337860368,
+          "mean": 0.7862462135534314,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.2966071643787293,
+          "ci_low": 0.23907054489430457,
+          "mean": 0.26664468605210223,
+          "n": 64
+        }
+      }
+    },
+    "blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "absolute_gain": {
+          "ci_high": 0.005775281366804846,
+          "ci_low": 0.004142934786650585,
+          "mean": 0.0048918662359938025,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.6166172266903789,
+          "ci_low": 0.5244874547665093,
+          "mean": 0.5714482642453791,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.19092789811385655,
+          "ci_low": 0.1329257206744361,
+          "mean": 0.16054790205033304,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "absolute_gain": {
+          "ci_high": 0.009962892829062181,
+          "ci_low": 0.008130852464964847,
+          "mean": 0.009025676129385828,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.9328903205037118,
+          "ci_low": 0.909382924876195,
+          "mean": 0.922038950540967,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.35307832703405173,
+          "ci_low": 0.2989207254063046,
+          "mean": 0.3249175111276854,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "absolute_gain": {
+          "ci_high": 0.0077219005422375624,
+          "ci_low": 0.0059762893797596925,
+          "mean": 0.006860679714009166,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.7304887662034188,
+          "ci_low": 0.6702160645815405,
+          "mean": 0.7006322047831418,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.25438213720618197,
+          "ci_low": 0.19561158308908802,
+          "mean": 0.2242307193780568,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "absolute_gain": {
+          "ci_high": 0.004225785151211312,
+          "ci_low": 0.0026332344542606733,
+          "mean": 0.003333807416493073,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.5404922667337904,
+          "ci_low": 0.4062589280159684,
+          "mean": 0.47261813953162995,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.1419835450618457,
+          "ci_low": 0.08315610677978086,
+          "mean": 0.11112372115061439,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "absolute_gain": {
+          "ci_high": 0.009015161583229202,
+          "ci_low": 0.007194625921110856,
+          "mean": 0.008041101030539722,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.8315572666767325,
+          "ci_low": 0.7922002657814736,
+          "mean": 0.8120054573270056,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.3003890387310992,
+          "ci_low": 0.24531087892695005,
+          "mean": 0.27215413338475025,
+          "n": 64
+        }
+      }
+    },
+    "kcenter_greedy_quality_gated": {
+      "coverage@10": {
+        "absolute_gain": {
+          "ci_high": 0.005405286410677945,
+          "ci_low": 0.004072924205393065,
+          "mean": 0.004722413723357022,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.6012882311304331,
+          "ci_low": 0.5101124792652497,
+          "mean": 0.5547148608662977,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.13477261450904232,
+          "ci_low": 0.10060355020508259,
+          "mean": 0.11762610359628695,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "absolute_gain": {
+          "ci_high": 0.009294005649135215,
+          "ci_low": 0.007849799701507437,
+          "mean": 0.008580921281827613,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.9106468617280795,
+          "ci_low": 0.867929198690469,
+          "mean": 0.8909662762222587,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.3073583110835429,
+          "ci_low": 0.2678551376185482,
+          "mean": 0.28776484300997984,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "absolute_gain": {
+          "ci_high": 0.007274841056496371,
+          "ci_low": 0.005814185752096819,
+          "mean": 0.006534941389691085,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.715757973302101,
+          "ci_low": 0.6427260579626061,
+          "mean": 0.6816080971289277,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.20286679310557393,
+          "ci_low": 0.16565447408611417,
+          "mean": 0.18442062432628628,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "absolute_gain": {
+          "ci_high": 0.004280820161075098,
+          "ci_low": 0.003154785350052407,
+          "mean": 0.0037064516101963816,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.5992650364296997,
+          "ci_low": 0.49131091229710394,
+          "mean": 0.5471577413326825,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.10789242202433168,
+          "ci_low": 0.07622563655118775,
+          "mean": 0.09141196401054402,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "absolute_gain": {
+          "ci_high": 0.008439856934419367,
+          "ci_low": 0.006918309616739862,
+          "mean": 0.007665711705340072,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.808827399215587,
+          "ci_low": 0.7565794478915081,
+          "mean": 0.7841474683308194,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.2576821580394994,
+          "ci_low": 0.21791964282485246,
+          "mean": 0.2378716711919105,
+          "n": 64
+        }
+      }
+    },
+    "old_novelty_only": {
+      "coverage@10": {
+        "absolute_gain": {
+          "ci_high": 0.0038453707502048924,
+          "ci_low": 0.0028331783552130218,
+          "mean": 0.0033271605789195746,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.4503335616822278,
+          "ci_low": 0.35254221727082174,
+          "mean": 0.40424704228961394,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.09679157369303522,
+          "ci_low": 0.07181278200419791,
+          "mean": 0.08340738130875774,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "absolute_gain": {
+          "ci_high": 0.009505234700045549,
+          "ci_low": 0.007960731974744704,
+          "mean": 0.008721823937958107,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.9143714131481919,
+          "ci_low": 0.8762049915162973,
+          "mean": 0.8969724391264533,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.33518124754307044,
+          "ci_low": 0.28501397573119214,
+          "mean": 0.3101362549744691,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "absolute_gain": {
+          "ci_high": 0.006152467465872178,
+          "ci_low": 0.00482040084010805,
+          "mean": 0.005478802660945803,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.6105157988291056,
+          "ci_low": 0.5288135794588233,
+          "mean": 0.5709537360130752,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.18396233544333157,
+          "ci_low": 0.1444372543812265,
+          "mean": 0.16493356033663806,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "absolute_gain": {
+          "ci_high": 0.0026367931895947545,
+          "ci_low": 0.0017301552000571973,
+          "mean": 0.00215770861832425,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.3875290767251149,
+          "ci_low": 0.2686565436420933,
+          "mean": 0.3295492388197742,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.0624717550933332,
+          "ci_low": 0.04222457271177096,
+          "mean": 0.052001201718047965,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "absolute_gain": {
+          "ci_high": 0.008142201792215926,
+          "ci_low": 0.006573671656951773,
+          "mean": 0.007351208460750058,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.7709952336070907,
+          "ci_low": 0.7047336089536608,
+          "mean": 0.7387182699448152,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.2650033736088838,
+          "ci_low": 0.2140916123019413,
+          "mean": 0.23814594044230403,
+          "n": 64
+        }
+      }
+    },
+    "oracle_greedy_eval_only": {
+      "coverage@10": {
+        "absolute_gain": {
+          "ci_high": 0.009007253763411428,
+          "ci_low": 0.007299865045351908,
+          "mean": 0.008097194723086431,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 1.0,
+          "ci_low": 1.0,
+          "mean": 1.0,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.32935365013409235,
+          "ci_low": 0.2778887714242909,
+          "mean": 0.3026891652491179,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "absolute_gain": {
+          "ci_high": 0.010699206583085472,
+          "ci_low": 0.00888735100044869,
+          "mean": 0.009712882345775142,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 1.0,
+          "ci_low": 1.0,
+          "mean": 1.0,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.39477308198975264,
+          "ci_low": 0.3421524952052547,
+          "mean": 0.3679877666680824,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "absolute_gain": {
+          "ci_high": 0.01028312133188592,
+          "ci_low": 0.008451667146000546,
+          "mean": 0.009345733531517908,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 1.0,
+          "ci_low": 1.0,
+          "mean": 1.0,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.3774197199559057,
+          "ci_low": 0.3280623180624213,
+          "mean": 0.35204171859271166,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "absolute_gain": {
+          "ci_high": 0.007392682507634162,
+          "ci_low": 0.005795178949192631,
+          "mean": 0.006554758787387982,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 1.0,
+          "ci_low": 1.0,
+          "mean": 1.0,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.2814689956865281,
+          "ci_low": 0.2285388209251415,
+          "mean": 0.2532204916846637,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "absolute_gain": {
+          "ci_high": 0.010675934206665261,
+          "ci_low": 0.008821062395581974,
+          "mean": 0.009706122754141688,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 1.0,
+          "ci_low": 1.0,
+          "mean": 1.0,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.3941001996098521,
+          "ci_low": 0.3428601910752926,
+          "mean": 0.36760663661855186,
+          "n": 64
+        }
+      }
+    },
+    "trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "absolute_gain": {
+          "ci_high": 0.005579063227778532,
+          "ci_low": 0.0038966529113531583,
+          "mean": 0.00469923997297883,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.594758957743256,
+          "ci_low": 0.48774573274503263,
+          "mean": 0.5426217445098833,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.18438884023659255,
+          "ci_low": 0.12473108005091531,
+          "mean": 0.15390840171541614,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "absolute_gain": {
+          "ci_high": 0.009245165302127132,
+          "ci_low": 0.007483178294496611,
+          "mean": 0.008317793160676957,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.8751469920743852,
+          "ci_low": 0.8184712780212704,
+          "mean": 0.8482840690382132,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.326863266796221,
+          "ci_low": 0.27286124605493456,
+          "mean": 0.2983122578446843,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "absolute_gain": {
+          "ci_high": 0.0073967180760519105,
+          "ci_low": 0.0055378319490409925,
+          "mean": 0.006462639948586002,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.6998903608827254,
+          "ci_low": 0.6154140627784875,
+          "mean": 0.6592380543695089,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.24540470066113337,
+          "ci_low": 0.18471666961752803,
+          "mean": 0.21370955783263326,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "absolute_gain": {
+          "ci_high": 0.004298709844442783,
+          "ci_low": 0.0025842259197088424,
+          "mean": 0.0033894525840878487,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.5437705042924136,
+          "ci_low": 0.4089512879059396,
+          "mean": 0.47731880704012153,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.14552734256128722,
+          "ci_low": 0.08780677681760636,
+          "mean": 0.11500081730144722,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "absolute_gain": {
+          "ci_high": 0.008458260275510839,
+          "ci_low": 0.00674264266184764,
+          "mean": 0.007515613961732015,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.7877086121836905,
+          "ci_low": 0.7254642091359028,
+          "mean": 0.7570279169040091,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.28584180288887645,
+          "ci_low": 0.2272014636647001,
+          "mean": 0.2550974799992183,
+          "n": 64
+        }
+      }
+    },
+    "window_shape_stats_q85_stat90_abs60_clustercap2": {
+      "coverage@10": {
+        "absolute_gain": {
+          "ci_high": 0.003341732796543509,
+          "ci_low": 0.0019835675886133684,
+          "mean": 0.0026204964902717624,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.3409864317784807,
+          "ci_low": 0.24086597697187487,
+          "mean": 0.28926711850199704,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.1424639193484588,
+          "ci_low": 0.08282511426934937,
+          "mean": 0.11154232518622138,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "absolute_gain": {
+          "ci_high": 0.009163605613866822,
+          "ci_low": 0.007420892875961727,
+          "mean": 0.008215747098438442,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.866729681218747,
+          "ci_low": 0.8138241783747144,
+          "mean": 0.8425036915988203,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.34674416080629206,
+          "ci_low": 0.29315772308211757,
+          "mean": 0.3190223503014842,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "absolute_gain": {
+          "ci_high": 0.0058114398435282055,
+          "ci_low": 0.004164883847988676,
+          "mean": 0.004951690410962328,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.5445336736461341,
+          "ci_low": 0.4500541434204659,
+          "mean": 0.4979338380268356,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.23139861614684676,
+          "ci_low": 0.17301230793369723,
+          "mean": 0.2001811049291164,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "absolute_gain": {
+          "ci_high": 0.0021034363056242,
+          "ci_low": 0.0009493810415733605,
+          "mean": 0.0014648422657046467,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.23750730400222161,
+          "ci_low": 0.14252185843294785,
+          "mean": 0.18937290148644928,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.09743488800376536,
+          "ci_low": 0.042748238725280586,
+          "mean": 0.06801658007621991,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "absolute_gain": {
+          "ci_high": 0.007432449802727206,
+          "ci_low": 0.005778553991840455,
+          "mean": 0.0065771643305197365,
+          "n": 64
+        },
+        "oracle_fraction": {
+          "ci_high": 0.7007930035903898,
+          "ci_low": 0.620551575356507,
+          "mean": 0.6623049279987223,
+          "n": 64
+        },
+        "relative_gain": {
+          "ci_high": 0.2876247067708616,
+          "ci_low": 0.22926462770134018,
+          "mean": 0.25683564293695604,
+          "n": 64
+        }
+      }
+    }
+  },
+  "primary_policy": "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05",
+  "representation": "balanced",
+  "seed": 17,
+  "selection_audit_path": "/artifacts/active/eval/artifact_gate_ts2vec_window_blend_scale/topk_selection_audit_full.csv",
+  "selection_hygiene": {
+    "artifact_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.020312500000000004,
+          "ci_low": 0.0015624999999999997,
+          "mean": 0.009375,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0609375,
+          "ci_low": 0.028125000000000004,
+          "mean": 0.04375,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.024687500000000015,
+          "ci_low": 0.01375000000000001,
+          "mean": 0.018906250000000013,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.02219140624999998,
+          "ci_low": 0.014375,
+          "mean": 0.018125000000000002,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.04187500000000001,
+          "ci_low": 0.015625,
+          "mean": 0.028125000000000004,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.049375,
+          "ci_low": 0.0275,
+          "mean": 0.038125,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.07187500000000001,
+          "ci_low": 0.021875000000000002,
+          "mean": 0.046875,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.03343750000000001,
+          "ci_low": 0.01718750000000001,
+          "mean": 0.025000000000000012,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0371875,
+          "ci_low": 0.0228125,
+          "mean": 0.0296875,
+          "n": 64
+        }
+      }
+    },
+    "blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.021875,
+          "ci_low": 0.0015624999999999997,
+          "mean": 0.009375,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0921875,
+          "ci_low": 0.049960937500000066,
+          "mean": 0.0703125,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.11566406249999979,
+          "ci_low": 0.06874999999999999,
+          "mean": 0.09218749999999999,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.16718750000000002,
+          "ci_low": 0.10464843750000005,
+          "mean": 0.134375,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.02375000000000001,
+          "ci_low": 0.01359375000000001,
+          "mean": 0.01843750000000001,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.07688281249999997,
+          "ci_low": 0.06281250000000001,
+          "mean": 0.06984375000000001,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.09734375,
+          "ci_low": 0.08218750000000001,
+          "mean": 0.08984375,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.11484375,
+          "ci_low": 0.0990625,
+          "mean": 0.10703125,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.036875,
+          "ci_low": 0.011875000000000002,
+          "mean": 0.023125000000000003,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.133125,
+          "ci_low": 0.096875,
+          "mean": 0.11437499999999999,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.16375,
+          "ci_low": 0.12123437500000002,
+          "mean": 0.141875,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.198125,
+          "ci_low": 0.15623437500000004,
+          "mean": 0.17625000000000002,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.071875,
+          "ci_low": 0.025,
+          "mean": 0.046875,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.09999999999999999,
+          "ci_low": 0.037500000000000006,
+          "mean": 0.065625,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.146875,
+          "ci_low": 0.071875,
+          "mean": 0.10625,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.03157031249999997,
+          "ci_low": 0.015937500000000007,
+          "mean": 0.023437500000000007,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.11531250000000001,
+          "ci_low": 0.093125,
+          "mean": 0.104375,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.140625,
+          "ci_low": 0.11686718750000001,
+          "mean": 0.12843749999999998,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.16843750000000002,
+          "ci_low": 0.143125,
+          "mean": 0.1559375,
+          "n": 64
+        }
+      }
+    },
+    "kcenter_greedy_quality_gated": {
+      "coverage@10": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.175,
+          "ci_low": 0.1203125,
+          "mean": 0.14687499999999998,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.2140625,
+          "ci_low": 0.1484375,
+          "mean": 0.18125000000000002,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.24062499999999998,
+          "ci_low": 0.171875,
+          "mean": 0.20625000000000002,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.07875000000000001,
+          "ci_low": 0.064375,
+          "mean": 0.0715625,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.10062499999999999,
+          "ci_low": 0.08640624999999999,
+          "mean": 0.09375000000000001,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.10875,
+          "ci_low": 0.09421874999999999,
+          "mean": 0.10125,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.1825,
+          "ci_low": 0.14625,
+          "mean": 0.164375,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.22375,
+          "ci_low": 0.185,
+          "mean": 0.20375,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.24,
+          "ci_low": 0.2,
+          "mean": 0.219375,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.140625,
+          "ci_low": 0.075,
+          "mean": 0.10625000000000001,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.1875,
+          "ci_low": 0.109375,
+          "mean": 0.146875,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.215625,
+          "ci_low": 0.13125,
+          "mean": 0.171875,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.13188281249999997,
+          "ci_low": 0.10718749999999999,
+          "mean": 0.11875,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.1584375,
+          "ci_low": 0.1328125,
+          "mean": 0.14593750000000003,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.17062500000000003,
+          "ci_low": 0.1434375,
+          "mean": 0.1565625,
+          "n": 64
+        }
+      }
+    },
+    "old_novelty_only": {
+      "coverage@10": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.1296875,
+          "ci_low": 0.10781249999999999,
+          "mean": 0.11875,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.24378906249999982,
+          "ci_low": 0.17964843750000004,
+          "mean": 0.2109375,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.1296875,
+          "ci_low": 0.10937499999999999,
+          "mean": 0.11875,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0578125,
+          "ci_low": 0.025,
+          "mean": 0.040625,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.19374999999999998,
+          "ci_low": 0.146875,
+          "mean": 0.16875,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.24375000000000002,
+          "ci_low": 0.178125,
+          "mean": 0.21093750000000003,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.14406249999999998,
+          "ci_low": 0.13984375,
+          "mean": 0.14203125,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.10203124999999999,
+          "ci_low": 0.0834375,
+          "mean": 0.09296875,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.14406249999999998,
+          "ci_low": 0.13984375,
+          "mean": 0.14203125,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.17734374999999997,
+          "ci_low": 0.16234374999999998,
+          "mean": 0.1696875,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.22000390625,
+          "ci_low": 0.20421875,
+          "mean": 0.2121875,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.24687499999999998,
+          "ci_low": 0.22733984375000002,
+          "mean": 0.23703125,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.10625000000000001,
+          "ci_low": 0.090625,
+          "mean": 0.098125,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.20625,
+          "ci_low": 0.15875,
+          "mean": 0.183125,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.10625,
+          "ci_low": 0.090625,
+          "mean": 0.098125,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.13,
+          "ci_low": 0.095,
+          "mean": 0.111875,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.20124999999999998,
+          "ci_low": 0.161875,
+          "mean": 0.18125000000000002,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.24562499999999998,
+          "ci_low": 0.201875,
+          "mean": 0.22312500000000002,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.20937499999999998,
+          "ci_low": 0.17812499999999998,
+          "mean": 0.19374999999999998,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.20625,
+          "ci_low": 0.12187499999999998,
+          "mean": 0.16249999999999998,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.20937499999999998,
+          "ci_low": 0.175,
+          "mean": 0.19374999999999998,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.040625,
+          "ci_low": 0.00625,
+          "mean": 0.021875000000000002,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.278125,
+          "ci_low": 0.20937499999999998,
+          "mean": 0.24062499999999998,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.33125000000000004,
+          "ci_low": 0.2375,
+          "mean": 0.28125,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.123125,
+          "ci_low": 0.106875,
+          "mean": 0.115,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.15468750000000003,
+          "ci_low": 0.12312500000000001,
+          "mean": 0.1390625,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.123125,
+          "ci_low": 0.10718749999999999,
+          "mean": 0.115,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.18375,
+          "ci_low": 0.1546875,
+          "mean": 0.169375,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.233125,
+          "ci_low": 0.2037421875,
+          "mean": 0.2190625,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.2725,
+          "ci_low": 0.2409375,
+          "mean": 0.2565625,
+          "n": 64
+        }
+      }
+    },
+    "oracle_greedy_eval_only": {
+      "coverage@10": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.046875,
+          "ci_low": 0.01875,
+          "mean": 0.03125,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.015624999999999997,
+          "ci_low": 0.0015624999999999997,
+          "mean": 0.007812499999999998,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.046875,
+          "ci_low": 0.0171875,
+          "mean": 0.03125,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.1015625,
+          "ci_low": 0.05464843750000007,
+          "mean": 0.0765625,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.1328125,
+          "ci_low": 0.078125,
+          "mean": 0.1046875,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.171875,
+          "ci_low": 0.11406250000000001,
+          "mean": 0.14218750000000002,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.16046875000000002,
+          "ci_low": 0.16,
+          "mean": 0.16015625,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.07000390624999998,
+          "ci_low": 0.055781250000000004,
+          "mean": 0.06265625000000001,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.16046875000000002,
+          "ci_low": 0.16,
+          "mean": 0.16015625,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.15515625,
+          "ci_low": 0.14374609375,
+          "mean": 0.14921875,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.19499999999999998,
+          "ci_low": 0.18312499999999998,
+          "mean": 0.18874999999999997,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.21547265624999998,
+          "ci_low": 0.2003125,
+          "mean": 0.20781249999999998,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.049375,
+          "ci_low": 0.030625,
+          "mean": 0.04,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.023750000000000007,
+          "ci_low": 0.010625000000000004,
+          "mean": 0.016875000000000005,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.049375,
+          "ci_low": 0.030625000000000003,
+          "mean": 0.04,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.091875,
+          "ci_low": 0.061875,
+          "mean": 0.07625,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.11875000000000001,
+          "ci_low": 0.08374999999999999,
+          "mean": 0.100625,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.14437500000000003,
+          "ci_low": 0.10437500000000001,
+          "mean": 0.12375000000000001,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.05,
+          "ci_low": 0.009375000000000001,
+          "mean": 0.028125000000000004,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.05,
+          "ci_low": 0.0125,
+          "mean": 0.028125000000000004,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.13125,
+          "ci_low": 0.0625,
+          "mean": 0.09687500000000002,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.16562500000000002,
+          "ci_low": 0.08125,
+          "mean": 0.121875,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.22187500000000002,
+          "ci_low": 0.12812500000000002,
+          "mean": 0.175,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.058124999999999996,
+          "ci_low": 0.04405468750000001,
+          "mean": 0.050937500000000004,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.04906250000000001,
+          "ci_low": 0.031250000000000014,
+          "mean": 0.04000000000000001,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0584375,
+          "ci_low": 0.04375,
+          "mean": 0.050937500000000004,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0946875,
+          "ci_low": 0.07375000000000001,
+          "mean": 0.08406250000000001,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.12,
+          "ci_low": 0.0959375,
+          "mean": 0.10781249999999999,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.13907031249999996,
+          "ci_low": 0.113125,
+          "mean": 0.1253125,
+          "n": 64
+        }
+      }
+    },
+    "trace_gate_blend_kcenter_ts2vec_window_mean_std_pool_a05": {
+      "coverage@10": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0234375,
+          "ci_low": 0.0031249999999999993,
+          "mean": 0.0109375,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.02250000000000001,
+          "ci_low": 0.012031250000000009,
+          "mean": 0.016875000000000008,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.04000000000000001,
+          "ci_low": 0.015000000000000003,
+          "mean": 0.026875000000000003,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.03125000000000001,
+          "ci_low": 0.014687500000000011,
+          "mean": 0.02281250000000001,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        }
+      }
+    },
+    "window_shape_stats_q85_stat90_abs60_clustercap2": {
+      "coverage@10": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.07812499999999997,
+          "ci_low": 0.04531249999999999,
+          "mean": 0.060937499999999985,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.035937500000000004,
+          "ci_low": 0.015625,
+          "mean": 0.025,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.05,
+          "ci_low": 0.021875,
+          "mean": 0.034375,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.1219140624999998,
+          "ci_low": 0.0734375,
+          "mean": 0.096875,
+          "n": 64
+        }
+      },
+      "coverage@100": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.05484375000000001,
+          "ci_low": 0.045000000000000026,
+          "mean": 0.04984375000000002,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.051722656249999985,
+          "ci_low": 0.03765625,
+          "mean": 0.044531249999999994,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.061250000000000006,
+          "ci_low": 0.047656250000000004,
+          "mean": 0.054375,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.0871875,
+          "ci_low": 0.07015625,
+          "mean": 0.07859374999999999,
+          "n": 64
+        }
+      },
+      "coverage@25": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.10312499999999998,
+          "ci_low": 0.078125,
+          "mean": 0.090625,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.036875000000000005,
+          "ci_low": 0.018750000000000003,
+          "mean": 0.027500000000000004,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.048125,
+          "ci_low": 0.027500000000000004,
+          "mean": 0.037500000000000006,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.11625,
+          "ci_low": 0.08000000000000002,
+          "mean": 0.098125,
+          "n": 64
+        }
+      },
+      "coverage@5": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.03437499999999999,
+          "ci_low": 0.006249999999999999,
+          "mean": 0.018749999999999996,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.05625,
+          "ci_low": 0.018750000000000003,
+          "mean": 0.0375,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.08124999999999999,
+          "ci_low": 0.028125000000000004,
+          "mean": 0.05312499999999999,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.13125,
+          "ci_low": 0.059375000000000004,
+          "mean": 0.09375,
+          "n": 64
+        }
+      },
+      "coverage@50": {
+        "artifact_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "duplicate_rate_at_k": {
+          "ci_high": 0.07874999999999999,
+          "ci_low": 0.06343750000000001,
+          "mean": 0.0709375,
+          "n": 64
+        },
+        "low_quality_rate_at_k": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 64
+        },
+        "spike_fail_rate_at_k": {
+          "ci_high": 0.043437500000000004,
+          "ci_low": 0.026875,
+          "mean": 0.035,
+          "n": 64
+        },
+        "trace_artifact_fail_rate_at_k": {
+          "ci_high": 0.0534375,
+          "ci_low": 0.0359375,
+          "mean": 0.044375,
+          "n": 64
+        },
+        "trace_fail_rate_at_k": {
+          "ci_high": 0.09875,
+          "ci_low": 0.07312500000000001,
+          "mean": 0.0859375,
+          "n": 64
+        }
+      }
+    }
+  }
+}

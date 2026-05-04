@@ -47,6 +47,12 @@ Use:
 artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips.csv
 ```
 
+Clean sendable copy:
+
+```text
+submission/ranked_new_clips.csv
+```
+
 This file uses `new_worker_id` as the primary ID column. Keep these backup
 variants in the package:
 
@@ -54,6 +60,9 @@ variants in the package:
 artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips_new_worker_id.csv
 artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips_worker_id.csv
 ```
+
+The top-level `submission/` folder is the package to send if the evaluator only
+needs the ranked CSV and supporting reports for the provided 2,000 clips.
 
 ## Expected Package Files
 
@@ -123,6 +132,9 @@ Avoid these claims:
 Core evidence:
 
 ```text
+submission/README.md
+submission/METHODS.md
+submission/RUN_ON_HELDOUT_NEW.md
 docs/exact_full_ts2vec_window_results_2026-05-04.md
 docs/gcp_ts2vec_embedding_run_2026-05-04.md
 docs/artifact_gate_active_loop_eval_2026-05-03.md

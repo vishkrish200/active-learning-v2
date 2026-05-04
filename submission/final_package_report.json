@@ -1,0 +1,19 @@
+{
+  "artifacts": {
+    "backup_worker_submission": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips_worker_id.csv",
+    "diagnostics": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/diagnostics.csv",
+    "exact_selector_report": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/exact_selector_report.json",
+    "feature_schema": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/feature_schema.json",
+    "package_report": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/final_package_report.json",
+    "primary_new_worker_submission": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips_new_worker_id.csv",
+    "primary_submission": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips.csv",
+    "readme": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/README_final.md",
+    "selector_config": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/selector_config.json",
+    "selector_report": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/selector_report.json",
+    "validation_report": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/validation_report.json"
+  },
+  "method_name": "artifact-gate exact-full TS2Vec / exact-window blend",
+  "n_rows": 2000,
+  "primary_id_column": "new_worker_id",
+  "status": "ready"
+}

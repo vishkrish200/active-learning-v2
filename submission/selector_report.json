@@ -1,0 +1,369 @@
+{
+  "artifacts": {
+    "artifact_gate_diagnostics": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_artifact_gate_diagnostics_full.csv",
+    "artifact_gate_submission": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_artifact_gate_submission_full.csv",
+    "artifact_gate_submission_new_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_artifact_gate_submission_full_new_worker_id.csv",
+    "artifact_gate_submission_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_artifact_gate_submission_full_worker_id.csv",
+    "enriched_current_diagnostics": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_enriched_current_full.csv",
+    "hard_gate_diagnostics": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_hard_gate_diagnostics_full.csv",
+    "hard_gate_submission": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_hard_gate_submission_full.csv",
+    "hard_gate_submission_new_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_hard_gate_submission_full_new_worker_id.csv",
+    "hard_gate_submission_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_hard_gate_submission_full_worker_id.csv",
+    "markdown": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_report_full.md",
+    "report": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_report_full.json",
+    "soft_penalty_diagnostics": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_soft_penalty_diagnostics_full.csv",
+    "soft_penalty_submission": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_soft_penalty_submission_full.csv",
+    "soft_penalty_submission_new_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_soft_penalty_submission_full_new_worker_id.csv",
+    "soft_penalty_submission_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_soft_penalty_submission_full_worker_id.csv",
+    "trace_gate_diagnostics": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_trace_gate_diagnostics_full.csv",
+    "trace_gate_submission": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_trace_gate_submission_full.csv",
+    "trace_gate_submission_new_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_trace_gate_submission_full_new_worker_id.csv",
+    "trace_gate_submission_worker_id": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/artifact_hygiene_ablation/spike_hygiene_ablation_trace_gate_submission_full_worker_id.csv"
+  },
+  "exact_diagnostics_path": "/artifacts/active/final_blend_rank/exact_full_ts2vec_window_a05/active_exact_window_blend_diagnostics_full.csv",
+  "mode": "full",
+  "n_rows": 2000,
+  "spike_rate_threshold": 0.025,
+  "summary": {
+    "artifact_gate": {
+      "baseline_top50_spike_fail_count": 1,
+      "baseline_top50_spike_fail_removed_count": 1,
+      "baseline_top50_trace_fail_count": 3,
+      "baseline_top50_trace_fail_removed_count": 3,
+      "topk": {
+        "10": {
+          "mean_original_rank": 6.9,
+          "mean_spike_rate": 0.005300364264987343,
+          "mean_stationary_fraction": 0.04437037037037037,
+          "n_rows": 10,
+          "overlap_with_current": 0.8,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 10
+        },
+        "100": {
+          "mean_original_rank": 53.49,
+          "mean_spike_rate": 0.0037670556275853553,
+          "mean_stationary_fraction": 0.04792407407407407,
+          "n_rows": 100,
+          "overlap_with_current": 0.96,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 100
+        },
+        "200": {
+          "mean_original_rank": 104.145,
+          "mean_spike_rate": 0.0031021176761128603,
+          "mean_stationary_fraction": 0.039752777777777776,
+          "n_rows": 200,
+          "overlap_with_current": 0.975,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 199
+        },
+        "50": {
+          "mean_original_rank": 27.58,
+          "mean_spike_rate": 0.0036549978391060074,
+          "mean_stationary_fraction": 0.05245185185185185,
+          "n_rows": 50,
+          "overlap_with_current": 0.94,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 50
+        }
+      },
+      "trace_verdict_counts_top50": {
+        "plausible_motion": 50
+      },
+      "verdict_counts_top50": {
+        "spike_pass": 50
+      }
+    },
+    "current": {
+      "baseline_top50_spike_fail_count": 1,
+      "baseline_top50_spike_fail_removed_count": 0,
+      "baseline_top50_trace_fail_count": 3,
+      "baseline_top50_trace_fail_removed_count": 0,
+      "topk": {
+        "10": {
+          "mean_original_rank": 5.5,
+          "mean_spike_rate": 0.009511020559362846,
+          "mean_stationary_fraction": 0.024296296296296295,
+          "n_rows": 10,
+          "overlap_with_current": 1.0,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.1,
+          "trace_artifact_fail_rate": 0.2,
+          "trace_fail_rate": 0.2,
+          "unique_clusters": 10
+        },
+        "100": {
+          "mean_original_rank": 50.5,
+          "mean_spike_rate": 0.004489102920293881,
+          "mean_stationary_fraction": 0.048287037037037045,
+          "n_rows": 100,
+          "overlap_with_current": 1.0,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.02,
+          "trace_artifact_fail_rate": 0.04,
+          "trace_fail_rate": 0.04,
+          "unique_clusters": 100
+        },
+        "200": {
+          "mean_original_rank": 100.5,
+          "mean_spike_rate": 0.0036767611286040625,
+          "mean_stationary_fraction": 0.04025,
+          "n_rows": 200,
+          "overlap_with_current": 1.0,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.015,
+          "trace_artifact_fail_rate": 0.025,
+          "trace_fail_rate": 0.025,
+          "unique_clusters": 199
+        },
+        "50": {
+          "mean_original_rank": 25.5,
+          "mean_spike_rate": 0.004949064641600297,
+          "mean_stationary_fraction": 0.05232592592592592,
+          "n_rows": 50,
+          "overlap_with_current": 1.0,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.02,
+          "trace_artifact_fail_rate": 0.06,
+          "trace_fail_rate": 0.06,
+          "unique_clusters": 50
+        }
+      },
+      "trace_verdict_counts_top50": {
+        "likely_artifact": 3,
+        "plausible_motion": 47
+      },
+      "verdict_counts_top50": {
+        "spike_fail": 1,
+        "spike_pass": 49
+      }
+    },
+    "hard_gate": {
+      "baseline_top50_spike_fail_count": 1,
+      "baseline_top50_spike_fail_removed_count": 1,
+      "baseline_top50_trace_fail_count": 3,
+      "baseline_top50_trace_fail_removed_count": 1,
+      "topk": {
+        "10": {
+          "mean_original_rank": 6.4,
+          "mean_spike_rate": 0.007668086682719022,
+          "mean_stationary_fraction": 0.04151851851851852,
+          "n_rows": 10,
+          "overlap_with_current": 0.9,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.1,
+          "trace_fail_rate": 0.1,
+          "unique_clusters": 10
+        },
+        "100": {
+          "mean_original_rank": 51.92,
+          "mean_spike_rate": 0.00420479101068099,
+          "mean_stationary_fraction": 0.04755555555555555,
+          "n_rows": 100,
+          "overlap_with_current": 0.98,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.02,
+          "trace_fail_rate": 0.02,
+          "unique_clusters": 100
+        },
+        "200": {
+          "mean_original_rank": 102.35,
+          "mean_spike_rate": 0.0033388899178860283,
+          "mean_stationary_fraction": 0.03973333333333333,
+          "n_rows": 200,
+          "overlap_with_current": 0.985,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.01,
+          "trace_fail_rate": 0.01,
+          "unique_clusters": 199
+        },
+        "50": {
+          "mean_original_rank": 26.48,
+          "mean_spike_rate": 0.004449589430141384,
+          "mean_stationary_fraction": 0.052225925925925926,
+          "n_rows": 50,
+          "overlap_with_current": 0.98,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.04,
+          "trace_fail_rate": 0.04,
+          "unique_clusters": 50
+        }
+      },
+      "trace_verdict_counts_top50": {
+        "likely_artifact": 2,
+        "plausible_motion": 48
+      },
+      "verdict_counts_top50": {
+        "spike_pass": 50
+      }
+    },
+    "soft_penalty": {
+      "baseline_top50_spike_fail_count": 1,
+      "baseline_top50_spike_fail_removed_count": 1,
+      "baseline_top50_trace_fail_count": 3,
+      "baseline_top50_trace_fail_removed_count": 1,
+      "topk": {
+        "10": {
+          "mean_original_rank": 6.4,
+          "mean_spike_rate": 0.007668086682719022,
+          "mean_stationary_fraction": 0.04151851851851852,
+          "n_rows": 10,
+          "overlap_with_current": 0.9,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.1,
+          "trace_fail_rate": 0.1,
+          "unique_clusters": 10
+        },
+        "100": {
+          "mean_original_rank": 51.92,
+          "mean_spike_rate": 0.00420479101068099,
+          "mean_stationary_fraction": 0.04755555555555555,
+          "n_rows": 100,
+          "overlap_with_current": 0.98,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.02,
+          "trace_fail_rate": 0.02,
+          "unique_clusters": 100
+        },
+        "200": {
+          "mean_original_rank": 102.35,
+          "mean_spike_rate": 0.0033388899178860283,
+          "mean_stationary_fraction": 0.03973333333333333,
+          "n_rows": 200,
+          "overlap_with_current": 0.985,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.01,
+          "trace_fail_rate": 0.01,
+          "unique_clusters": 199
+        },
+        "50": {
+          "mean_original_rank": 26.48,
+          "mean_spike_rate": 0.004449589430141384,
+          "mean_stationary_fraction": 0.052225925925925926,
+          "n_rows": 50,
+          "overlap_with_current": 0.98,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.04,
+          "trace_fail_rate": 0.04,
+          "unique_clusters": 50
+        }
+      },
+      "trace_verdict_counts_top50": {
+        "likely_artifact": 2,
+        "plausible_motion": 48
+      },
+      "verdict_counts_top50": {
+        "spike_pass": 50
+      }
+    },
+    "trace_gate": {
+      "baseline_top50_spike_fail_count": 1,
+      "baseline_top50_spike_fail_removed_count": 1,
+      "baseline_top50_trace_fail_count": 3,
+      "baseline_top50_trace_fail_removed_count": 3,
+      "topk": {
+        "10": {
+          "mean_original_rank": 6.9,
+          "mean_spike_rate": 0.005300364264987343,
+          "mean_stationary_fraction": 0.04437037037037037,
+          "n_rows": 10,
+          "overlap_with_current": 0.8,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 10
+        },
+        "100": {
+          "mean_original_rank": 53.49,
+          "mean_spike_rate": 0.0037670556275853553,
+          "mean_stationary_fraction": 0.04792407407407407,
+          "n_rows": 100,
+          "overlap_with_current": 0.96,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 100
+        },
+        "200": {
+          "mean_original_rank": 104.145,
+          "mean_spike_rate": 0.0031021176761128603,
+          "mean_stationary_fraction": 0.039752777777777776,
+          "n_rows": 200,
+          "overlap_with_current": 0.975,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 199
+        },
+        "50": {
+          "mean_original_rank": 27.58,
+          "mean_spike_rate": 0.0036549978391060074,
+          "mean_stationary_fraction": 0.05245185185185185,
+          "n_rows": 50,
+          "overlap_with_current": 0.94,
+          "physical_fail_rate": 0.0,
+          "quality_fail_rate": 0.0,
+          "spike_fail_rate": 0.0,
+          "trace_artifact_fail_rate": 0.0,
+          "trace_fail_rate": 0.0,
+          "unique_clusters": 50
+        }
+      },
+      "trace_verdict_counts_top50": {
+        "plausible_motion": 50
+      },
+      "verdict_counts_top50": {
+        "spike_pass": 50
+      }
+    }
+  },
+  "top_k_values": [
+    10,
+    50,
+    100,
+    200
+  ]
+}

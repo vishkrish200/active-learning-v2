@@ -1,0 +1,27 @@
+{
+  "inputs": {
+    "new_manifest": "cache/manifests/new_urls.txt",
+    "old_manifest": "cache/manifests/pretrain_full_cached_urls.txt"
+  },
+  "method": {
+    "claim": "Exact-full TS2Vec / exact-window blended k-center selector with artifact-aware trace rerank.",
+    "known_limitations": [
+      "The final ranking uses the current promoted TS2Vec checkpoint, not a newly retrained fixed-crop checkpoint.",
+      "The window-stat and TS2Vec old-support views are both exact full-support for the provided old corpus.",
+      "The final artifact should not be described as validated clean TS2Vec active learning.",
+      "The external held-out evaluator remains the real test."
+    ],
+    "name": "artifact-gate exact-full TS2Vec / exact-window blend",
+    "primary_submission_id_column": "new_worker_id"
+  },
+  "n_ranked_clips": 2000,
+  "outputs": {
+    "backup_worker_submission": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips_worker_id.csv",
+    "diagnostics": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/diagnostics.csv",
+    "exact_selector_report": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/exact_selector_report.json",
+    "primary_new_worker_submission": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips_new_worker_id.csv",
+    "primary_submission": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips.csv",
+    "selector_report": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/selector_report.json",
+    "validation_report": "artifacts/final_selector/exact_full_ts2vec_artifact_gate/validation_report.json"
+  }
+}

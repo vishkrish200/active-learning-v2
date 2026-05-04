@@ -21,9 +21,11 @@ from marginal_value.logging_utils import log_event
 DEFAULT_RUN_ID = "hidden_test"
 DEFAULT_DATA_VOLUME = "imu-novelty-subset-data"
 DEFAULT_ARTIFACTS_VOLUME = "activelearning-imu-rebuild-cache"
-DEFAULT_LEFT_SUPPORT_SHARD_DIR = "/artifacts/active/embedding_cache/ts2vec_window_full_new/embeddings_7481b57ede264d17002b4316_shards"
+DEFAULT_LEFT_SUPPORT_SHARD_DIR = (
+    "/artifacts/active/embedding_cache/ts2vec_old_support_full_l4_20260504/ts2vec_embedding_shards"
+)
 DEFAULT_TS2VEC_CHECKPOINT_PATH = "/artifacts/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt"
-DEFAULT_MIN_LEFT_SUPPORT_CLIPS = 20000
+DEFAULT_MIN_LEFT_SUPPORT_CLIPS = 200000
 DEFAULT_MAX_QUERY_CLIPS = 2500
 DEFAULT_ALPHA = 0.5
 DEFAULT_TOP_K_VALUES = [10, 50, 100, 200]
@@ -521,15 +523,16 @@ def _stage_configs(
             },
             "validation": {"expected_count": int(new_count)},
             "method": {
-                "name": "artifact-gate exact-window blend hidden-test runner",
+                "name": "artifact-gate exact-full TS2Vec / exact-window hidden-test runner",
                 "primary_submission_id_column": "new_worker_id",
                 "claim": (
-                    "Partial-TS2Vec / exact full-window blended k-center selector with "
+                    "Exact-full TS2Vec / exact full-window blended k-center selector with "
                     "artifact-aware trace rerank."
                 ),
                 "known_limitations": [
-                    "The TS2Vec old-support view uses the frozen partial cache, not exact full-support TS2Vec.",
+                    "The default TS2Vec old-support view uses the exact 200k public old-corpus cache.",
                     "The window-stat old-support view is rebuilt exactly for the provided old manifest.",
+                    "For a different old corpus, rerun old-support TS2Vec precompute or use the exact-window fallback.",
                     "This runner does not use hidden targets or labels.",
                 ],
             },
@@ -701,7 +704,7 @@ def _readme_text(plan: Mapping[str, Any]) -> str:
     return f"""# Hidden-Test IMU Ranking Run Package
 
 This package prepares the current scientifically strongest non-training path:
-artifact-gated exact-window blend ranking.
+artifact-gated exact-full TS2Vec / exact-window blend ranking.
 
 It binds the provided old/new manifests into Modal stage configs and records the
 expected artifacts. Running `commands.sh` ranks the new manifest relative to the
@@ -716,7 +719,7 @@ or evaluator feedback.
    new manifests.
 4. Emits an exact-window old-novelty baseline that does not depend on TS2Vec.
 5. Computes frozen-checkpoint TS2Vec embeddings for the new clips only.
-6. Runs the partial-TS2Vec / exact-window blended k-center selector.
+6. Runs the exact-public-old-TS2Vec / exact-window blended k-center selector.
 7. Applies the artifact-aware hygiene rerank.
 8. Packages submission CSVs and diagnostics under `final_package/` and
    `final_package_exact_window_old_novelty/`.
@@ -730,11 +733,14 @@ or evaluator feedback.
 
 ## Important Limitations
 
-- The TS2Vec old-support view is still the frozen partial old-support cache.
+- The default TS2Vec old-support view is exact for the public 200,000-clip old
+  corpus cache at `{DEFAULT_LEFT_SUPPORT_SHARD_DIR}`.
 - The window-stat old-support view is rebuilt exactly for the supplied old
   manifest.
+- If the evaluator supplies a different old corpus, exact TS2Vec support needs
+  a new old-support TS2Vec precompute; otherwise use the exact-window baseline.
 - This is a reproducible hidden-test runner, not TS2Vec retraining and not a
-  claim of exact full-support TS2Vec.
+  claim of validated clean TS2Vec active learning.
 
 ## Run
 

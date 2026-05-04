@@ -44,7 +44,7 @@ old manifest + new manifest
   -> exact window-stat shard build for cached old/new clips
   -> exact-window old-novelty baseline CSV
   -> frozen TS2Vec embedding precompute for cached new clips
-  -> partial-TS2Vec / exact-window blended k-center ranking
+  -> exact-public-old-TS2Vec / exact-window blended k-center ranking
   -> artifact-aware hygiene rerank
   -> final evaluator-facing CSV package
 ```
@@ -69,6 +69,8 @@ This upgrade makes the claim sharper:
   TS2Vec old-support dependency;
 - the expected new-query TS2Vec shard directory is derived deterministically
   from the supplied new manifest and checkpoint metadata;
+- the default TS2Vec old-support cache is now the exact 200,000-clip public
+  old-corpus cache;
 - the runner documents that it does not use hidden targets, labels, candidate
   roles, or evaluator feedback.
 
@@ -76,14 +78,14 @@ This upgrade makes the claim sharper:
 
 This is not heavy training and not a new model.
 
-It still does not make TS2Vec a full-support exact search. The TS2Vec
-old-support side remains the frozen partial cache. The window-stat old-support
-side is exact for the supplied old manifest.
+For the public old corpus, the default TS2Vec old-support side is now exact
+full-support. The window-stat old-support side is rebuilt exactly for the
+supplied old manifest.
 
-It also still assumes the frozen TS2Vec checkpoint and partial old-support
-TS2Vec cache are available on the configured artifacts volume. The fresh
-old/new raw-data assumption is removed; the generated commands cache those from
-the supplied manifests.
+It still assumes the frozen TS2Vec checkpoint and exact public old-support
+TS2Vec cache are available on the configured artifacts volume. The fresh old/new
+raw-data assumption is removed; the generated commands cache those from the
+supplied manifests.
 
 If the TS2Vec cache dependency is undesirable for a reviewer, use the generated
 `final_package_exact_window_old_novelty/ranked_new_clips.csv` baseline. That
@@ -93,14 +95,13 @@ and does not require TS2Vec support embeddings.
 Correct claim:
 
 ```text
-Partial-TS2Vec / exact-window blended k-center selector with artifact-aware
+Exact-public-old-TS2Vec / exact-window blended k-center selector with artifact-aware
 trace rerank, packaged as a manifest-bound hidden-test runner.
 ```
 
 Avoid:
 
 - validated TS2Vec active learning;
-- exact full-200k TS2Vec novelty;
 - full-corpus learned marginal value.
 
 ## Example

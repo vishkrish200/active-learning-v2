@@ -1,0 +1,313 @@
+{
+  "backup_worker_submission_columns": [
+    {
+      "inferred_type": "int",
+      "name": "rank"
+    },
+    {
+      "inferred_type": "float",
+      "name": "score"
+    },
+    {
+      "inferred_type": "string",
+      "name": "worker_id"
+    }
+  ],
+  "diagnostic_columns": [
+    {
+      "inferred_type": "float",
+      "name": "blend_old_novelty_score"
+    },
+    {
+      "inferred_type": "int",
+      "name": "candidate_index"
+    },
+    {
+      "inferred_type": "float",
+      "name": "distance_to_new_cluster_medoid"
+    },
+    {
+      "inferred_type": "float",
+      "name": "final_score"
+    },
+    {
+      "inferred_type": "bool",
+      "name": "is_singleton"
+    },
+    {
+      "inferred_type": "float",
+      "name": "max_abs_value"
+    },
+    {
+      "inferred_type": "int",
+      "name": "new_cluster_id"
+    },
+    {
+      "inferred_type": "int",
+      "name": "new_cluster_size"
+    },
+    {
+      "inferred_type": "float",
+      "name": "old_knn_distance_ts2vec"
+    },
+    {
+      "inferred_type": "float",
+      "name": "old_knn_distance_window_mean_std_pool"
+    },
+    {
+      "inferred_type": "float",
+      "name": "old_novelty_score_ts2vec"
+    },
+    {
+      "inferred_type": "float",
+      "name": "old_novelty_score_window_mean_std_pool"
+    },
+    {
+      "inferred_type": "int",
+      "name": "original_rank"
+    },
+    {
+      "inferred_type": "float",
+      "name": "original_score"
+    },
+    {
+      "inferred_type": "string",
+      "name": "physical_validity_failure_reasons"
+    },
+    {
+      "inferred_type": "bool",
+      "name": "physical_validity_pass"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__axis_imbalance"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__duration_sec"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__extreme_value_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__flatline_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__high_frequency_energy"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__inf_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__max_abs_value"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__missing_rate"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__n_samples"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__nan_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__quality_score"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__repeated_timestamp_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__saturation_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__spike_rate"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__stationary_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality__timestamp_jitter_fraction"
+    },
+    {
+      "inferred_type": "bool",
+      "name": "quality_gate_pass"
+    },
+    {
+      "inferred_type": "float",
+      "name": "quality_score"
+    },
+    {
+      "inferred_type": "int",
+      "name": "rank"
+    },
+    {
+      "inferred_type": "float",
+      "name": "ranker_score"
+    },
+    {
+      "inferred_type": "string",
+      "name": "raw_path"
+    },
+    {
+      "inferred_type": "string",
+      "name": "reason_code"
+    },
+    {
+      "inferred_type": "float",
+      "name": "rerank_score"
+    },
+    {
+      "inferred_type": "string",
+      "name": "reranker"
+    },
+    {
+      "inferred_type": "string",
+      "name": "sample_id"
+    },
+    {
+      "inferred_type": "float",
+      "name": "score"
+    },
+    {
+      "inferred_type": "string",
+      "name": "selector"
+    },
+    {
+      "inferred_type": "string",
+      "name": "source_group_id"
+    },
+    {
+      "inferred_type": "string",
+      "name": "source_worker_id"
+    },
+    {
+      "inferred_type": "float",
+      "name": "spike_adjusted_score"
+    },
+    {
+      "inferred_type": "string",
+      "name": "spike_hygiene_mode"
+    },
+    {
+      "inferred_type": "bool",
+      "name": "spike_hygiene_pass"
+    },
+    {
+      "inferred_type": "float",
+      "name": "spike_penalty_multiplier"
+    },
+    {
+      "inferred_type": "float",
+      "name": "spike_rate_threshold"
+    },
+    {
+      "inferred_type": "float",
+      "name": "stationary_fraction"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__acc_jerk_p95"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__acc_norm_mean"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__acc_norm_p95"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__axis_std_max"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__axis_std_min"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__duration_sec"
+    },
+    {
+      "inferred_type": "string",
+      "name": "trace__flags"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__gyro_jerk_p95"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__gyro_norm_mean"
+    },
+    {
+      "inferred_type": "float",
+      "name": "trace__gyro_norm_p95"
+    },
+    {
+      "inferred_type": "int",
+      "name": "trace__n_samples"
+    },
+    {
+      "inferred_type": "string",
+      "name": "trace__periodicity_acc_norm"
+    },
+    {
+      "inferred_type": "string",
+      "name": "trace__periodicity_gyro_norm"
+    },
+    {
+      "inferred_type": "string",
+      "name": "trace__verdict"
+    },
+    {
+      "inferred_type": "bool",
+      "name": "trace_artifact_pass"
+    },
+    {
+      "inferred_type": "bool",
+      "name": "trace_hygiene_pass"
+    },
+    {
+      "inferred_type": "string",
+      "name": "url"
+    },
+    {
+      "inferred_type": "string",
+      "name": "worker_id"
+    }
+  ],
+  "forbidden_training_features_used": false,
+  "notes": [
+    "Submission files contain only rank, score, and an ID column.",
+    "Diagnostics are for audit and are not required by the external evaluator."
+  ],
+  "primary_submission_columns": [
+    {
+      "inferred_type": "int",
+      "name": "rank"
+    },
+    {
+      "inferred_type": "float",
+      "name": "score"
+    },
+    {
+      "inferred_type": "string",
+      "name": "new_worker_id"
+    }
+  ]
+}

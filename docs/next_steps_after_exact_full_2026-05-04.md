@@ -10,10 +10,16 @@ Current primary package:
 artifacts/final_selector/exact_full_ts2vec_artifact_gate
 ```
 
+Clean sendable copy:
+
+```text
+submission/
+```
+
 Primary CSV:
 
 ```text
-artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips.csv
+submission/ranked_new_clips.csv
 ```
 
 Current honest claim:
@@ -67,9 +73,15 @@ pre-rerank exact-full top 50.
 
 ### 1. Submission package polish
 
-This is the highest-return non-training work.
+This has now been done for the provided 2,000 public clips.
 
-Build a clean `submission/` folder or archive containing:
+Clean package:
+
+```text
+submission/
+```
+
+It contains:
 
 ```text
 ranked_new_clips.csv
@@ -88,7 +100,7 @@ Also include a one-page `METHODS.md` with the exact claim and limitations.
 
 Acceptance gate:
 
-- the package validates with `run_final --validate-only`;
+- the source final package validates with `run_final --validate-only`;
 - the README points only to the exact-full package;
 - no stale partial-support package is described as primary.
 

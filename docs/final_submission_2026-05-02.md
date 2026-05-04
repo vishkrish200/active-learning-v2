@@ -32,6 +32,12 @@ Current primary CSV:
 artifacts/final_selector/exact_full_ts2vec_artifact_gate/ranked_new_clips.csv
 ```
 
+Clean sendable package:
+
+```text
+submission/
+```
+
 The May 4 upgrade precomputed TS2Vec embeddings for all 200,000 old-support
 clips and reran the blend with exact full-support TS2Vec plus exact full-support
 `window_mean_std_pool`. The artifact-gated exact-full result is highly
