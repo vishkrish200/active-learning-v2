@@ -162,10 +162,16 @@ def _read_manifest(path_or_url: str) -> list[str]:
 
 def _read_text(path_or_url: str) -> str:
     if path_or_url.startswith("gs://"):
-        return subprocess.check_output(["gcloud", "storage", "cat", path_or_url], text=True)
+        return _with_retries(
+            lambda: subprocess.check_output(["gcloud", "storage", "cat", path_or_url], text=True),
+            label=path_or_url,
+        )
     if path_or_url.startswith(("http://", "https://")):
-        with urlopen(path_or_url, timeout=60) as response:
-            return response.read().decode("utf-8")
+        def read_http() -> str:
+            with urlopen(path_or_url, timeout=60) as response:
+                return response.read().decode("utf-8")
+
+        return _with_retries(read_http, label=path_or_url)
     return Path(path_or_url).read_text(encoding="utf-8")
 
 
@@ -192,12 +198,18 @@ def _embed_url_batch(
 def _load_jsonl_imu_url(url: str, *, max_samples: int | None) -> np.ndarray:
     samples: list[list[float]] = []
     if url.startswith("gs://"):
-        text = subprocess.check_output(["gcloud", "storage", "cat", url], text=True)
+        text = _with_retries(
+            lambda: subprocess.check_output(["gcloud", "storage", "cat", url], text=True),
+            label=url,
+        )
         lines: Iterable[str] = text.splitlines()
     elif url.startswith(("http://", "https://")):
-        with urlopen(url, timeout=120) as response:
-            lines = (line.decode("utf-8") for line in response)
-            return _samples_from_lines(lines, max_samples=max_samples)
+        def read_http_samples() -> np.ndarray:
+            with urlopen(url, timeout=120) as response:
+                lines = (line.decode("utf-8") for line in response)
+                return _samples_from_lines(lines, max_samples=max_samples)
+
+        return _with_retries(read_http_samples, label=url)
     else:
         lines = Path(url).read_text(encoding="utf-8").splitlines()
     for line in lines:
@@ -287,7 +299,32 @@ def _completed_shards(manifest_path: Path) -> set[int]:
 
 
 def _gcloud_cp(local_path: Path, gcs_path: str) -> None:
-    subprocess.run(["gcloud", "storage", "cp", str(local_path), gcs_path], check=True)
+    _with_retries(
+        lambda: subprocess.run(["gcloud", "storage", "cp", str(local_path), gcs_path], check=True),
+        label=gcs_path,
+    )
+
+
+def _with_retries(operation, *, label: str, attempts: int = 3, sleep_seconds: float = 2.0):
+    last_error: Exception | None = None
+    for attempt in range(1, int(attempts) + 1):
+        try:
+            return operation()
+        except Exception as exc:  # noqa: BLE001 - preserve original failure after bounded retries.
+            last_error = exc
+            if attempt >= int(attempts):
+                break
+            log_event(
+                "gcp_ts2vec_embed_manifest",
+                "retryable_operation_failed",
+                label=label,
+                attempt=attempt,
+                attempts=int(attempts),
+                error=str(exc),
+            )
+            time.sleep(float(sleep_seconds) * attempt)
+    assert last_error is not None
+    raise last_error
 
 
 if __name__ == "__main__":
