@@ -28,6 +28,19 @@ ranked_new_clips_worker_id.csv
 Use `ranked_new_clips_worker_id.csv` only if the evaluator expects the internal
 manifest-hash ID instead of the public `sampleNNNNNN`-style ID.
 
+## What This Submission Contains
+
+This package contains both:
+
+```text
+1. the ranked output for the public 2,000 new clips;
+2. the algorithm/run instructions for scoring a held-out new manifest.
+```
+
+The public CSV is the easiest way to evaluate the clips already listed on the
+challenge page. The held-out runner is the algorithm path if the evaluator wants
+to run the same method on another new-candidate manifest.
+
 ## How Eddy Can Test The 2,000 Provided Clips
 
 For the public 2,000 new clips, Eddy does not need to run our code.
@@ -41,6 +54,29 @@ The evaluator can:
    metric using that ordered list.
 
 This is the intended CSV-only submission path.
+
+## How Eddy Can Test The Algorithm
+
+If the held-out test uses the same public 200,000-clip old corpus and a
+different hidden new-candidate manifest, use:
+
+```text
+RUN_ON_HELDOUT_NEW.md
+```
+
+That path runs:
+
+```text
+old manifest + hidden new manifest -> ranked CSV
+```
+
+It reuses the exact 200,000-clip old-support TS2Vec cache, computes
+TS2Vec/window embeddings for the hidden new clips, rebuilds exact window support,
+then emits the same CSV schema.
+
+If the evaluator changes the old corpus itself, exact TS2Vec support for that
+new old corpus must be recomputed. The same runner also emits an exact-window
+fallback that does not depend on old-support TS2Vec embeddings.
 
 ## Method Summary
 
