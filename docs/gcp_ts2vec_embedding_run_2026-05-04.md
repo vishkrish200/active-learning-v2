@@ -213,6 +213,55 @@ elapsed_seconds: 301.796
 The 5k probe ran at roughly 1,000 full-length clips per minute on one L4 after
 the Python environment was already built.
 
+## Full Old-Support Run
+
+The full 200,000-clip old-support TS2Vec embedding run completed successfully
+on one L4 VM:
+
+```text
+vm_name: gcp-ts2vec-l4-full-0504
+zone: us-central1-a
+machine: g2-standard-4
+gpu: 1x NVIDIA L4
+source_archive: gs://active-learning-v2-802636843791/source/active-learning-v2-codex-ts2vec-pipeline-9fbc0c2cba.tar.gz
+output: gs://active-learning-v2-802636843791/embeddings/ts2vec_old_support_full_l4_20260504
+log: gs://active-learning-v2-802636843791/logs/ts2vec_old_support_full_l4_20260504.log
+status: passed
+elapsed_seconds: 11007.324
+n_clips: 200000
+n_shards: 200
+sample_ids_unique: 200000 / 200000
+embedding_dim: 320
+bad_shards: 0
+```
+
+Final run validation printed:
+
+```text
+event=manifest_check n_clips=200000 n_shards=200 n_sample_ids=200000 n_unique=200000
+event=shard_matrix_check n_rows=200000 embedding_dim=320 bad_shards=0
+event=full_l4_done ts=2026-05-04T09:30:50Z
+```
+
+Post-run local verification confirmed:
+
+```text
+gcs_npz_shard_count: 200
+manifest_n_clips: 200000
+manifest_n_shards: 200
+ids_from_shards: 200000
+unique_ids_from_shards: 200000
+```
+
+The L4 VM was deleted immediately after the successful run. A post-delete
+instance listing for the GCP project returned no running instances.
+
+This artifact removes the previous "partial old-support TS2Vec" caveat for
+future exact-support ranking runs. It does not by itself change the promoted
+submission ranking; the next step is to rerun the final blend using this exact
+full-support TS2Vec cache and compare against the current artifact-gate
+exact-window output.
+
 ## Full-Run Estimate
 
 At the measured 5k-probe throughput, embedding all 200,000 old-support clips on
@@ -238,3 +287,6 @@ it uses:
 - shard-level GCS uploads;
 - log upload on exit;
 - explicit VM deletion after completion.
+
+This run has now been completed; the estimate is retained here as provenance
+for the compute decision.
