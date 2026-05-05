@@ -278,6 +278,28 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
             [2, 4],
         )
 
+    def test_random_replay_policies_are_supported_and_seeded_independently(self):
+        clips = _candidate_cap_clips()
+        episodes = (_candidate_cap_episode(clips),)
+        config = OfflineBenchmarkConfig(
+            batch_size=2,
+            rounds=1,
+            policies=["random_valid", "random_valid_replay_000", "random_valid_replay_001"],
+            representations=["window"],
+            primary_representations=["window"],
+            random_seed=101,
+        )
+
+        result_a = run_offline_active_benchmark(clips, episodes, config)
+        result_b = run_offline_active_benchmark(clips, episodes, config)
+
+        selected_a = {row.policy_name: row.selected_ids for row in result_a.rounds}
+        selected_b = {row.policy_name: row.selected_ids for row in result_b.rounds}
+        self.assertEqual(selected_a, selected_b)
+        self.assertIn("random_valid_replay_000", result_a.policy_summary)
+        self.assertIn("random_valid_replay_001", result_a.policy_summary)
+        self.assertNotEqual(selected_a["random_valid_replay_000"], selected_a["random_valid_replay_001"])
+
     def test_artifact_gate_blend_policy_demotes_artifacts_after_ts2vec_window_blend(self):
         clips = _blend_policy_clips()
         episode = _blend_policy_episode(clips)

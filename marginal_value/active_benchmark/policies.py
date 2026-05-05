@@ -27,6 +27,7 @@ SUPPORTED_POLICIES = (
     "ts2vec_novelty_same_gates_no_kcenter",
     "oracle_greedy_eval_only",
 )
+RANDOM_REPLAY_PREFIX = "random_valid_replay_"
 
 
 def select_batch(
@@ -40,13 +41,22 @@ def select_batch(
     episode_index: int,
     round_index: int,
 ) -> tuple[tuple[str, ...], tuple[float, ...]]:
-    if policy_name not in SUPPORTED_POLICIES:
+    random_replay_index = _random_replay_index(policy_name)
+    if policy_name not in SUPPORTED_POLICIES and random_replay_index is None:
         raise ValueError(f"Unsupported offline active benchmark policy: {policy_name}")
     batch_size = min(max(0, int(config.batch_size)), len(candidate_ids))
     if batch_size == 0:
         return (), ()
-    if policy_name == "random_valid":
-        return _random_valid(clips_by_id, candidate_ids, config=config, episode_index=episode_index, round_index=round_index, batch_size=batch_size)
+    if policy_name == "random_valid" or random_replay_index is not None:
+        return _random_valid(
+            clips_by_id,
+            candidate_ids,
+            config=config,
+            episode_index=episode_index,
+            round_index=round_index,
+            batch_size=batch_size,
+            replay_index=random_replay_index,
+        )
     if policy_name == "quality_only":
         order = _quality_order(clips_by_id, candidate_ids)
         return _selected_with_scores(order[:batch_size], clips_by_id, score_fn=lambda clip: float(clip.quality_score))
@@ -147,14 +157,25 @@ def _random_valid(
     episode_index: int,
     round_index: int,
     batch_size: int,
+    replay_index: int | None = None,
 ) -> tuple[tuple[str, ...], tuple[float, ...]]:
     valid = [sample_id for sample_id in candidate_ids if _passes_gates(clips_by_id[str(sample_id)], config)]
     fallback = [sample_id for sample_id in candidate_ids if sample_id not in set(valid)]
-    rng = np.random.default_rng(int(config.random_seed) + episode_index * 997 + round_index * 31)
+    replay_offset = 0 if replay_index is None else (int(replay_index) + 1) * 104729
+    rng = np.random.default_rng(int(config.random_seed) + episode_index * 997 + round_index * 31 + replay_offset)
     valid_order = list(rng.permutation(valid)) if valid else []
     fallback_order = list(rng.permutation(fallback)) if fallback else []
     selected = tuple(str(sample_id) for sample_id in [*valid_order, *fallback_order][:batch_size])
     return selected, tuple(float(clips_by_id[sample_id].quality_score) for sample_id in selected)
+
+
+def _random_replay_index(policy_name: str) -> int | None:
+    if not policy_name.startswith(RANDOM_REPLAY_PREFIX):
+        return None
+    suffix = policy_name[len(RANDOM_REPLAY_PREFIX) :]
+    if not suffix.isdigit():
+        return None
+    return int(suffix)
 
 
 def _quality_order(clips_by_id: Mapping[str, BenchmarkClip], candidate_ids: Sequence[str]) -> list[str]:
