@@ -1,4 +1,5 @@
 import json
+import math
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -19,6 +20,62 @@ from scripts.offline_active_benchmark_from_urls import _attach_ts2vec_embeddings
 
 
 class OfflineActiveBenchmarkTests(unittest.TestCase):
+    def test_old_window_focus_gcp_config_is_window_only_and_bounded(self):
+        config_path = Path("configs/offline_active_benchmark_gcp_old_window_focus_exact.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_training"])
+        self.assertNotIn("ts2vec", config)
+
+        data = config["data"]
+        benchmark = config["benchmark"]
+        policies = benchmark["policies"]
+        random_replays = [policy for policy in policies if policy.startswith("random_valid_replay_")]
+
+        self.assertEqual(config["acceptance"]["minimum_completed_seeds"], 5)
+        self.assertEqual(len(data["selection_seeds"]), 5)
+        self.assertEqual(len(random_replays), 50)
+        self.assertEqual(random_replays[0], "random_valid_replay_000")
+        self.assertEqual(random_replays[-1], "random_valid_replay_049")
+        self.assertNotIn("ts2vec", benchmark["representations"])
+        self.assertNotIn("ts2vec", benchmark["primary_representations"])
+        self.assertEqual(benchmark["representations"], ["window", "raw_shape_stats"])
+        self.assertEqual(benchmark["primary_representations"], ["window", "raw_shape_stats"])
+        self.assertEqual(benchmark["blend_left_representation"], "window")
+        self.assertEqual(benchmark["blend_right_representation"], "window")
+        self.assertEqual(benchmark["episode_strategy"], "opportunity")
+        self.assertEqual(benchmark["episode_representation"], "window")
+
+        required_policies = {
+            "random_valid",
+            "quality_only",
+            "old_novelty_window",
+            "old_novelty_window_sourcecap2",
+            "kcenter_quality_gated_window",
+            "submitted_minus_ts2vec",
+            "submitted_no_kcenter",
+            "window_novelty_same_gates_no_kcenter",
+            "oracle_greedy_eval_only",
+        }
+        ts2vec_premise_policies = {
+            "blend_kcenter_ts2vec_window",
+            "artifact_gate_blend_kcenter_ts2vec_window",
+            "submitted_full_replay",
+            "submitted_minus_window",
+            "ts2vec_novelty_same_gates_no_kcenter",
+        }
+        self.assertTrue(required_policies <= set(policies))
+        self.assertFalse(ts2vec_premise_policies & set(policies))
+
+        candidate_clip_count = int(benchmark["candidate_groups_per_episode"]) * int(data["clips_per_group"])
+        final_budget = int(benchmark["rounds"]) * int(benchmark["batch_size"])
+        self.assertLessEqual(
+            math.comb(candidate_clip_count, final_budget),
+            int(benchmark["oracle_exact_combination_limit"]),
+        )
+
     def test_synthetic_two_round_benchmark_tracks_policy_state_and_reports(self):
         clips = _synthetic_clips()
         episodes = build_source_blocked_episodes(
