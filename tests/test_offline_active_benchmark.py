@@ -10,6 +10,7 @@ from marginal_value.active_benchmark import (
     EpisodeSpec,
     OfflineBenchmarkConfig,
     build_difficulty_targeted_episodes,
+    build_opportunity_targeted_episodes,
     build_source_blocked_episodes,
     run_offline_active_benchmark,
     write_benchmark_reports,
@@ -194,6 +195,34 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
             candidate_distance = _mean_group_distance(clips, episode.target_group_ids, episode.candidate_group_ids)
             self.assertLess(candidate_distance, support_distance)
 
+    def test_opportunity_targeted_episodes_raise_oracle_over_random_replay_gap(self):
+        clips = _opportunity_source_group_clips()
+        hard = build_difficulty_targeted_episodes(
+            clips,
+            n_folds=1,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=1,
+            max_support_groups=4,
+            representation="window",
+        )
+        opportunity = build_opportunity_targeted_episodes(
+            clips,
+            n_folds=1,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=1,
+            max_support_groups=4,
+            representation="window",
+        )
+
+        hard_gap = _oracle_minus_random_replay_mean(clips, hard)
+        opportunity_gap = _oracle_minus_random_replay_mean(clips, opportunity)
+
+        self.assertGreater(opportunity_gap, hard_gap + 0.15)
+        candidate_distances = _group_distances_to_targets(clips, opportunity[0].target_group_ids, opportunity[0].candidate_group_ids)
+        hard_candidate_distances = _group_distances_to_targets(clips, hard[0].target_group_ids, hard[0].candidate_group_ids)
+        self.assertLess(min(candidate_distances), 0.05)
+        self.assertGreater(max(candidate_distances), max(hard_candidate_distances) + 0.50)
+
     def test_url_runner_can_select_difficulty_targeted_episode_strategy(self):
         clips = _separated_source_group_clips()
 
@@ -221,6 +250,18 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
             _mean_group_distance(clips, hard[0].target_group_ids, hard[0].candidate_group_ids),
             _mean_group_distance(clips, hard[0].target_group_ids, hard[0].support_group_ids),
         )
+
+        opportunity = _build_episodes_from_clips(
+            clips,
+            episode_strategy="opportunity",
+            folds=2,
+            candidate_groups_per_episode=2,
+            target_groups_per_episode=1,
+            max_support_groups=2,
+            episode_representation="window",
+        )
+        self.assertEqual(len(opportunity), 2)
+        self.assertFalse(set(opportunity[0].candidate_group_ids) & set(opportunity[0].target_group_ids))
 
     def test_progress_events_and_oracle_candidate_cap_are_exposed(self):
         clips = _candidate_cap_clips()
@@ -496,6 +537,40 @@ def _separated_source_group_clips() -> list[BenchmarkClip]:
     return clips
 
 
+def _opportunity_source_group_clips() -> list[BenchmarkClip]:
+    angles_by_group = {
+        "target_like_00": 0.0,
+        "target_like_01": 2.0,
+        "target_like_02": 4.0,
+        "target_like_03": 6.0,
+        "target_like_04": 8.0,
+        "distractor_00": 178.0,
+        "distractor_01": 182.0,
+        "support_like_00": 170.0,
+        "support_like_01": 174.0,
+        "support_like_02": 186.0,
+        "support_like_03": 190.0,
+        "neutral_00": 90.0,
+        "neutral_01": 270.0,
+    }
+    clips: list[BenchmarkClip] = []
+    for group_id, angle in angles_by_group.items():
+        for clip_index in range(2):
+            radians = np.deg2rad(angle + clip_index * 0.25)
+            embedding = np.asarray([np.cos(radians), np.sin(radians)], dtype=float)
+            clips.append(
+                BenchmarkClip(
+                    sample_id=f"{group_id}_clip{clip_index:03d}",
+                    source_group_id=group_id,
+                    embeddings={"window": embedding},
+                    quality_score=1.0,
+                    stationary_fraction=0.0,
+                    max_abs_value=1.0,
+                )
+            )
+    return clips
+
+
 def _candidate_cap_clips() -> list[BenchmarkClip]:
     centers = {
         "support_far_a": -5.0,
@@ -675,6 +750,15 @@ class FakeTS2VecEncoder:
 
 
 def _mean_group_distance(clips: list[BenchmarkClip], target_groups: tuple[str, ...], comparison_groups: tuple[str, ...]) -> float:
+    distances = _group_distances_to_targets(clips, target_groups, comparison_groups)
+    return float(np.mean(distances))
+
+
+def _group_distances_to_targets(
+    clips: list[BenchmarkClip],
+    target_groups: tuple[str, ...],
+    comparison_groups: tuple[str, ...],
+) -> list[float]:
     by_group: dict[str, list[np.ndarray]] = {}
     for clip in clips:
         by_group.setdefault(clip.source_group_id, []).append(np.asarray(clip.embeddings["window"], dtype=float))
@@ -682,7 +766,27 @@ def _mean_group_distance(clips: list[BenchmarkClip], target_groups: tuple[str, .
     comparison = np.vstack([np.mean(by_group[group], axis=0) for group in comparison_groups])
     target = target / np.maximum(np.linalg.norm(target, axis=1, keepdims=True), 1.0e-12)
     comparison = comparison / np.maximum(np.linalg.norm(comparison, axis=1, keepdims=True), 1.0e-12)
-    return float(np.mean(1.0 - np.max(target @ comparison.T, axis=1)))
+    distances = []
+    for row in comparison:
+        distances.append(float(1.0 - np.max(target @ row.reshape(-1, 1))))
+    return distances
+
+
+def _oracle_minus_random_replay_mean(clips: list[BenchmarkClip], episodes: tuple[EpisodeSpec, ...]) -> float:
+    replay_policies = [f"random_valid_replay_{index:03d}" for index in range(12)]
+    config = OfflineBenchmarkConfig(
+        batch_size=2,
+        rounds=1,
+        policies=[*replay_policies, "oracle_greedy_eval_only"],
+        representations=["window"],
+        primary_representations=["window"],
+        random_seed=29,
+        oracle_exact_combination_limit=10_000,
+    )
+    result = run_offline_active_benchmark(clips, episodes, config)
+    final_by_policy = {row.policy_name: float(row.cumulative_balanced_relative_gain) for row in result.rounds}
+    random_mean = float(np.mean([final_by_policy[policy] for policy in replay_policies]))
+    return final_by_policy["oracle_greedy_eval_only"] - random_mean
 
 
 def _worker_id(url: str) -> str:

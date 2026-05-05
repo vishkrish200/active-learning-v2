@@ -6,7 +6,11 @@ from marginal_value.active_benchmark.benchmark_discrimination import (
 from marginal_value.active_benchmark.reports import write_benchmark_reports
 from marginal_value.active_benchmark.runner import run_offline_active_benchmark
 from marginal_value.active_benchmark.schema import BenchmarkClip, BenchmarkResult, EpisodeSpec, OfflineBenchmarkConfig, RoundResult
-from marginal_value.active_benchmark.splits import build_difficulty_targeted_episodes, build_source_blocked_episodes
+from marginal_value.active_benchmark.splits import (
+    build_difficulty_targeted_episodes,
+    build_opportunity_targeted_episodes,
+    build_source_blocked_episodes,
+)
 
 __all__ = [
     "BenchmarkClip",
@@ -17,6 +21,7 @@ __all__ = [
     "build_benchmark_decision_report",
     "build_benchmark_discrimination_report",
     "build_difficulty_targeted_episodes",
+    "build_opportunity_targeted_episodes",
     "build_source_blocked_episodes",
     "run_offline_active_benchmark",
     "write_benchmark_decision_reports",
