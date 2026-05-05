@@ -33,7 +33,7 @@ class BenchmarkDecisionReportTests(unittest.TestCase):
 
         gates = {gate["name"]: gate for gate in report["gates"]}
         self.assertEqual(report["decision"]["downstream_training"], "hold")
-        self.assertEqual(report["decision"]["baseline_to_carry"], "kcenter_quality_gated_window")
+        self.assertEqual(report["decision"]["baseline_to_carry"], "old_novelty_window_sourcecap2")
         self.assertEqual(gates["oracle_sanity"]["status"], "pass")
         self.assertEqual(gates["bad_control_sanity"]["status"], "pass")
         self.assertEqual(gates["near_zero_sensitivity"]["status"], "pass")
@@ -63,7 +63,7 @@ class BenchmarkDecisionReportTests(unittest.TestCase):
         self.assertIn("## Decision", markdown)
         self.assertIn("## Gates", markdown)
         self.assertIn("TS2Vec", markdown)
-        self.assertIn("kcenter_quality_gated_window", markdown)
+        self.assertIn("old_novelty_window_sourcecap2", markdown)
 
     def test_decision_report_script_runs_directly_from_repo_root(self):
         with TemporaryDirectory() as tmp:

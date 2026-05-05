@@ -328,7 +328,7 @@ def _decision(gates: list[dict[str, Any]], final_means_all: dict[str, float]) ->
     by_name = {gate["name"]: gate for gate in gates}
     hard_failures = [gate["name"] for gate in gates if gate.get("status") == "fail"]
     ts2vec_status = by_name.get("ts2vec_incremental_value", {}).get("status")
-    baseline = KCENTER_WINDOW_POLICY if KCENTER_WINDOW_POLICY in final_means_all else _top_policy(_without_oracle(final_means_all))[0]
+    baseline = _top_policy(_without_oracle(final_means_all))[0] or KCENTER_WINDOW_POLICY
     if hard_failures:
         downstream = "hold"
         read = "benchmark proxy has failed sanity gates; redesign or debug the proxy before model training"
@@ -344,7 +344,7 @@ def _decision(gates: list[dict[str, Any]], final_means_all: dict[str, float]) ->
         "read": read,
         "blocking_gates": hard_failures,
         "next_steps": [
-            "Carry kcenter_quality_gated_window as the active-learning baseline unless a stronger proxy result displaces it.",
+            f"Carry {baseline} as the active-learning baseline unless a stronger proxy result displaces it.",
             "Do not launch downstream training until the benchmark either validates TS2Vec incremental value or is redesigned.",
             "If spending GCP credits next, spend them on proxy validation or a tiny downstream smoke, not a full retraining run.",
         ],
