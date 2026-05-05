@@ -1,0 +1,49 @@
+{
+  "execution": {
+    "provider": "local",
+    "allow_gcp": false,
+    "allow_modal": false,
+    "notes": "Synthetic local smoke only. Do not launch GCP, Modal, GPU, TS2Vec retraining, or downstream model training from this config."
+  },
+  "benchmark": {
+    "dataset": "synthetic",
+    "n_workers": 8,
+    "clips_per_worker": 5,
+    "episode_strategy": "hard",
+    "episode_representation": "window",
+    "n_folds": 2,
+    "candidate_groups_per_episode": 2,
+    "target_groups_per_episode": 2,
+    "max_support_groups": 4,
+    "rounds": 2,
+    "batch_size": 2,
+    "representations": ["window"],
+    "primary_representations": ["window"],
+    "oracle_candidate_cap": 8,
+    "oracle_exact_combination_limit": 1000,
+    "policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_window",
+      "kcenter_quality_gated_window",
+      "oracle_greedy_eval_only"
+    ],
+    "random_seed": 13
+  },
+  "gcp": {
+    "enabled": false,
+    "allowed_after_local_smoke_passes": true,
+    "requires_cost_time_estimate": true,
+    "first_target": {
+      "kind": "bounded_cpu_offline_benchmark",
+      "max_rows": 20000,
+      "folds": 4,
+      "rounds": 5,
+      "no_ts2vec_retraining": true,
+      "no_gpu_training": true
+    }
+  },
+  "artifacts": {
+    "output_dir": "artifacts/offline_active_benchmark/smoke"
+  }
+}

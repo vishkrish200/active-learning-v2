@@ -1,0 +1,75 @@
+{
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 60,
+    "no_gpu": true,
+    "no_training": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "data/modal_manifests/pretrain_urls.txt",
+    "max_rows_per_seed": 1800,
+    "max_groups": 300,
+    "clips_per_group": 6,
+    "sampling_mode": "random",
+    "selection_seeds": [17, 23, 37],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "hard",
+    "episode_representation": "window",
+    "folds": 4,
+    "candidate_groups_per_episode": 2,
+    "target_groups_per_episode": 2,
+    "max_support_groups": 96,
+    "rounds": 2,
+    "batch_size": 3,
+    "oracle_candidate_cap": null,
+    "oracle_exact_combination_limit": 5000,
+    "representations": ["ts2vec", "window", "raw_shape_stats"],
+    "primary_representations": ["window", "raw_shape_stats"],
+    "blend_left_representation": "ts2vec",
+    "blend_right_representation": "window",
+    "blend_alpha": 0.5,
+    "max_artifact_score": 0.05,
+    "policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_window",
+      "old_novelty_window_sourcecap2",
+      "kcenter_quality_gated_window",
+      "blend_kcenter_ts2vec_window",
+      "artifact_gate_blend_kcenter_ts2vec_window",
+      "submitted_full_replay",
+      "submitted_minus_ts2vec",
+      "submitted_minus_window",
+      "submitted_no_kcenter",
+      "window_novelty_same_gates_no_kcenter",
+      "ts2vec_novelty_same_gates_no_kcenter",
+      "oracle_greedy_eval_only"
+    ]
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260505_exact_oracle_calibration"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 3,
+    "minimum_episodes_per_seed": 4,
+    "required_checks": [
+      "source-group leakage is false",
+      "oracle_fraction_exact_all_rounds is true for every seed",
+      "support deltas are exactly +3",
+      "candidate deltas are exactly -3",
+      "paired deltas are reported for submitted-style ablations",
+      "selection_details are present in every round row",
+      "VM is deleted after artifact copy"
+    ]
+  }
+}

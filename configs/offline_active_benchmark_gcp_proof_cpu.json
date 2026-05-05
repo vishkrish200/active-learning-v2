@@ -1,0 +1,61 @@
+{
+  "purpose": "Cheapest GCP proof run for the offline active-learning benchmark after the full oracle diagnostic proved too slow.",
+  "cloud": {
+    "provider": "gcp",
+    "zone": "us-central1-a",
+    "machine_type": "e2-standard-4",
+    "gpu": false,
+    "max_runtime_minutes": 60,
+    "delete_vm_after_artifact_copy": true
+  },
+  "data": {
+    "manifest": "data/modal_manifests/pretrain_urls.txt",
+    "max_rows_per_seed": 20000,
+    "max_groups": 1000,
+    "clips_per_group": 20,
+    "sampling_mode": "random",
+    "selection_seeds": [17, 23, 37],
+    "max_samples_per_clip": 900
+  },
+  "benchmark": {
+    "episode_strategy": "hard",
+    "episode_representation": "window",
+    "folds": 3,
+    "candidate_groups_per_episode": 2,
+    "target_groups_per_episode": 3,
+    "max_support_groups": 128,
+    "rounds": 2,
+    "batch_size": 5,
+    "oracle_candidate_cap": 24,
+    "oracle_exact_combination_limit": 10000,
+    "representations": ["window", "raw_shape_stats"],
+    "primary_representations": ["window", "raw_shape_stats"],
+    "policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_window",
+      "kcenter_quality_gated_window",
+      "oracle_greedy_eval_only"
+    ]
+  },
+  "outputs": {
+    "local_dir": "artifacts/offline_active_benchmark/gcp_runs/20260504_20k_random_3seed_proof"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 3,
+    "minimum_episodes_per_seed": 3,
+    "required_artifacts": [
+      "selected_urls.txt",
+      "offline_active_benchmark_report.json",
+      "offline_active_benchmark_report.md",
+      "proof_summary.json"
+    ],
+    "required_checks": [
+      "source-group leakage is false",
+      "difficulty_audit is present",
+      "oracle upper bound is nonzero on at least one episode-round",
+      "policy summaries include all configured policies",
+      "VM is deleted after artifact copy"
+    ]
+  }
+}

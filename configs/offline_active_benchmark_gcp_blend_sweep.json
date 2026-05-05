@@ -1,0 +1,68 @@
+{
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 90,
+    "no_gpu": true,
+    "no_training": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "data/modal_manifests/pretrain_urls.txt",
+    "max_rows_per_seed": 5000,
+    "max_groups": 500,
+    "clips_per_group": 10,
+    "sampling_mode": "random",
+    "selection_seeds": [17, 23, 37],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "sweep": {
+    "blend_alpha_values": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "max_artifact_score_values": [null, 0.0, 0.05],
+    "baseline_policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_window",
+      "kcenter_quality_gated_window"
+    ],
+    "swept_policies": [
+      "blend_kcenter_ts2vec_window",
+      "artifact_gate_blend_kcenter_ts2vec_window"
+    ]
+  },
+  "benchmark": {
+    "episode_strategy": "hard",
+    "episode_representation": "window",
+    "folds": 3,
+    "candidate_groups_per_episode": 2,
+    "target_groups_per_episode": 3,
+    "max_support_groups": 128,
+    "rounds": 2,
+    "batch_size": 5,
+    "oracle_candidate_cap": 24,
+    "oracle_exact_combination_limit": 10000,
+    "representations": ["ts2vec", "window", "raw_shape_stats"],
+    "primary_representations": ["window", "raw_shape_stats"],
+    "blend_left_representation": "ts2vec",
+    "blend_right_representation": "window"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260505_blend_alpha_artifact_sweep"
+  },
+  "acceptance": {
+    "minimum_completed_cells": 15,
+    "minimum_completed_seeds_per_cell": 3,
+    "required_checks": [
+      "each sweep cell includes the strong simple controls",
+      "selection_details explain every selected clip",
+      "report ranks blend cells by final cumulative gain against kcenter_quality_gated_window and old_novelty_window",
+      "VM is deleted after artifact copy"
+    ]
+  }
+}

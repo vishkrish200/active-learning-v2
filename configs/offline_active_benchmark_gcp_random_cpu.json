@@ -1,0 +1,44 @@
+{
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 90,
+    "no_gpu": true,
+    "no_training": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "data/modal_manifests/pretrain_urls.txt",
+    "max_rows_per_seed": 20000,
+    "max_groups": 1000,
+    "clips_per_group": 20,
+    "sampling_mode": "random",
+    "selection_seeds": [17, 23, 37],
+    "max_samples_per_clip": 900
+  },
+  "benchmark": {
+    "episode_strategy": "hard",
+    "episode_representation": "window",
+    "folds": 6,
+    "candidate_groups_per_episode": 5,
+    "target_groups_per_episode": 5,
+    "max_support_groups": 128,
+    "rounds": 4,
+    "batch_size": 10,
+    "oracle_candidate_cap": 40,
+    "oracle_exact_combination_limit": 10000,
+    "representations": ["window", "raw_shape_stats"],
+    "primary_representations": ["window", "raw_shape_stats"],
+    "policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_window",
+      "kcenter_quality_gated_window",
+      "oracle_greedy_eval_only"
+    ]
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260504_20k_random_3seed"
+  }
+}
