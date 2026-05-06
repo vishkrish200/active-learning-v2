@@ -252,6 +252,29 @@ def build_source_family_shift_episodes(
     return tuple(episodes)
 
 
+def infer_source_family_assignments(
+    clips: Sequence[BenchmarkClip],
+    *,
+    representation: str = "window",
+    source_family_count: int = 4,
+) -> dict[str, str]:
+    by_group: dict[str, list[BenchmarkClip]] = defaultdict(list)
+    for clip in clips:
+        by_group[str(clip.source_group_id)].append(clip)
+    groups = sorted(by_group)
+    if not groups:
+        raise ValueError("Cannot infer source families without clips.")
+    literal = _literal_source_family_assignments(groups)
+    if literal is not None:
+        return literal
+    centroids = _group_centroids(by_group, groups, representation=representation)
+    return _cluster_source_family_assignments(
+        centroids,
+        groups,
+        source_family_count=max(2, int(source_family_count)),
+    )
+
+
 def _clip_ids_for_groups(by_group: dict[str, list[BenchmarkClip]], groups: Sequence[str]) -> tuple[str, ...]:
     return tuple(
         clip.sample_id

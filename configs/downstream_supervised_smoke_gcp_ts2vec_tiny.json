@@ -1,0 +1,61 @@
+{
+  "name": "downstream_supervised_smoke_gcp_ts2vec_tiny",
+  "execution": {
+    "platform": "gcp",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "max_runtime_minutes": 90
+  },
+  "data": {
+    "manifest": "gs://active-learning-v2-802636843791/offline_active_benchmark/pretrain_urls.txt",
+    "max_rows_per_seed": 300,
+    "max_groups": 100,
+    "clips_per_group": 3,
+    "selection_seeds": [17]
+  },
+  "representations": {
+    "load": ["ts2vec", "window", "raw_shape_stats"],
+    "primary": ["window", "raw_shape_stats"],
+    "ts2vec_checkpoint": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "ts2vec_device": "cpu"
+  },
+  "benchmark": {
+    "episode_strategy": "rotating",
+    "folds": 2,
+    "candidate_groups_per_episode": 6,
+    "target_groups_per_episode": 2,
+    "max_support_groups": 64,
+    "rounds": 2,
+    "batch_size": 2,
+    "policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_window",
+      "old_novelty_ts2vec",
+      "kcenter_quality_gated_ts2vec",
+      "submitted_full_replay",
+      "ts2vec_novelty_same_gates_no_kcenter"
+    ]
+  },
+  "downstream": {
+    "model": "nearest_centroid_source_family",
+    "label_source": "source_family",
+    "label_representation": "window",
+    "source_family_count": 4,
+    "representations": ["window", "raw_shape_stats"],
+    "baseline_policy": "old_novelty_ts2vec",
+    "random_policy": "random_valid",
+    "decision": "tiny_smoke_only"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 1,
+    "required_checks": [
+      "supervised report is written",
+      "no leakage in support/candidate/target source groups",
+      "model update rows are nonempty"
+    ],
+    "non_claim": "This is a source-family pseudo-label supervised smoke, not real challenge-label downstream proof."
+  }
+}

@@ -10,6 +10,10 @@ from marginal_value.active_benchmark import (
     run_offline_active_benchmark,
     write_benchmark_reports,
 )
+from marginal_value.active_benchmark.downstream_supervised_smoke import (
+    build_downstream_supervised_report,
+    write_downstream_supervised_reports,
+)
 from marginal_value.active_benchmark.downstream_smoke import build_downstream_utility_report, write_downstream_utility_reports
 from marginal_value.active_benchmark.reports import result_to_json
 from scripts.offline_active_benchmark_from_urls import (
@@ -121,6 +125,25 @@ def main() -> None:
         "decision": downstream_report["decision"],
         "summary": downstream_report["summary"],
     }
+    if args.supervised_downstream_label_source != "none":
+        supervised_representations = _parse_csv_list(args.supervised_downstream_representations)
+        supervised_report = build_downstream_supervised_report(
+            result,
+            clips,
+            downstream_representations=supervised_representations,
+            label_source=args.supervised_downstream_label_source,
+            label_representation=args.supervised_downstream_label_representation,
+            source_family_count=args.supervised_downstream_source_family_count,
+            baseline_policy=args.supervised_downstream_baseline_policy,
+            random_policy=args.supervised_downstream_random_policy,
+        )
+        supervised_paths = write_downstream_supervised_reports(supervised_report, output_dir)
+        proof["downstream_supervised_report"] = {
+            "json": str(supervised_paths["json"]),
+            "markdown": str(supervised_paths["markdown"]),
+            "decision": supervised_report["decision"],
+            "summary": supervised_report["summary"],
+        }
     proof_path = output_dir / "proof_summary.json"
     proof_path.write_text(json.dumps(proof, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({"event": "done", **proof}, sort_keys=True), flush=True)
@@ -175,6 +198,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--downstream-max-components", type=int, default=4)
     parser.add_argument("--downstream-baseline-policy", default="old_novelty_ts2vec")
     parser.add_argument("--downstream-random-policy", default="random_valid")
+    parser.add_argument("--supervised-downstream-label-source", choices=["none", "source_family"], default="none")
+    parser.add_argument("--supervised-downstream-label-representation", default="window")
+    parser.add_argument("--supervised-downstream-source-family-count", type=int, default=4)
+    parser.add_argument("--supervised-downstream-representations", default="window,raw_shape_stats")
+    parser.add_argument("--supervised-downstream-baseline-policy", default="old_novelty_ts2vec")
+    parser.add_argument("--supervised-downstream-random-policy", default="random_valid")
     return parser.parse_args()
 
 

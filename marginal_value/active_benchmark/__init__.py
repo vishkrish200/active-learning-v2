@@ -11,6 +11,7 @@ from marginal_value.active_benchmark.splits import (
     build_opportunity_targeted_episodes,
     build_source_family_shift_episodes,
     build_source_blocked_episodes,
+    infer_source_family_assignments,
 )
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "build_opportunity_targeted_episodes",
     "build_source_family_shift_episodes",
     "build_source_blocked_episodes",
+    "infer_source_family_assignments",
     "run_offline_active_benchmark",
     "write_benchmark_decision_reports",
     "write_benchmark_discrimination_reports",
