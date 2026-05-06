@@ -129,6 +129,49 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
             int(benchmark["oracle_exact_combination_limit"]),
         )
 
+    def test_source_shift_ts2vec_v2_gcp_config_expands_candidates_but_stays_exact(self):
+        config_path = Path("configs/offline_active_benchmark_gcp_source_shift_ts2vec_v2_exact.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_training"])
+        self.assertIn("ts2vec", config)
+
+        data = config["data"]
+        benchmark = config["benchmark"]
+        policies = benchmark["policies"]
+        random_replays = [policy for policy in policies if policy.startswith("random_valid_replay_")]
+
+        self.assertEqual(config["acceptance"]["minimum_completed_seeds"], 5)
+        self.assertEqual(len(data["selection_seeds"]), 5)
+        self.assertEqual(len(random_replays), 50)
+        self.assertEqual(random_replays[0], "random_valid_replay_000")
+        self.assertEqual(random_replays[-1], "random_valid_replay_049")
+        self.assertEqual(benchmark["episode_strategy"], "source_family_shift")
+        self.assertEqual(benchmark["candidate_groups_per_episode"], 6)
+        self.assertEqual(data["clips_per_group"], 3)
+        self.assertEqual(benchmark["rounds"], 2)
+        self.assertEqual(benchmark["batch_size"], 2)
+        self.assertIn("ts2vec", benchmark["representations"])
+        self.assertEqual(benchmark["primary_representations"], ["window", "raw_shape_stats"])
+        self.assertEqual(benchmark["blend_left_representation"], "ts2vec")
+        self.assertEqual(benchmark["blend_right_representation"], "window")
+
+        candidate_clip_count = int(benchmark["candidate_groups_per_episode"]) * int(data["clips_per_group"])
+        final_budget = int(benchmark["rounds"]) * int(benchmark["batch_size"])
+        self.assertEqual(candidate_clip_count, 18)
+        self.assertEqual(final_budget, 4)
+        self.assertLessEqual(
+            math.comb(candidate_clip_count, final_budget),
+            int(benchmark["oracle_exact_combination_limit"]),
+        )
+
+        required_checks = set(config["acceptance"]["required_checks"])
+        self.assertIn("support deltas are exactly +2", required_checks)
+        self.assertIn("candidate deltas are exactly -2", required_checks)
+        self.assertIn("near-zero oracle sensitivity improves over source_shift_ts2vec_exact_20260506T174755Z", required_checks)
+
     def test_synthetic_two_round_benchmark_tracks_policy_state_and_reports(self):
         clips = _synthetic_clips()
         episodes = build_source_blocked_episodes(
