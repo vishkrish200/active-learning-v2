@@ -42,6 +42,23 @@ class DownstreamUtilitySmokeTests(unittest.TestCase):
         self.assertEqual(config["downstream"]["baseline_policy"], "old_novelty_ts2vec")
         self.assertEqual(config["downstream"]["decision"], "hold_after_smoke")
 
+    def test_gcp_three_seed_ts2vec_smoke_config_keeps_same_bounds(self):
+        config_path = Path("configs/downstream_utility_smoke_gcp_ts2vec_3seed.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["linear_model_only"])
+        self.assertEqual(config["data"]["selection_seeds"], [17, 23, 37])
+        self.assertLessEqual(config["data"]["max_rows_per_seed"], 300)
+        self.assertEqual(config["benchmark"]["folds"], 2)
+        self.assertEqual(config["benchmark"]["rounds"], 2)
+        self.assertEqual(config["benchmark"]["batch_size"], 2)
+        self.assertEqual(config["downstream"]["baseline_policy"], "old_novelty_ts2vec")
+        self.assertEqual(config["acceptance"]["minimum_completed_seeds"], 3)
+        self.assertIn("baseline beats random on mean relative reconstruction gain", config["acceptance"]["required_checks"])
+
     def test_reconstruction_utility_rewards_target_like_acquisition(self):
         clips = [
             _clip("support_a", "support_a", [9.0, 0.0]),
