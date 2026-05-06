@@ -16,6 +16,7 @@ from marginal_value.active_benchmark import (
     OfflineBenchmarkConfig,
     build_difficulty_targeted_episodes,
     build_opportunity_targeted_episodes,
+    build_source_family_shift_episodes,
     build_source_blocked_episodes,
     run_offline_active_benchmark,
     write_benchmark_reports,
@@ -83,6 +84,7 @@ def main() -> None:
         target_groups_per_episode=args.target_groups_per_episode,
         max_support_groups=args.max_support_groups,
         episode_representation=args.episode_representation,
+        source_family_count=args.source_family_count,
     )
     config = OfflineBenchmarkConfig(
         batch_size=args.batch_size,
@@ -129,8 +131,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument("--download-timeout-seconds", type=float, default=30.0)
     parser.add_argument("--folds", type=int, default=4)
-    parser.add_argument("--episode-strategy", choices=["rotating", "hard", "opportunity"], default="rotating")
+    parser.add_argument("--episode-strategy", choices=["rotating", "hard", "opportunity", "source_family_shift"], default="rotating")
     parser.add_argument("--episode-representation", default="window")
+    parser.add_argument("--source-family-count", type=int, default=4)
     parser.add_argument("--candidate-groups-per-episode", type=int, default=3)
     parser.add_argument("--target-groups-per-episode", type=int, default=3)
     parser.add_argument("--max-support-groups", type=int, default=128)
@@ -167,6 +170,7 @@ def _build_episodes_from_clips(
     target_groups_per_episode: int,
     max_support_groups: int | None,
     episode_representation: str,
+    source_family_count: int = 4,
 ):
     if episode_strategy == "rotating":
         return build_source_blocked_episodes(
@@ -193,6 +197,16 @@ def _build_episodes_from_clips(
             target_groups_per_episode=target_groups_per_episode,
             max_support_groups=max_support_groups,
             representation=episode_representation,
+        )
+    if episode_strategy == "source_family_shift":
+        return build_source_family_shift_episodes(
+            clips,
+            n_folds=folds,
+            candidate_groups_per_episode=candidate_groups_per_episode,
+            target_groups_per_episode=target_groups_per_episode,
+            max_support_groups=max_support_groups,
+            representation=episode_representation,
+            source_family_count=source_family_count,
         )
     raise ValueError(f"Unsupported episode strategy: {episode_strategy}")
 

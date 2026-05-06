@@ -12,6 +12,7 @@ from marginal_value.active_benchmark import (
     OfflineBenchmarkConfig,
     build_difficulty_targeted_episodes,
     build_opportunity_targeted_episodes,
+    build_source_family_shift_episodes,
     build_source_blocked_episodes,
     run_offline_active_benchmark,
     write_benchmark_reports,
@@ -68,6 +69,58 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
         }
         self.assertTrue(required_policies <= set(policies))
         self.assertFalse(ts2vec_premise_policies & set(policies))
+
+        candidate_clip_count = int(benchmark["candidate_groups_per_episode"]) * int(data["clips_per_group"])
+        final_budget = int(benchmark["rounds"]) * int(benchmark["batch_size"])
+        self.assertLessEqual(
+            math.comb(candidate_clip_count, final_budget),
+            int(benchmark["oracle_exact_combination_limit"]),
+        )
+
+    def test_source_shift_ts2vec_gcp_config_is_frozen_and_bounded(self):
+        config_path = Path("configs/offline_active_benchmark_gcp_source_shift_ts2vec_exact.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_training"])
+        self.assertIn("ts2vec", config)
+
+        data = config["data"]
+        benchmark = config["benchmark"]
+        policies = benchmark["policies"]
+        random_replays = [policy for policy in policies if policy.startswith("random_valid_replay_")]
+
+        self.assertEqual(config["acceptance"]["minimum_completed_seeds"], 5)
+        self.assertEqual(len(data["selection_seeds"]), 5)
+        self.assertEqual(len(random_replays), 50)
+        self.assertEqual(benchmark["episode_strategy"], "source_family_shift")
+        self.assertEqual(benchmark["episode_representation"], "window")
+        self.assertEqual(benchmark["source_family_count"], 4)
+        self.assertIn("ts2vec", benchmark["representations"])
+        self.assertEqual(benchmark["primary_representations"], ["window", "raw_shape_stats"])
+        self.assertEqual(benchmark["blend_left_representation"], "ts2vec")
+        self.assertEqual(benchmark["blend_right_representation"], "window")
+
+        required_policies = {
+            "random_valid",
+            "quality_only",
+            "old_novelty_window",
+            "old_novelty_window_sourcecap2",
+            "old_novelty_ts2vec",
+            "kcenter_quality_gated_window",
+            "kcenter_quality_gated_ts2vec",
+            "blend_kcenter_ts2vec_window",
+            "artifact_gate_blend_kcenter_ts2vec_window",
+            "submitted_full_replay",
+            "submitted_minus_ts2vec",
+            "submitted_minus_window",
+            "submitted_no_kcenter",
+            "window_novelty_same_gates_no_kcenter",
+            "ts2vec_novelty_same_gates_no_kcenter",
+            "oracle_greedy_eval_only",
+        }
+        self.assertTrue(required_policies <= set(policies))
 
         candidate_clip_count = int(benchmark["candidate_groups_per_episode"]) * int(data["clips_per_group"])
         final_budget = int(benchmark["rounds"]) * int(benchmark["batch_size"])
@@ -280,6 +333,71 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
         self.assertLess(min(candidate_distances), 0.05)
         self.assertGreater(max(candidate_distances), max(hard_candidate_distances) + 0.50)
 
+    def test_source_family_shift_episodes_hold_out_target_family(self):
+        clips = _source_family_shift_clips()
+
+        episodes = build_source_family_shift_episodes(
+            clips,
+            n_folds=4,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=2,
+            max_support_groups=4,
+            representation="window",
+            source_family_count=4,
+        )
+
+        self.assertEqual(len(episodes), 4)
+        for episode in episodes:
+            target_families = {_literal_family(group) for group in episode.target_group_ids}
+            candidate_families = {_literal_family(group) for group in episode.candidate_group_ids}
+            support_families = {_literal_family(group) for group in episode.support_group_ids}
+            self.assertEqual(len(target_families), 1)
+            self.assertFalse(target_families & candidate_families)
+            self.assertFalse(target_families & support_families)
+            self.assertFalse(set(episode.support_group_ids) & set(episode.candidate_group_ids))
+            self.assertFalse(set(episode.support_group_ids) & set(episode.target_group_ids))
+            self.assertFalse(set(episode.candidate_group_ids) & set(episode.target_group_ids))
+            self.assertEqual(len(episode.target_group_ids), 2)
+            self.assertEqual(len(episode.candidate_group_ids), 4)
+            self.assertEqual(len(episode.support_group_ids), 4)
+
+    def test_source_family_shift_skips_target_families_that_would_exhaust_support(self):
+        clips = _imbalanced_source_family_shift_clips()
+
+        episodes = build_source_family_shift_episodes(
+            clips,
+            n_folds=2,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=2,
+            max_support_groups=4,
+            representation="window",
+            source_family_count=3,
+        )
+
+        self.assertEqual(len(episodes), 2)
+        for episode in episodes:
+            self.assertNotIn("familyA", {_literal_family(group) for group in episode.target_group_ids})
+            self.assertGreaterEqual(len(episode.support_group_ids), 1)
+
+    def test_source_family_shift_adapts_cluster_count_for_unlabeled_workers(self):
+        clips = _clustered_worker_shift_clips()
+
+        episodes = build_source_family_shift_episodes(
+            clips,
+            n_folds=2,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=2,
+            max_support_groups=4,
+            representation="window",
+            source_family_count=4,
+        )
+
+        self.assertEqual(len(episodes), 2)
+        for episode in episodes:
+            self.assertEqual(len(episode.target_group_ids), 2)
+            self.assertEqual(len(episode.candidate_group_ids), 4)
+            self.assertGreaterEqual(len(episode.support_group_ids), 1)
+
     def test_url_runner_can_select_difficulty_targeted_episode_strategy(self):
         clips = _separated_source_group_clips()
 
@@ -319,6 +437,19 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
         )
         self.assertEqual(len(opportunity), 2)
         self.assertFalse(set(opportunity[0].candidate_group_ids) & set(opportunity[0].target_group_ids))
+
+        source_shift = _build_episodes_from_clips(
+            _source_family_shift_clips(),
+            episode_strategy="source_family_shift",
+            folds=2,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=2,
+            max_support_groups=4,
+            episode_representation="window",
+            source_family_count=4,
+        )
+        self.assertEqual(len(source_shift), 2)
+        self.assertFalse({_literal_family(group) for group in source_shift[0].target_group_ids} & {_literal_family(group) for group in source_shift[0].candidate_group_ids})
 
     def test_progress_events_and_oracle_candidate_cap_are_exposed(self):
         clips = _candidate_cap_clips()
@@ -478,6 +609,31 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
         self.assertEqual(by_policy["window_novelty_same_gates_no_kcenter"].selected_ids, ("candidate_a_clip000", "candidate_a_clip001"))
         self.assertEqual(by_policy["ts2vec_novelty_same_gates_no_kcenter"].selected_ids, ("candidate_b_clip000", "candidate_a_clip000"))
 
+    def test_explicit_ts2vec_policy_aliases_match_ts2vec_ablation_behavior(self):
+        clips = _submitted_ablation_clips()
+        episode = _submitted_ablation_episode(clips)
+        config = OfflineBenchmarkConfig(
+            batch_size=2,
+            rounds=1,
+            policies=[
+                "old_novelty_ts2vec",
+                "kcenter_quality_gated_ts2vec",
+                "ts2vec_novelty_same_gates_no_kcenter",
+                "submitted_minus_window",
+            ],
+            representations=["ts2vec", "window"],
+            primary_representations=["window", "ts2vec"],
+            blend_left_representation="ts2vec",
+            blend_right_representation="window",
+        )
+
+        result = run_offline_active_benchmark(clips, (episode,), config)
+
+        by_policy = {row.policy_name: row for row in result.rounds}
+        self.assertEqual(by_policy["old_novelty_ts2vec"].selected_ids, ("candidate_b_clip000", "candidate_a_clip000"))
+        self.assertEqual(by_policy["ts2vec_novelty_same_gates_no_kcenter"].selected_ids, by_policy["old_novelty_ts2vec"].selected_ids)
+        self.assertEqual(by_policy["kcenter_quality_gated_ts2vec"].selected_ids, by_policy["submitted_minus_window"].selected_ids)
+
     def test_selected_clip_audit_records_scores_and_gate_status(self):
         clips = _blend_policy_clips()
         episode = _blend_policy_episode(clips)
@@ -625,6 +781,80 @@ def _opportunity_source_group_clips() -> list[BenchmarkClip]:
                     max_abs_value=1.0,
                 )
             )
+    return clips
+
+
+def _source_family_shift_clips() -> list[BenchmarkClip]:
+    centers = {
+        "familyA_worker00": np.asarray([1.0, 0.0], dtype=float),
+        "familyA_worker01": np.asarray([0.98, 0.08], dtype=float),
+        "familyA_worker02": np.asarray([0.96, -0.10], dtype=float),
+        "familyA_worker03": np.asarray([0.94, 0.18], dtype=float),
+        "familyB_worker00": np.asarray([0.0, 1.0], dtype=float),
+        "familyB_worker01": np.asarray([0.08, 0.98], dtype=float),
+        "familyB_worker02": np.asarray([-0.10, 0.96], dtype=float),
+        "familyB_worker03": np.asarray([0.18, 0.94], dtype=float),
+        "familyC_worker00": np.asarray([-1.0, 0.0], dtype=float),
+        "familyC_worker01": np.asarray([-0.98, 0.08], dtype=float),
+        "familyC_worker02": np.asarray([-0.96, -0.10], dtype=float),
+        "familyC_worker03": np.asarray([-0.94, 0.18], dtype=float),
+        "familyD_worker00": np.asarray([0.0, -1.0], dtype=float),
+        "familyD_worker01": np.asarray([0.08, -0.98], dtype=float),
+        "familyD_worker02": np.asarray([-0.10, -0.96], dtype=float),
+        "familyD_worker03": np.asarray([0.18, -0.94], dtype=float),
+    }
+    clips: list[BenchmarkClip] = []
+    for group_id, center in centers.items():
+        for clip_index in range(2):
+            offset = 0.01 * clip_index
+            window = np.asarray([center[0] + offset, center[1] - offset], dtype=float)
+            ts2vec = np.asarray([center[1] - offset, center[0] + offset], dtype=float)
+            clips.append(
+                BenchmarkClip(
+                    sample_id=f"{group_id}_clip{clip_index:03d}",
+                    source_group_id=group_id,
+                    embeddings={"window": window, "ts2vec": ts2vec},
+                    quality_score=1.0,
+                    stationary_fraction=0.0,
+                    max_abs_value=1.0,
+                )
+            )
+    return clips
+
+
+def _imbalanced_source_family_shift_clips() -> list[BenchmarkClip]:
+    centers: dict[str, np.ndarray] = {}
+    for index in range(8):
+        centers[f"familyA_worker{index:02d}"] = np.asarray([1.0, 0.02 * index], dtype=float)
+    for index in range(2):
+        centers[f"familyB_worker{index:02d}"] = np.asarray([0.0, 1.0 - 0.02 * index], dtype=float)
+        centers[f"familyC_worker{index:02d}"] = np.asarray([-1.0, 0.02 * index], dtype=float)
+    clips: list[BenchmarkClip] = []
+    for group_id, center in centers.items():
+        clips.append(
+            BenchmarkClip(
+                sample_id=f"{group_id}_clip000",
+                source_group_id=group_id,
+                embeddings={"window": center, "ts2vec": center[::-1].copy()},
+                quality_score=1.0,
+            )
+        )
+    return clips
+
+
+def _clustered_worker_shift_clips() -> list[BenchmarkClip]:
+    clips: list[BenchmarkClip] = []
+    for group_index in range(20):
+        angle = np.deg2rad((group_index % 5) * 10.0 + (group_index // 5) * 90.0)
+        center = np.asarray([np.cos(angle), np.sin(angle)], dtype=float)
+        clips.append(
+            BenchmarkClip(
+                sample_id=f"worker{group_index:05d}_clip000",
+                source_group_id=f"worker{group_index:05d}",
+                embeddings={"window": center, "ts2vec": center[::-1].copy()},
+                quality_score=1.0,
+            )
+        )
     return clips
 
 
@@ -848,6 +1078,10 @@ def _oracle_minus_random_replay_mean(clips: list[BenchmarkClip], episodes: tuple
 
 def _worker_id(url: str) -> str:
     return next(part for part in url.split("/") if part.startswith("worker"))
+
+
+def _literal_family(group_id: str) -> str:
+    return group_id.split("_worker", 1)[0]
 
 
 if __name__ == "__main__":

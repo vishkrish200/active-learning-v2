@@ -16,7 +16,9 @@ SUPPORTED_POLICIES = (
     "quality_only",
     "old_novelty_window",
     "old_novelty_window_sourcecap2",
+    "old_novelty_ts2vec",
     "kcenter_quality_gated_window",
+    "kcenter_quality_gated_ts2vec",
     "blend_kcenter_ts2vec_window",
     "artifact_gate_blend_kcenter_ts2vec_window",
     "submitted_full_replay",
@@ -69,6 +71,15 @@ def select_batch(
         order = _score_order(candidate_ids, scores, clips_by_id)
         order = _source_capped_order(order, clips_by_id, source_cap=2)
         return _selected_with_scores(order[:batch_size], clips_by_id, score_fn=lambda clip: scores[clip.sample_id])
+    if policy_name == "old_novelty_ts2vec":
+        scores = _novelty_scores_by_representation(
+            clips_by_id,
+            support_ids=support_ids,
+            candidate_ids=candidate_ids,
+            representation=str(config.blend_left_representation),
+        )
+        order = _score_order(candidate_ids, scores, clips_by_id)
+        return _selected_with_scores(order[:batch_size], clips_by_id, score_fn=lambda clip: scores[clip.sample_id])
     if policy_name == "kcenter_quality_gated_window":
         return _kcenter_quality_gated(
             clips_by_id,
@@ -77,6 +88,15 @@ def select_batch(
             config=config,
             batch_size=batch_size,
             representation="window",
+        )
+    if policy_name == "kcenter_quality_gated_ts2vec":
+        return _kcenter_quality_gated(
+            clips_by_id,
+            support_ids=support_ids,
+            candidate_ids=candidate_ids,
+            config=config,
+            batch_size=batch_size,
+            representation=str(config.blend_left_representation),
         )
     if policy_name in {
         "blend_kcenter_ts2vec_window",
