@@ -252,6 +252,107 @@ def build_source_family_shift_episodes(
     return tuple(episodes)
 
 
+def build_source_family_label_holdout_episodes(
+    clips: Sequence[BenchmarkClip],
+    *,
+    n_folds: int,
+    candidate_groups_per_episode: int,
+    target_groups_per_episode: int,
+    target_candidate_groups_per_episode: int | None = None,
+    max_support_groups: int | None = None,
+    representation: str = "window",
+    source_family_count: int = 4,
+) -> tuple[EpisodeSpec, ...]:
+    by_group: dict[str, list[BenchmarkClip]] = defaultdict(list)
+    for clip in clips:
+        by_group[str(clip.source_group_id)].append(clip)
+    groups = sorted(by_group)
+    if not groups:
+        raise ValueError("Cannot build active benchmark episodes without clips.")
+    target_count = max(1, int(target_groups_per_episode))
+    candidate_count = max(1, int(candidate_groups_per_episode))
+    target_candidate_count = (
+        max(1, int(target_candidate_groups_per_episode))
+        if target_candidate_groups_per_episode is not None
+        else max(1, candidate_count // 2)
+    )
+    target_candidate_count = min(target_candidate_count, candidate_count)
+    decoy_candidate_count = candidate_count - target_candidate_count
+
+    centroids = _group_centroids(by_group, groups, representation=representation)
+    distances = _cosine_distance_matrix(centroids, centroids)
+    family_by_group, groups_by_family, _target_family_order = _source_family_roles(
+        groups,
+        centroids=centroids,
+        source_family_count=source_family_count,
+        target_count=target_count,
+        candidate_count=candidate_count,
+    )
+    eligible_families = _eligible_label_holdout_families(
+        groups,
+        groups_by_family,
+        target_count=target_count,
+        target_candidate_count=target_candidate_count,
+        decoy_candidate_count=decoy_candidate_count,
+    )
+    if len(eligible_families) < 1:
+        raise ValueError("Source-family label-holdout episodes require at least one family with target and candidate groups.")
+
+    episodes: list[EpisodeSpec] = []
+    for fold_id in range(max(1, int(n_folds))):
+        target_family = eligible_families[fold_id % len(eligible_families)]
+        target_pool = sorted(groups_by_family[target_family])
+        family_cycle_start = (fold_id // len(eligible_families)) * (target_count + target_candidate_count)
+        target_groups = tuple(_rotating_take(target_pool, start=family_cycle_start, count=target_count))
+        target_group_set = set(target_groups)
+        target_candidate_pool = [group for group in target_pool if group not in target_group_set]
+        target_candidate_groups = tuple(
+            _rotating_take(
+                target_candidate_pool,
+                start=family_cycle_start,
+                count=target_candidate_count,
+            )
+        )
+
+        target_indices = [groups.index(group) for group in target_groups]
+        target_distance = distances[:, target_indices].mean(axis=1)
+        non_target_family_groups = [group for group in groups if family_by_group[group] != target_family]
+        if decoy_candidate_count > 0:
+            decoy_target_distance = np.asarray([target_distance[groups.index(group)] for group in non_target_family_groups], dtype=float)
+            decoy_candidate_groups = _opportunity_candidate_groups(
+                non_target_family_groups,
+                target_groups=(),
+                target_distance=decoy_target_distance,
+                candidate_count=decoy_candidate_count,
+            )
+        else:
+            decoy_candidate_groups = ()
+        candidate_groups = tuple([*target_candidate_groups, *decoy_candidate_groups])
+        blocked = set(target_groups) | set(candidate_groups)
+        support_pool = [group for group in non_target_family_groups if group not in blocked]
+        support_groups = sorted(
+            support_pool,
+            key=lambda group: (-float(target_distance[groups.index(group)]), family_by_group[group], group),
+        )
+        if max_support_groups is not None:
+            support_groups = support_groups[: max(1, int(max_support_groups))]
+        if not support_groups:
+            raise ValueError("Each active benchmark episode requires at least one support group.")
+        episodes.append(
+            EpisodeSpec(
+                episode_id=f"episode_{fold_id:03d}",
+                fold_id=int(fold_id),
+                support_ids=_clip_ids_for_groups(by_group, support_groups),
+                candidate_ids=_clip_ids_for_groups(by_group, candidate_groups),
+                target_ids=_clip_ids_for_groups(by_group, target_groups),
+                support_group_ids=tuple(support_groups),
+                candidate_group_ids=tuple(candidate_groups),
+                target_group_ids=target_groups,
+            )
+        )
+    return tuple(episodes)
+
+
 def infer_source_family_assignments(
     clips: Sequence[BenchmarkClip],
     *,
@@ -418,6 +519,25 @@ def _eligible_target_families(
             for family, family_groups in groups_by_family.items()
             if len(family_groups) >= int(target_count)
             and len(groups) - len(family_groups) >= int(candidate_count) + 1
+        ],
+        key=lambda family: (family, len(groups_by_family[family])),
+    )
+
+
+def _eligible_label_holdout_families(
+    groups: Sequence[str],
+    groups_by_family: dict[str, list[str]],
+    *,
+    target_count: int,
+    target_candidate_count: int,
+    decoy_candidate_count: int,
+) -> list[str]:
+    return sorted(
+        [
+            family
+            for family, family_groups in groups_by_family.items()
+            if len(family_groups) >= int(target_count) + int(target_candidate_count)
+            and len(groups) - len(family_groups) >= int(decoy_candidate_count) + 1
         ],
         key=lambda family: (family, len(groups_by_family[family])),
     )

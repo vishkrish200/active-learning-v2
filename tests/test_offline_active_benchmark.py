@@ -12,6 +12,7 @@ from marginal_value.active_benchmark import (
     OfflineBenchmarkConfig,
     build_difficulty_targeted_episodes,
     build_opportunity_targeted_episodes,
+    build_source_family_label_holdout_episodes,
     build_source_family_shift_episodes,
     build_source_blocked_episodes,
     run_offline_active_benchmark,
@@ -441,6 +442,34 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
             self.assertEqual(len(episode.candidate_group_ids), 4)
             self.assertGreaterEqual(len(episode.support_group_ids), 1)
 
+    def test_source_family_label_holdout_candidates_include_target_family_not_support(self):
+        clips = _source_family_label_holdout_clips()
+
+        episodes = build_source_family_label_holdout_episodes(
+            clips,
+            n_folds=2,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=2,
+            target_candidate_groups_per_episode=2,
+            max_support_groups=4,
+            representation="window",
+            source_family_count=4,
+        )
+
+        self.assertEqual(len(episodes), 2)
+        for episode in episodes:
+            target_families = {_literal_family(group) for group in episode.target_group_ids}
+            candidate_families = {_literal_family(group) for group in episode.candidate_group_ids}
+            support_families = {_literal_family(group) for group in episode.support_group_ids}
+
+            self.assertEqual(len(target_families), 1)
+            self.assertTrue(target_families & candidate_families)
+            self.assertFalse(target_families & support_families)
+            self.assertEqual(len([group for group in episode.candidate_group_ids if _literal_family(group) in target_families]), 2)
+            self.assertFalse(set(episode.support_group_ids) & set(episode.candidate_group_ids))
+            self.assertFalse(set(episode.support_group_ids) & set(episode.target_group_ids))
+            self.assertFalse(set(episode.candidate_group_ids) & set(episode.target_group_ids))
+
     def test_url_runner_can_select_difficulty_targeted_episode_strategy(self):
         clips = _separated_source_group_clips()
 
@@ -493,6 +522,21 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
         )
         self.assertEqual(len(source_shift), 2)
         self.assertFalse({_literal_family(group) for group in source_shift[0].target_group_ids} & {_literal_family(group) for group in source_shift[0].candidate_group_ids})
+
+        label_holdout = _build_episodes_from_clips(
+            _source_family_label_holdout_clips(),
+            episode_strategy="source_family_label_holdout",
+            folds=2,
+            candidate_groups_per_episode=4,
+            target_groups_per_episode=2,
+            max_support_groups=4,
+            episode_representation="window",
+            source_family_count=4,
+        )
+        self.assertEqual(len(label_holdout), 2)
+        label_holdout_target_families = {_literal_family(group) for group in label_holdout[0].target_group_ids}
+        self.assertTrue(label_holdout_target_families & {_literal_family(group) for group in label_holdout[0].candidate_group_ids})
+        self.assertFalse(label_holdout_target_families & {_literal_family(group) for group in label_holdout[0].support_group_ids})
 
     def test_progress_events_and_oracle_candidate_cap_are_exposed(self):
         clips = _candidate_cap_clips()
@@ -863,6 +907,10 @@ def _source_family_shift_clips() -> list[BenchmarkClip]:
                 )
             )
     return clips
+
+
+def _source_family_label_holdout_clips() -> list[BenchmarkClip]:
+    return _source_family_shift_clips()
 
 
 def _imbalanced_source_family_shift_clips() -> list[BenchmarkClip]:

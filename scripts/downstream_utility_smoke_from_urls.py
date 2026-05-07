@@ -163,7 +163,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--download-workers", type=int, default=16)
     parser.add_argument("--download-timeout-seconds", type=float, default=30.0)
     parser.add_argument("--folds", type=int, default=2)
-    parser.add_argument("--episode-strategy", choices=["rotating", "hard", "opportunity", "source_family_shift"], default="source_family_shift")
+    parser.add_argument("--episode-strategy", choices=["rotating", "hard", "opportunity", "source_family_shift", "source_family_label_holdout"], default="source_family_shift")
     parser.add_argument("--episode-representation", default="window")
     parser.add_argument("--source-family-count", type=int, default=4)
     parser.add_argument("--candidate-groups-per-episode", type=int, default=6)

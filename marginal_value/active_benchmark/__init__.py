@@ -9,6 +9,7 @@ from marginal_value.active_benchmark.schema import BenchmarkClip, BenchmarkResul
 from marginal_value.active_benchmark.splits import (
     build_difficulty_targeted_episodes,
     build_opportunity_targeted_episodes,
+    build_source_family_label_holdout_episodes,
     build_source_family_shift_episodes,
     build_source_blocked_episodes,
     infer_source_family_assignments,
@@ -24,6 +25,7 @@ __all__ = [
     "build_benchmark_discrimination_report",
     "build_difficulty_targeted_episodes",
     "build_opportunity_targeted_episodes",
+    "build_source_family_label_holdout_episodes",
     "build_source_family_shift_episodes",
     "build_source_blocked_episodes",
     "infer_source_family_assignments",

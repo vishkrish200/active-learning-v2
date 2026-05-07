@@ -38,6 +38,24 @@ class DownstreamSupervisedSmokeTests(unittest.TestCase):
         self.assertEqual(config["downstream"]["baseline_policy"], "old_novelty_ts2vec")
         self.assertEqual(config["downstream"]["decision"], "tiny_smoke_only")
 
+    def test_gcp_hard_supervised_smoke_config_uses_label_holdout_gate(self):
+        config_path = Path("configs/downstream_supervised_smoke_gcp_ts2vec_label_holdout.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertEqual(config["data"]["selection_seeds"], [17])
+        self.assertLessEqual(config["data"]["max_rows_per_seed"], 300)
+        self.assertEqual(config["benchmark"]["episode_strategy"], "source_family_label_holdout")
+        self.assertEqual(config["benchmark"]["folds"], 2)
+        self.assertEqual(config["benchmark"]["candidate_groups_per_episode"], 6)
+        self.assertEqual(config["benchmark"]["target_groups_per_episode"], 2)
+        self.assertEqual(config["benchmark"]["rounds"], 2)
+        self.assertEqual(config["benchmark"]["batch_size"], 2)
+        self.assertIn("support excludes target family", config["acceptance"]["required_checks"])
+        self.assertIn("candidate includes target-family bridge groups", config["acceptance"]["required_checks"])
+
     def test_supervised_utility_rewards_acquiring_target_family_labels(self):
         clips = [
             _clip("support_a", "fam_a_worker_support", [0.0, 0.0], quality=0.90),
