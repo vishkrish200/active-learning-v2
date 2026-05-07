@@ -14,6 +14,7 @@ from marginal_value.indexing.knn_features import normalize_rows
 SUPPORTED_POLICIES = (
     "random_valid",
     "quality_only",
+    "quality_stratified_random",
     "old_novelty_window",
     "old_novelty_window_sourcecap2",
     "old_novelty_ts2vec",
@@ -62,6 +63,15 @@ def select_batch(
     if policy_name == "quality_only":
         order = _quality_order(clips_by_id, candidate_ids)
         return _selected_with_scores(order[:batch_size], clips_by_id, score_fn=lambda clip: float(clip.quality_score))
+    if policy_name == "quality_stratified_random":
+        return _quality_stratified_random(
+            clips_by_id,
+            candidate_ids,
+            config=config,
+            episode_index=episode_index,
+            round_index=round_index,
+            batch_size=batch_size,
+        )
     if policy_name == "old_novelty_window":
         scores = _old_novelty_scores(clips_by_id, support_ids=support_ids, candidate_ids=candidate_ids)
         order = _score_order(candidate_ids, scores, clips_by_id)
@@ -186,6 +196,31 @@ def _random_valid(
     valid_order = list(rng.permutation(valid)) if valid else []
     fallback_order = list(rng.permutation(fallback)) if fallback else []
     selected = tuple(str(sample_id) for sample_id in [*valid_order, *fallback_order][:batch_size])
+    return selected, tuple(float(clips_by_id[sample_id].quality_score) for sample_id in selected)
+
+
+def _quality_stratified_random(
+    clips_by_id: Mapping[str, BenchmarkClip],
+    candidate_ids: Sequence[str],
+    *,
+    config: OfflineBenchmarkConfig,
+    episode_index: int,
+    round_index: int,
+    batch_size: int,
+) -> tuple[tuple[str, ...], tuple[float, ...]]:
+    eligible = [str(sample_id) for sample_id in candidate_ids if _passes_gates(clips_by_id[str(sample_id)], config)]
+    eligible_set = set(eligible)
+    fallback = [str(sample_id) for sample_id in candidate_ids if str(sample_id) not in eligible_set]
+    quality_order = _quality_order(clips_by_id, eligible)
+    stratum_size = min(len(quality_order), max(batch_size * 2, batch_size))
+    stratum = quality_order[:stratum_size]
+    remainder = quality_order[stratum_size:]
+
+    rng = np.random.default_rng(int(config.random_seed) + episode_index * 997 + round_index * 31 + 65537)
+    stratum_order = list(rng.permutation(stratum)) if stratum else []
+    remainder_order = list(rng.permutation(remainder)) if remainder else []
+    fallback_order = _quality_order(clips_by_id, fallback)
+    selected = tuple(str(sample_id) for sample_id in [*stratum_order, *remainder_order, *fallback_order][:batch_size])
     return selected, tuple(float(clips_by_id[sample_id].quality_score) for sample_id in selected)
 
 

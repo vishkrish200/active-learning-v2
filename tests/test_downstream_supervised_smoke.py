@@ -53,6 +53,7 @@ class DownstreamSupervisedSmokeTests(unittest.TestCase):
         self.assertEqual(config["benchmark"]["target_groups_per_episode"], 2)
         self.assertEqual(config["benchmark"]["rounds"], 2)
         self.assertEqual(config["benchmark"]["batch_size"], 2)
+        self.assertIn("quality_stratified_random", config["benchmark"]["policies"])
         self.assertIn("support excludes target family", config["acceptance"]["required_checks"])
         self.assertIn("candidate includes target-family bridge groups", config["acceptance"]["required_checks"])
 

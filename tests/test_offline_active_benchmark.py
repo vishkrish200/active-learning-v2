@@ -272,6 +272,47 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
         self.assertIn("oracle_greedy_eval_only", markdown)
         self.assertTrue(Path("configs/offline_active_benchmark_smoke.json").exists())
 
+    def test_quality_stratified_random_samples_from_quality_matched_stratum(self):
+        clips = [
+            _quality_clip("support_a", "support_a", [0.0, 0.0], quality=0.90),
+            _quality_clip("target_a", "target_a", [1.0, 1.0], quality=0.90),
+            _quality_clip("top_a", "candidate_a", [2.0, 0.0], quality=0.99),
+            _quality_clip("top_b", "candidate_b", [2.1, 0.0], quality=0.99),
+            _quality_clip("top_c", "candidate_c", [2.2, 0.0], quality=0.99),
+            _quality_clip("top_d", "candidate_d", [2.3, 0.0], quality=0.99),
+            _quality_clip("low_a", "candidate_e", [9.0, 0.0], quality=0.20),
+            _quality_clip("low_b", "candidate_f", [9.1, 0.0], quality=0.10),
+        ]
+        episode = EpisodeSpec(
+            episode_id="episode_000",
+            fold_id=0,
+            support_ids=("support_a",),
+            candidate_ids=("top_a", "top_b", "top_c", "top_d", "low_a", "low_b"),
+            target_ids=("target_a",),
+            support_group_ids=("support_a",),
+            candidate_group_ids=("candidate_a", "candidate_b", "candidate_c", "candidate_d", "candidate_e", "candidate_f"),
+            target_group_ids=("target_a",),
+        )
+
+        result = run_offline_active_benchmark(
+            clips,
+            (episode,),
+            OfflineBenchmarkConfig(
+                batch_size=2,
+                rounds=1,
+                policies=("quality_only", "quality_stratified_random"),
+                representations=("window",),
+                primary_representations=("window",),
+                random_seed=3,
+                quality_threshold=0.0,
+            ),
+        )
+
+        by_policy = {row.policy_name: row.selected_ids for row in result.rounds}
+        self.assertEqual(by_policy["quality_only"], ("top_a", "top_b"))
+        self.assertTrue(set(by_policy["quality_stratified_random"]) <= {"top_a", "top_b", "top_c", "top_d"})
+        self.assertNotEqual(by_policy["quality_stratified_random"], by_policy["quality_only"])
+
     def test_url_sampling_randomizes_workers_and_clips_reproducibly(self):
         with TemporaryDirectory() as tmp:
             manifest = Path(tmp) / "urls.txt"
@@ -814,6 +855,15 @@ def _synthetic_clips() -> list[BenchmarkClip]:
                 )
             )
     return clips
+
+
+def _quality_clip(sample_id: str, source_group_id: str, embedding: list[float], *, quality: float) -> BenchmarkClip:
+    return BenchmarkClip(
+        sample_id=sample_id,
+        source_group_id=source_group_id,
+        embeddings={"window": np.asarray(embedding, dtype=float)},
+        quality_score=float(quality),
+    )
 
 
 def _separated_source_group_clips() -> list[BenchmarkClip]:
