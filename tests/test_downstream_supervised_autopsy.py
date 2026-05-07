@@ -105,6 +105,61 @@ class DownstreamSupervisedAutopsyTests(unittest.TestCase):
             self.assertEqual(json.loads(paths["json"].read_text(encoding="utf-8"))["decision"]["read"], "hold")
             self.assertIn("accuracy_flat_across_policies", paths["markdown"].read_text(encoding="utf-8"))
 
+    def test_autopsy_read_calls_out_baseline_losing_random_on_nll(self):
+        benchmark_report = {
+            "difficulty_audit": [
+                {
+                    "episode_id": "episode_000",
+                    "support_target_baseline_distance_by_representation": {"window": 1.0},
+                    "candidate_target_nearest_distance_by_representation": {"window": 0.2},
+                }
+            ],
+            "rounds": [],
+        }
+        supervised_report = {
+            "input": {
+                "baseline_policy": "old_novelty_ts2vec",
+                "random_policy": "random_valid",
+                "downstream_representations": ["window"],
+            },
+            "summary": {
+                "policy_final_means": {
+                    "old_novelty_ts2vec": {
+                        "mean_after_accuracy": 0.70,
+                        "mean_accuracy_gain": 0.10,
+                        "mean_nll_reduction": -0.25,
+                    },
+                    "random_valid": {
+                        "mean_after_accuracy": 0.60,
+                        "mean_accuracy_gain": 0.00,
+                        "mean_nll_reduction": 0.05,
+                    },
+                }
+            },
+            "rows": [
+                {
+                    "episode_id": "episode_000",
+                    "policy_name": "old_novelty_ts2vec",
+                    "round_index": 1,
+                    "representation": "window",
+                    "baseline_known_target_fraction": 0.5,
+                },
+                {
+                    "episode_id": "episode_000",
+                    "policy_name": "random_valid",
+                    "round_index": 1,
+                    "representation": "window",
+                    "baseline_known_target_fraction": 0.5,
+                },
+            ],
+        }
+
+        autopsy = build_downstream_supervised_autopsy(benchmark_report, supervised_report)
+
+        self.assertEqual(autopsy["diagnosis"], ["baseline_loses_random_on_nll_reduction"])
+        self.assertIn("loses", autopsy["decision"]["read"])
+        self.assertIn("random_valid", autopsy["decision"]["read"])
+
 
 if __name__ == "__main__":
     unittest.main()

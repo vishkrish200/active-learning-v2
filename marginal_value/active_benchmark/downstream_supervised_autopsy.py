@@ -234,6 +234,8 @@ def _decision_read(diagnosis: Sequence[str], *, baseline: str, random: str) -> s
         return "Hold downstream training: target labels are already represented before acquisition."
     if "candidate_pool_not_closer_than_support" in diagnosis:
         return "Hold downstream training: candidates are not a better target bridge than existing support."
+    if "baseline_loses_random_on_nll_reduction" in diagnosis:
+        return f"Hold downstream training: {baseline} loses to {random} on NLL reduction."
     return "No obvious flatness failure found; a small repeat may be eligible."
 
 
