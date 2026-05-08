@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -16,6 +19,22 @@ from scripts.offline_coverage_benchmark_from_urls import _coverage_proof_summary
 
 
 class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
+    def test_url_coverage_runner_is_directly_executable_without_pythonpath(self):
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", None)
+        repo_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "scripts/offline_coverage_benchmark_from_urls.py", "--help"],
+            cwd=repo_root,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--manifest", result.stdout)
+
     def test_gcp_three_seed_coverage_config_is_bounded_cpu_only(self):
         config_path = Path("configs/coverage_benchmark_gcp_ts2vec_3seed_cpu.json")
         self.assertTrue(config_path.exists())
