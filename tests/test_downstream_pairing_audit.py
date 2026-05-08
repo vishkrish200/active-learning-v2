@@ -34,6 +34,21 @@ class DownstreamPairingAuditTests(unittest.TestCase):
         self.assertEqual(quality["after_accuracy_win_count_vs_random"], 0)
         self.assertIn("final-round incremental", audit["decision"]["read"])
 
+    def test_quality_stratified_repeat_result_stops_repeat_recommendation(self):
+        report = {
+            "rows": [
+                _row("random_valid", round_index=0, baseline_accuracy=0.0, after_accuracy=0.7, baseline_nll=10.0, after_nll=4.0),
+                _row("quality_stratified_random", round_index=0, baseline_accuracy=0.0, after_accuracy=0.8, baseline_nll=10.0, after_nll=3.0),
+                _row("old_novelty_ts2vec", round_index=0, baseline_accuracy=0.0, after_accuracy=0.6, baseline_nll=10.0, after_nll=5.0),
+            ]
+        }
+
+        audit = build_supervised_pairing_audit({17: report}, random_policy="random_valid")
+
+        self.assertEqual(audit["decision"]["next_gate"], "hold_proxy_not_promotive")
+        self.assertIn("quality_stratified_random repeat is complete", audit["decision"]["read"])
+        self.assertEqual(audit["decision"]["best_total_accuracy_gain_policy"], "quality_stratified_random")
+
     def test_writer_outputs_json_and_markdown(self):
         report = {
             "rows": [

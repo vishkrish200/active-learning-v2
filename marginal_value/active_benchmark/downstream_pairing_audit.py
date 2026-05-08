@@ -246,15 +246,26 @@ def _decision(
 ) -> dict[str, object]:
     best_after = _best_policy(policy_summary, "mean_after_accuracy")
     best_total_gain = _best_policy(policy_summary, "mean_total_accuracy_gain")
+    quality_stratified_present = "quality_stratified_random" in policy_summary
+    next_gate = "quality_stratified_random_repeat"
+    read = (
+        f"Do not train yet: final-row accuracy_gain is a final-round incremental metric. "
+        f"Use paired total gains from the common round-0 baseline and compare against {random_policy}."
+    )
+    if quality_stratified_present:
+        next_gate = "hold_proxy_not_promotive"
+        read = (
+            "Do not train: quality_stratified_random repeat is complete, and this source-family "
+            "pseudo-label proxy should be treated as non-promotive unless a TS2Vec policy beats "
+            f"both {random_policy} and the quality-matched control on paired total utility."
+        )
     return {
         "downstream_training": "hold",
-        "next_gate": "quality_stratified_random_repeat",
+        "next_gate": next_gate,
         "best_after_accuracy_policy": best_after,
         "best_total_accuracy_gain_policy": best_total_gain,
-        "read": (
-            f"Do not train yet: final-row accuracy_gain is a final-round incremental metric. "
-            f"Use paired total gains from the common round-0 baseline and compare against {random_policy}."
-        ),
+        "quality_stratified_random_present": quality_stratified_present,
+        "read": read,
         "baseline_audit_read": str(baseline_audit.get("read", "")),
     }
 
