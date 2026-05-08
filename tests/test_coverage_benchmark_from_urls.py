@@ -111,6 +111,32 @@ class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
         self.assertIn("balanced accuracy gain moves positive for the oracle", config["acceptance"]["required_checks"])
         self.assertIn("source-group leakage is false", config["acceptance"]["required_checks"])
 
+    def test_bridge_three_seed_config_is_bounded_cpu_only(self):
+        config_path = Path("configs/coverage_bridge_benchmark_gcp_ts2vec_kcenter_3seed.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["no_downstream_training"])
+        self.assertEqual(config["data"]["selection_seeds"], [17, 23, 37])
+        self.assertLessEqual(config["data"]["max_rows_per_seed"], 540)
+        self.assertEqual(config["benchmark"]["episode_strategy"], "source_family_label_holdout")
+        self.assertEqual(config["benchmark"]["folds"], 5)
+        self.assertEqual(config["benchmark"]["candidate_groups_per_episode"], 12)
+        self.assertEqual(config["benchmark"]["target_candidate_groups_per_episode"], 4)
+        self.assertEqual(config["benchmark"]["target_families_per_episode"], 2)
+        self.assertEqual(config["benchmark"]["budgets"], [1, 2, 4])
+        self.assertIn("quality_stratified_random_v1", config["benchmark"]["policies"])
+        self.assertIn("ts2vec_kcenter_v1", config["benchmark"]["policies"])
+        self.assertIn("oracle_greedy_target_family_v1", config["benchmark"]["policies"])
+        self.assertEqual(config["acceptance"]["minimum_completed_seeds"], 3)
+        self.assertIn(
+            "ts2vec_kcenter_v1 balanced-accuracy delta vs quality_stratified_random_v1 is positive",
+            config["acceptance"]["required_checks"],
+        )
+        self.assertIn("source-group leakage is false for all seeds", config["acceptance"]["required_checks"])
+
     def test_gcp_launcher_download_copy_avoids_gsutil_parallel_hang(self):
         calls = []
         original_run = launch_coverage_benchmark_gcp._run
