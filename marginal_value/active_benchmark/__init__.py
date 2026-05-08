@@ -3,6 +3,10 @@ from marginal_value.active_benchmark.benchmark_discrimination import (
     build_benchmark_discrimination_report,
     write_benchmark_discrimination_reports,
 )
+from marginal_value.active_benchmark.coverage_decision import (
+    build_coverage_decision_report,
+    write_coverage_decision_reports,
+)
 from marginal_value.active_benchmark.coverage_reports import write_coverage_reports
 from marginal_value.active_benchmark.coverage_runner import (
     CoverageBenchmarkConfig,
@@ -37,6 +41,7 @@ __all__ = [
     "RoundResult",
     "build_benchmark_decision_report",
     "build_benchmark_discrimination_report",
+    "build_coverage_decision_report",
     "build_difficulty_targeted_episodes",
     "build_opportunity_targeted_episodes",
     "build_source_family_label_holdout_episodes",
@@ -48,5 +53,6 @@ __all__ = [
     "write_benchmark_decision_reports",
     "write_benchmark_discrimination_reports",
     "write_benchmark_reports",
+    "write_coverage_decision_reports",
     "write_coverage_reports",
 ]

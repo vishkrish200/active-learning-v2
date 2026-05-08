@@ -35,6 +35,22 @@ class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--manifest", result.stdout)
 
+    def test_coverage_decision_summarizer_is_directly_executable_without_pythonpath(self):
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", None)
+        repo_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "scripts/summarize_coverage_benchmark_reports.py", "--help"],
+            cwd=repo_root,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--output-json", result.stdout)
+
     def test_gcp_three_seed_coverage_config_is_bounded_cpu_only(self):
         config_path = Path("configs/coverage_benchmark_gcp_ts2vec_3seed_cpu.json")
         self.assertTrue(config_path.exists())
@@ -53,6 +69,22 @@ class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
         self.assertIn("submitted_full_replay_v1", config["benchmark"]["policies"])
         self.assertEqual(config["acceptance"]["minimum_completed_seeds"], 3)
         self.assertIn("same-feature selector/eval rows are diagnostic, not primary", config["acceptance"]["required_checks"])
+
+    def test_next_coverage_gate_config_adds_oracle_ci_without_training(self):
+        config_path = Path("configs/coverage_benchmark_gcp_ts2vec_oracle_ci_10seed_cpu.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["no_downstream_training"])
+        self.assertEqual(len(config["data"]["selection_seeds"]), 10)
+        self.assertEqual(config["benchmark"]["folds"], 5)
+        self.assertIn("oracle_greedy_eval_view_v1", config["benchmark"]["policies"])
+        self.assertEqual(config["reporting"]["decision_report_script"], "scripts/summarize_coverage_benchmark_reports.py")
+        self.assertEqual(config["reporting"]["bootstrap_unit"], "seed_episode")
+        self.assertIn("coverage_decision_report.json", config["acceptance"]["required_artifacts"])
+        self.assertIn("oracle capture is reported for top deployable policy", config["acceptance"]["required_checks"])
 
     def test_eval_view_family_parser_rejects_malformed_entries(self):
         self.assertEqual(

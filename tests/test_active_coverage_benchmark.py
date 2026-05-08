@@ -9,9 +9,11 @@ from marginal_value.active_benchmark import (
     BenchmarkClip,
     CoverageBenchmarkConfig,
     EpisodeSpec,
+    build_coverage_decision_report,
     run_coverage_benchmark,
     write_coverage_reports,
 )
+from marginal_value.active_benchmark.coverage_reports import coverage_result_to_json
 
 
 class ActiveCoverageBenchmarkTests(unittest.TestCase):
@@ -132,6 +134,38 @@ class ActiveCoverageBenchmarkTests(unittest.TestCase):
         self.assertIn("# Blind Target Coverage Benchmark", markdown)
         self.assertIn("ts2vec_support_novelty_v1", markdown)
         self.assertIn("coverage_gain_rel", markdown)
+
+    def test_coverage_decision_report_adds_episode_bootstrap_and_oracle_capture(self):
+        result = run_coverage_benchmark(
+            _coverage_fixture_clips(),
+            [_coverage_fixture_episode()],
+            CoverageBenchmarkConfig(
+                budgets=(1,),
+                policies=("quality_only_v1", "ts2vec_kcenter_v1", "oracle_greedy_eval_view_v1"),
+                eval_views=("morph_stats_v1", "ts2vec"),
+                primary_eval_views=("morph_stats_v1",),
+                ts2vec_view="ts2vec",
+                window_view="window",
+                eval_view_families={"morph_stats_v1": "morphology", "ts2vec": "ts2vec"},
+                quality_threshold=0.85,
+                max_artifact_score=0.05,
+                random_seed=11,
+            ),
+        )
+
+        report = build_coverage_decision_report(
+            [coverage_result_to_json(result)],
+            report_names=["seed_fixture"],
+            baseline_policy="quality_only_v1",
+            bootstrap_replicates=10,
+        )
+
+        self.assertEqual(report["coverage_units"]["independent_episode_count"], 1)
+        self.assertEqual(report["coverage_units"]["final_budget"], 1)
+        self.assertEqual(report["policy_final_summary"]["oracle_greedy_eval_view_v1"]["uses_target_for_selection"], True)
+        self.assertGreater(report["pairwise_vs_baseline"]["ts2vec_kcenter_v1"]["mean_delta"], 0.90)
+        self.assertGreater(report["oracle_capture_vs_baseline"]["ts2vec_kcenter_v1"]["mean_oracle_capture"], 0.99)
+        self.assertEqual(report["decision"]["downstream_training"], "hold")
 
 
 def _coverage_fixture_episode() -> EpisodeSpec:
