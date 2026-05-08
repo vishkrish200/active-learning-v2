@@ -183,7 +183,8 @@ finish_failure() {{
   echo '{{"run_id":"'$RUN_ID'","state":"failure","exit_code":'$code',"ts":"'"$(date -Iseconds)"'"}}' > "$STATUS/failure.json"
   if [ -f "$LOG" ]; then cp "$LOG" "$STATUS/run_all.log"; fi
   tar -czf "$WORK/partial_${{RUN_ID}}.tgz" -C "$WORK" out status
-  gsutil -m cp -r "$STATUS" "$GCS_PREFIX/status/" >/dev/null 2>&1 || true
+  gsutil cp "$STATUS/failure.json" "$GCS_PREFIX/status/failure.json" >/dev/null 2>&1 || true
+  if [ -f "$STATUS/run_all.log" ]; then gsutil cp "$STATUS/run_all.log" "$GCS_PREFIX/status/run_all.log" >/dev/null 2>&1 || true; fi
   gsutil cp "$WORK/partial_${{RUN_ID}}.tgz" "$GCS_PREFIX/partial_${{RUN_ID}}.tgz" >/dev/null 2>&1 || true
   exit "$code"
 }}
@@ -266,7 +267,7 @@ tar -czf "$WORK/results_${{RUN_ID}}.tgz" -C "$WORK/out" "$RUN_ID"
 gsutil -m cp -r "$OUT" "$GCS_PREFIX/results/"
 gsutil cp "$WORK/results_${{RUN_ID}}.tgz" "$GCS_PREFIX/results_${{RUN_ID}}.tgz"
 echo '{{"run_id":"'$RUN_ID'","state":"success","exit_code":0,"ts":"'"$(date -Iseconds)"'"}}' > "$STATUS/success.json"
-gsutil -m cp -r "$STATUS" "$GCS_PREFIX/status/"
+gsutil cp "$STATUS/success.json" "$GCS_PREFIX/status/success.json"
 """
 
 
@@ -274,10 +275,10 @@ def _poll_status(*, gcs_prefix: str, run_id: str, timeout_seconds: int, poll_sec
     deadline = time.time() + timeout_seconds
     last_report = 0.0
     while time.time() < deadline:
-        if _gsutil_stat(f"{gcs_prefix}/status/success.json"):
+        if _remote_status_exists(gcs_prefix, "success.json"):
             print(json.dumps({"event": "remote_success", "run_id": run_id}), flush=True)
             return "success"
-        if _gsutil_stat(f"{gcs_prefix}/status/failure.json"):
+        if _remote_status_exists(gcs_prefix, "failure.json"):
             print(json.dumps({"event": "remote_failure", "run_id": run_id}), flush=True)
             return "failure"
         now = time.time()
@@ -297,6 +298,10 @@ def _copy_results(*, gcs_prefix: str, download_dir: Path) -> None:
 
 def _gsutil_stat(path: str) -> bool:
     return subprocess.run(["gsutil", "-q", "stat", path], check=False).returncode == 0
+
+
+def _remote_status_exists(gcs_prefix: str, filename: str) -> bool:
+    return _gsutil_stat(f"{gcs_prefix}/status/{filename}") or _gsutil_stat(f"{gcs_prefix}/status/status/{filename}")
 
 
 def _run(command: list[str], *, cwd: Path, check: bool = True) -> subprocess.CompletedProcess[str]:
