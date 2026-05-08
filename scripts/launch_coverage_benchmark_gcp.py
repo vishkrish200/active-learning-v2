@@ -292,10 +292,10 @@ def _poll_status(*, gcs_prefix: str, run_id: str, timeout_seconds: int, poll_sec
 
 
 def _copy_results(*, gcs_prefix: str, download_dir: Path) -> None:
-    _run(["gsutil", "-m", "cp", "-r", f"{gcs_prefix}/status", str(download_dir)], cwd=Path.cwd(), check=False)
-    _run(["gsutil", "-m", "cp", "-r", f"{gcs_prefix}/results", str(download_dir)], cwd=Path.cwd(), check=False)
-    _run(["gsutil", "cp", f"{gcs_prefix}/results_*.tgz", str(download_dir)], cwd=Path.cwd(), check=False)
-    _run(["gsutil", "cp", f"{gcs_prefix}/partial_*.tgz", str(download_dir)], cwd=Path.cwd(), check=False)
+    _run(["gcloud", "storage", "cp", "--recursive", f"{gcs_prefix}/status", str(download_dir)], cwd=Path.cwd(), check=False)
+    _run(["gcloud", "storage", "cp", "--recursive", f"{gcs_prefix}/results", str(download_dir)], cwd=Path.cwd(), check=False)
+    _run(["gcloud", "storage", "cp", f"{gcs_prefix}/results_*.tgz", str(download_dir)], cwd=Path.cwd(), check=False)
+    _run(["gcloud", "storage", "cp", f"{gcs_prefix}/partial_*.tgz", str(download_dir)], cwd=Path.cwd(), check=False)
 
 
 def _gsutil_stat(path: str) -> bool:

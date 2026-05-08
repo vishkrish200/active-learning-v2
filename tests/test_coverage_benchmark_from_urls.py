@@ -16,6 +16,7 @@ from marginal_value.active_benchmark import (
 )
 from marginal_value.active_benchmark.coverage_reports import coverage_result_to_json
 from scripts.offline_coverage_benchmark_from_urls import _coverage_proof_summary, _parse_eval_view_families
+from scripts import launch_coverage_benchmark_gcp
 
 
 class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
@@ -85,6 +86,26 @@ class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
         self.assertEqual(config["reporting"]["bootstrap_unit"], "seed_episode")
         self.assertIn("coverage_decision_report.json", config["acceptance"]["required_artifacts"])
         self.assertIn("oracle capture is reported for top deployable policy", config["acceptance"]["required_checks"])
+
+    def test_gcp_launcher_download_copy_avoids_gsutil_parallel_hang(self):
+        calls = []
+        original_run = launch_coverage_benchmark_gcp._run
+
+        def fake_run(command, *, cwd, check=True):
+            calls.append(command)
+
+        try:
+            launch_coverage_benchmark_gcp._run = fake_run
+            launch_coverage_benchmark_gcp._copy_results(
+                gcs_prefix="gs://bucket/run",
+                download_dir=Path("/tmp/downstream-download"),
+            )
+        finally:
+            launch_coverage_benchmark_gcp._run = original_run
+
+        self.assertGreaterEqual(len(calls), 4)
+        self.assertTrue(all(call[:2] == ["gcloud", "storage"] for call in calls))
+        self.assertTrue(any("--recursive" in call for call in calls))
 
     def test_eval_view_family_parser_rejects_malformed_entries(self):
         self.assertEqual(
