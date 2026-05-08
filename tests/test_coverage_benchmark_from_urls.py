@@ -87,6 +87,30 @@ class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
         self.assertIn("coverage_decision_report.json", config["acceptance"]["required_artifacts"])
         self.assertIn("oracle capture is reported for top deployable policy", config["acceptance"]["required_checks"])
 
+    def test_bridge_pilot_config_matches_advisor_gate(self):
+        config_path = Path("configs/coverage_bridge_benchmark_gcp_ts2vec_kcenter_pilot.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["no_downstream_training"])
+        self.assertEqual(config["data"]["selection_seeds"], [17])
+        self.assertEqual(config["data"]["clips_per_group"], 3)
+        self.assertEqual(config["benchmark"]["episode_strategy"], "source_family_label_holdout")
+        self.assertEqual(config["benchmark"]["candidate_groups_per_episode"], 12)
+        self.assertEqual(config["benchmark"]["target_candidate_groups_per_episode"], 4)
+        self.assertEqual(config["benchmark"]["target_families_per_episode"], 2)
+        self.assertEqual(config["benchmark"]["budgets"], [1, 2, 4])
+        self.assertIn("quality_stratified_random_v1", config["benchmark"]["policies"])
+        self.assertIn("ts2vec_kcenter_v1", config["benchmark"]["policies"])
+        self.assertIn("oracle_greedy_target_family_v1", config["benchmark"]["policies"])
+        self.assertEqual(config["downstream"]["model"], "nearest_centroid_source_family_bridge")
+        self.assertIn("oracle target-family discovery at K=4 is at least 0.50", config["acceptance"]["required_checks"])
+        self.assertIn("after_known_target_fraction becomes nonzero at K=4", config["acceptance"]["required_checks"])
+        self.assertIn("balanced accuracy gain moves positive for the oracle", config["acceptance"]["required_checks"])
+        self.assertIn("source-group leakage is false", config["acceptance"]["required_checks"])
+
     def test_gcp_launcher_download_copy_avoids_gsutil_parallel_hang(self):
         calls = []
         original_run = launch_coverage_benchmark_gcp._run

@@ -83,6 +83,8 @@ def main() -> None:
         folds=args.folds,
         candidate_groups_per_episode=args.candidate_groups_per_episode,
         target_groups_per_episode=args.target_groups_per_episode,
+        target_candidate_groups_per_episode=args.target_candidate_groups_per_episode,
+        target_families_per_episode=args.target_families_per_episode,
         max_support_groups=args.max_support_groups,
         episode_representation=args.episode_representation,
         source_family_count=args.source_family_count,
@@ -102,6 +104,8 @@ def main() -> None:
         blend_alpha=args.blend_alpha,
         eval_view_families=_parse_eval_view_families(args.eval_view_families),
         distance_metric=args.distance_metric,
+        source_family_count=args.source_family_count,
+        source_family_label_view=args.downstream_supervised_label_representation,
     )
     result = run_coverage_benchmark(clips, episodes, config, progress_callback=_print_progress_event)
     paths = write_coverage_reports(result, output_dir)
@@ -159,6 +163,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--source-family-count", type=int, default=4)
     parser.add_argument("--candidate-groups-per-episode", type=int, default=6)
     parser.add_argument("--target-groups-per-episode", type=int, default=2)
+    parser.add_argument("--target-candidate-groups-per-episode", type=int, default=None)
+    parser.add_argument("--target-families-per-episode", type=int, default=1)
     parser.add_argument("--max-support-groups", type=int, default=64)
     parser.add_argument("--budgets", default="1,2,4")
     parser.add_argument("--quality-threshold", type=float, default=0.85)

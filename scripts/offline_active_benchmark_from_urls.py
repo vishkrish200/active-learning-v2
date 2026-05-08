@@ -83,6 +83,8 @@ def main() -> None:
         folds=args.folds,
         candidate_groups_per_episode=args.candidate_groups_per_episode,
         target_groups_per_episode=args.target_groups_per_episode,
+        target_candidate_groups_per_episode=args.target_candidate_groups_per_episode,
+        target_families_per_episode=args.target_families_per_episode,
         max_support_groups=args.max_support_groups,
         episode_representation=args.episode_representation,
         source_family_count=args.source_family_count,
@@ -137,6 +139,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--source-family-count", type=int, default=4)
     parser.add_argument("--candidate-groups-per-episode", type=int, default=3)
     parser.add_argument("--target-groups-per-episode", type=int, default=3)
+    parser.add_argument("--target-candidate-groups-per-episode", type=int, default=None)
+    parser.add_argument("--target-families-per-episode", type=int, default=1)
     parser.add_argument("--max-support-groups", type=int, default=128)
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=5)
@@ -169,8 +173,10 @@ def _build_episodes_from_clips(
     folds: int,
     candidate_groups_per_episode: int,
     target_groups_per_episode: int,
-    max_support_groups: int | None,
-    episode_representation: str,
+    target_candidate_groups_per_episode: int | None = None,
+    target_families_per_episode: int = 1,
+    max_support_groups: int | None = None,
+    episode_representation: str = "window",
     source_family_count: int = 4,
 ):
     if episode_strategy == "rotating":
@@ -215,6 +221,8 @@ def _build_episodes_from_clips(
             n_folds=folds,
             candidate_groups_per_episode=candidate_groups_per_episode,
             target_groups_per_episode=target_groups_per_episode,
+            target_candidate_groups_per_episode=target_candidate_groups_per_episode,
+            target_families_per_episode=target_families_per_episode,
             max_support_groups=max_support_groups,
             representation=episode_representation,
             source_family_count=source_family_count,

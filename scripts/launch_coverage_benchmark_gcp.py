@@ -165,6 +165,10 @@ def _startup_script(
     eval_view_families = ",".join(f"{key}:{value}" for key, value in benchmark["eval_view_families"].items())
     max_artifact_score = benchmark.get("max_artifact_score")
     artifact_arg = "none" if max_artifact_score is None else str(max_artifact_score)
+    target_candidate_groups = int(
+        benchmark.get("target_candidate_groups_per_episode", max(1, int(benchmark["candidate_groups_per_episode"]) // 2))
+    )
+    target_families = int(benchmark.get("target_families_per_episode", 1))
     downstream_args = _downstream_args(config)
 
     return f"""#!/usr/bin/env bash
@@ -234,6 +238,8 @@ for SEED in {seeds}; do
     --source-family-count {int(benchmark["source_family_count"])} \\
     --candidate-groups-per-episode {int(benchmark["candidate_groups_per_episode"])} \\
     --target-groups-per-episode {int(benchmark["target_groups_per_episode"])} \\
+    --target-candidate-groups-per-episode {target_candidate_groups} \\
+    --target-families-per-episode {target_families} \\
     --max-support-groups {int(benchmark["max_support_groups"])} \\
     --budgets {shlex.quote(budgets)} \\
     --quality-threshold {float(benchmark["quality_threshold"])} \\

@@ -140,6 +140,65 @@ class DownstreamSupervisedSmokeTests(unittest.TestCase):
         self.assertEqual(report["decision"]["downstream_training"], "hold_large_training")
         self.assertIn("source-family pseudo-label", report["decision"]["read"])
 
+    def test_bridge_metrics_measure_target_family_discovery(self):
+        clips = [
+            _clip("support_a", "fam_a_worker_support", [0.0, 0.0], quality=0.90),
+            _clip("support_b", "fam_b_worker_support", [10.0, 0.0], quality=0.90),
+            _clip("candidate_target_family", "fam_c_worker_candidate", [0.0, 10.0], quality=0.90),
+            _clip("candidate_known_family", "fam_b_worker_candidate", [10.0, 1.0], quality=0.90),
+            _clip("target_c", "fam_c_worker_target", [0.0, 11.0], quality=0.90),
+        ]
+        episode = EpisodeSpec(
+            episode_id="episode_000",
+            fold_id=0,
+            support_ids=("support_a", "support_b"),
+            candidate_ids=("candidate_target_family", "candidate_known_family"),
+            target_ids=("target_c",),
+            support_group_ids=("fam_a_worker_support", "fam_b_worker_support"),
+            candidate_group_ids=("fam_c_worker_candidate", "fam_b_worker_candidate"),
+            target_group_ids=("fam_c_worker_target",),
+        )
+        result = CoverageRunResult(
+            episodes=(episode,),
+            policies=("ts2vec_kcenter_v1", "quality_stratified_random_v1"),
+            budgets=(1,),
+            rounds=(),
+            selected_rows=(
+                _coverage_selected("ts2vec_kcenter_v1", 1, 1, "candidate_target_family", "fam_c_worker_candidate"),
+                _coverage_selected("quality_stratified_random_v1", 1, 1, "candidate_known_family", "fam_b_worker_candidate"),
+            ),
+            metric_rows=(),
+            policy_summary={},
+            config=CoverageBenchmarkConfig(
+                budgets=(1,),
+                policies=("ts2vec_kcenter_v1", "quality_stratified_random_v1"),
+                eval_views=("window",),
+                primary_eval_views=("window",),
+            ),
+        )
+
+        rows = build_downstream_coverage_supervised_rows(
+            result,
+            clips,
+            downstream_representations=("window",),
+            label_source="source_family",
+            label_representation="window",
+            source_family_count=3,
+        )
+        by_policy_budget = {(row["policy_id"], row["budget_k"]): row for row in rows}
+
+        self.assertEqual(by_policy_budget[("ts2vec_kcenter_v1", 0)]["target_family_discovery_rate"], 0.0)
+        self.assertEqual(by_policy_budget[("ts2vec_kcenter_v1", 1)]["candidate_bridge_count"], 1)
+        self.assertEqual(by_policy_budget[("ts2vec_kcenter_v1", 1)]["selected_bridge_count"], 1)
+        self.assertEqual(by_policy_budget[("ts2vec_kcenter_v1", 1)]["target_family_count"], 1)
+        self.assertEqual(by_policy_budget[("ts2vec_kcenter_v1", 1)]["target_family_discovery_rate"], 1.0)
+        self.assertEqual(by_policy_budget[("quality_stratified_random_v1", 1)]["selected_bridge_count"], 0)
+        self.assertEqual(by_policy_budget[("quality_stratified_random_v1", 1)]["target_family_discovery_rate"], 0.0)
+        self.assertGreater(
+            by_policy_budget[("ts2vec_kcenter_v1", 1)]["after_known_target_fraction"],
+            by_policy_budget[("quality_stratified_random_v1", 1)]["after_known_target_fraction"],
+        )
+
     def test_gcp_coverage_downstream_tiny_config_targets_coverage_winner(self):
         config_path = Path("configs/downstream_coverage_smoke_gcp_ts2vec_kcenter_tiny.json")
         self.assertTrue(config_path.exists())

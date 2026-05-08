@@ -259,6 +259,7 @@ def build_source_family_label_holdout_episodes(
     candidate_groups_per_episode: int,
     target_groups_per_episode: int,
     target_candidate_groups_per_episode: int | None = None,
+    target_families_per_episode: int = 1,
     max_support_groups: int | None = None,
     representation: str = "window",
     source_family_count: int = 4,
@@ -278,6 +279,11 @@ def build_source_family_label_holdout_episodes(
     )
     target_candidate_count = min(target_candidate_count, candidate_count)
     decoy_candidate_count = candidate_count - target_candidate_count
+    target_family_count = max(1, int(target_families_per_episode))
+    if target_count < target_family_count or target_candidate_count < target_family_count:
+        raise ValueError("Source-family label-holdout episodes require at least one target and bridge candidate group per target family.")
+    target_counts_by_family = _balanced_counts(target_count, target_family_count)
+    target_candidate_counts_by_family = _balanced_counts(target_candidate_count, target_family_count)
 
     centroids = _group_centroids(by_group, groups, representation=representation)
     distances = _cosine_distance_matrix(centroids, centroids)
@@ -291,32 +297,52 @@ def build_source_family_label_holdout_episodes(
     eligible_families = _eligible_label_holdout_families(
         groups,
         groups_by_family,
-        target_count=target_count,
-        target_candidate_count=target_candidate_count,
+        target_count=max(target_counts_by_family),
+        target_candidate_count=max(target_candidate_counts_by_family),
         decoy_candidate_count=decoy_candidate_count,
     )
-    if len(eligible_families) < 1:
+    if len(eligible_families) < target_family_count:
         raise ValueError("Source-family label-holdout episodes require at least one family with target and candidate groups.")
 
     episodes: list[EpisodeSpec] = []
     for fold_id in range(max(1, int(n_folds))):
-        target_family = eligible_families[fold_id % len(eligible_families)]
-        target_pool = sorted(groups_by_family[target_family])
-        family_cycle_start = (fold_id // len(eligible_families)) * (target_count + target_candidate_count)
-        target_groups = tuple(_rotating_take(target_pool, start=family_cycle_start, count=target_count))
-        target_group_set = set(target_groups)
-        target_candidate_pool = [group for group in target_pool if group not in target_group_set]
-        target_candidate_groups = tuple(
+        target_families = tuple(
             _rotating_take(
-                target_candidate_pool,
-                start=family_cycle_start,
-                count=target_candidate_count,
+                eligible_families,
+                start=fold_id * target_family_count,
+                count=target_family_count,
             )
         )
+        target_groups_list: list[str] = []
+        target_candidate_groups_list: list[str] = []
+        family_cycle = fold_id // max(1, len(eligible_families))
+        for family_index, target_family in enumerate(target_families):
+            target_pool = sorted(groups_by_family[target_family])
+            family_target_count = target_counts_by_family[family_index]
+            family_candidate_count = target_candidate_counts_by_family[family_index]
+            family_cycle_start = family_cycle * (family_target_count + family_candidate_count)
+            family_target_groups = _rotating_take(
+                target_pool,
+                start=family_cycle_start,
+                count=family_target_count,
+            )
+            target_groups_list.extend(family_target_groups)
+            target_group_set = set(family_target_groups)
+            target_candidate_pool = [group for group in target_pool if group not in target_group_set]
+            target_candidate_groups_list.extend(
+                _rotating_take(
+                    target_candidate_pool,
+                    start=family_cycle_start,
+                    count=family_candidate_count,
+                )
+            )
+        target_groups = tuple(target_groups_list)
+        target_candidate_groups = tuple(target_candidate_groups_list)
 
         target_indices = [groups.index(group) for group in target_groups]
         target_distance = distances[:, target_indices].mean(axis=1)
-        non_target_family_groups = [group for group in groups if family_by_group[group] != target_family]
+        target_family_set = set(target_families)
+        non_target_family_groups = [group for group in groups if family_by_group[group] not in target_family_set]
         if decoy_candidate_count > 0:
             decoy_target_distance = np.asarray([target_distance[groups.index(group)] for group in non_target_family_groups], dtype=float)
             decoy_candidate_groups = _opportunity_candidate_groups(
@@ -604,3 +630,12 @@ def _rotating_take(values: Sequence[str], *, start: int, count: int) -> list[str
     if not values:
         return []
     return [values[(start + offset) % len(values)] for offset in range(count)]
+
+
+def _balanced_counts(total: int, buckets: int) -> list[int]:
+    buckets = max(1, int(buckets))
+    total = max(1, int(total))
+    base = total // buckets
+    remainder = total % buckets
+    counts = [base + (1 if index < remainder else 0) for index in range(buckets)]
+    return [max(1, count) for count in counts]

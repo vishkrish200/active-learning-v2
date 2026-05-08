@@ -1,0 +1,111 @@
+{
+  "purpose": "One-seed CPU-only bridge-candidate label-holdout benchmark for frozen TS2Vec/window acquisition. Tests whether selected candidates introduce target-family labels before any downstream training spend.",
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 75,
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "no_downstream_training": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt",
+    "max_rows_per_seed": 540,
+    "max_groups": 180,
+    "clips_per_group": 3,
+    "sampling_mode": "random",
+    "selection_seeds": [17],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "source_family_label_holdout",
+    "episode_representation": "window",
+    "source_family_count": 4,
+    "folds": 5,
+    "candidate_groups_per_episode": 12,
+    "target_groups_per_episode": 6,
+    "target_candidate_groups_per_episode": 4,
+    "target_families_per_episode": 2,
+    "max_support_groups": 96,
+    "budgets": [1, 2, 4],
+    "quality_threshold": 0.85,
+    "max_stationary_fraction": 0.9,
+    "max_abs_value": 60.0,
+    "max_artifact_score": 0.05,
+    "distance_metric": "euclidean",
+    "representations": ["ts2vec", "window", "raw_shape_stats"],
+    "eval_views": ["ts2vec", "window", "raw_shape_stats"],
+    "primary_eval_views": ["window", "raw_shape_stats"],
+    "eval_view_families": {
+      "ts2vec": "ts2vec",
+      "window": "window",
+      "raw_shape_stats": "raw_shape"
+    },
+    "ts2vec_view": "ts2vec",
+    "window_view": "window",
+    "blend_alpha": 0.5,
+    "policies": [
+      "quality_stratified_random_v1",
+      "quality_only_v1",
+      "ts2vec_kcenter_v1",
+      "oracle_greedy_target_family_v1"
+    ]
+  },
+  "downstream": {
+    "model": "nearest_centroid_source_family_bridge",
+    "label_source": "source_family",
+    "label_representation": "window",
+    "source_family_count": 4,
+    "representations": ["window", "raw_shape_stats"],
+    "top_policy": "ts2vec_kcenter_v1",
+    "baseline_policy": "quality_stratified_random_v1",
+    "decision": "bridge_identifiability_pilot_only"
+  },
+  "reporting": {
+    "decision_report_script": "scripts/summarize_coverage_benchmark_reports.py",
+    "baseline_policy": "quality_stratified_random_v1",
+    "oracle_policy": "oracle_greedy_target_family_v1",
+    "bootstrap_replicates": 500,
+    "bootstrap_unit": "seed_episode"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260508_bridge_label_holdout_ts2vec_kcenter_pilot"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 1,
+    "minimum_episodes_per_seed": 5,
+    "required_artifacts": [
+      "selected_urls.txt",
+      "blind_target_coverage_benchmark_report.json",
+      "blind_target_coverage_benchmark_report.md",
+      "coverage_proof_summary.json",
+      "downstream_coverage_supervised_smoke_report.json",
+      "downstream_coverage_supervised_smoke_report.md",
+      "coverage_decision_report.json",
+      "coverage_decision_report.md"
+    ],
+    "required_checks": [
+      "source-group leakage is false",
+      "frozen TS2Vec embeddings are used without retraining",
+      "candidate pool has 36 clips from 12 groups with 3 clips per group",
+      "candidate pool includes target-family bridge groups",
+      "support excludes held-out target families",
+      "oracle target-family discovery at K=4 is at least 0.50",
+      "after_known_target_fraction becomes nonzero at K=4",
+      "balanced accuracy gain moves positive for the oracle",
+      "ts2vec_kcenter_v1 is compared directly against quality_stratified_random_v1",
+      "selected_invalid_rate_max is zero",
+      "selected_target_leak_count_total is zero",
+      "VM spawned for this run is deleted after artifact copy"
+    ],
+    "promotion_rule": "Only launch a 3-seed bridge benchmark if the one-seed pilot is identifiable: oracle discovery >= 0.50 at K=4, oracle balanced-accuracy gain >= +0.05, and ts2vec_kcenter_v1 beats quality_stratified_random_v1 on target-family discovery or known-target fraction.",
+    "non_claim": "This is a bridge-candidate source-family pseudo-label benchmark, not real challenge-label downstream training proof."
+  }
+}

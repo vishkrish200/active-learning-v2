@@ -7,6 +7,7 @@ import numpy as np
 
 from marginal_value.active_benchmark.representations import clip_lookup, stack_embeddings
 from marginal_value.active_benchmark.schema import BenchmarkClip, EpisodeSpec
+from marginal_value.active_benchmark.splits import infer_source_family_assignments
 from marginal_value.indexing.knn_features import normalize_rows
 
 
@@ -20,6 +21,7 @@ SUPPORTED_COVERAGE_POLICIES = (
     "ts2vec_kcenter_v1",
     "submitted_full_replay_v1",
     "oracle_greedy_eval_view_v1",
+    "oracle_greedy_target_family_v1",
 )
 HYGIENE_EVAL_VIEW = "__hygiene__"
 
@@ -40,6 +42,8 @@ class CoverageBenchmarkConfig:
     blend_alpha: float = 0.5
     eval_view_families: Mapping[str, str] = field(default_factory=dict)
     distance_metric: str = "euclidean"
+    source_family_count: int = 4
+    source_family_label_view: str = "window"
     eps: float = 1.0e-12
 
 
@@ -326,6 +330,13 @@ def _policy_spec(policy_id: str, config: CoverageBenchmarkConfig) -> _PolicySpec
             selector_feature_families=("oracle", "target"),
             uses_target_for_selection=True,
         )
+    if policy_id == "oracle_greedy_target_family_v1":
+        return _PolicySpec(
+            policy_id=policy_id,
+            selector_view=None,
+            selector_feature_families=("oracle", "target_family"),
+            uses_target_for_selection=True,
+        )
     raise ValueError(f"Unsupported coverage benchmark policy: {policy_id}")
 
 
@@ -397,6 +408,13 @@ def _rank_candidates(
         )
     if policy_spec.policy_id == "oracle_greedy_eval_view_v1":
         return _oracle_greedy_order(
+            clips_by_id,
+            episode=episode,
+            candidate_ids=eligible,
+            config=config,
+        )
+    if policy_spec.policy_id == "oracle_greedy_target_family_v1":
+        return _oracle_target_family_order(
             clips_by_id,
             episode=episode,
             candidate_ids=eligible,
@@ -586,6 +604,60 @@ def _oracle_greedy_order(
     for sample_id in tail:
         scores[sample_id] = 0.0
     return tuple([*selected, *tail]), scores
+
+
+def _oracle_target_family_order(
+    clips_by_id: Mapping[str, BenchmarkClip],
+    *,
+    episode: EpisodeSpec,
+    candidate_ids: Sequence[str],
+    config: CoverageBenchmarkConfig,
+) -> tuple[tuple[str, ...], dict[str, float]]:
+    labels_by_id = _source_family_labels_by_id(
+        clips_by_id,
+        representation=str(config.source_family_label_view),
+        source_family_count=int(config.source_family_count),
+    )
+    target_labels = {labels_by_id[str(sample_id)] for sample_id in episode.target_ids if str(sample_id) in labels_by_id}
+    known_labels = {labels_by_id[str(sample_id)] for sample_id in episode.support_ids if str(sample_id) in labels_by_id}
+    selected: list[str] = []
+    remaining = [str(sample_id) for sample_id in candidate_ids]
+    scores: dict[str, float] = {}
+    max_budget = min(max(int(budget) for budget in config.budgets), len(remaining))
+    while remaining and len(selected) < max_budget:
+        by_id: dict[str, float] = {}
+        selected_labels = {labels_by_id[str(sample_id)] for sample_id in selected if str(sample_id) in labels_by_id}
+        for sample_id in remaining:
+            trial_labels = set(known_labels)
+            trial_labels.update(selected_labels)
+            if sample_id in labels_by_id:
+                trial_labels.add(labels_by_id[sample_id])
+            discovered = target_labels & trial_labels
+            by_id[sample_id] = float(len(discovered) / len(target_labels)) if target_labels else 0.0
+        best = max(remaining, key=lambda sample_id: (by_id[sample_id], float(clips_by_id[sample_id].quality_score), sample_id))
+        scores[best] = by_id[best]
+        selected.append(best)
+        remaining.remove(best)
+    selected_set = set(selected)
+    tail = [sample_id for sample_id in remaining if sample_id not in selected_set]
+    for sample_id in tail:
+        scores[sample_id] = 0.0
+    return tuple([*selected, *tail]), scores
+
+
+def _source_family_labels_by_id(
+    clips_by_id: Mapping[str, BenchmarkClip],
+    *,
+    representation: str,
+    source_family_count: int,
+) -> dict[str, str]:
+    clips = [clips_by_id[sample_id] for sample_id in sorted(clips_by_id)]
+    family_by_group = infer_source_family_assignments(
+        clips,
+        representation=representation,
+        source_family_count=source_family_count,
+    )
+    return {clip.sample_id: str(family_by_group[str(clip.source_group_id)]) for clip in clips}
 
 
 def _mean_primary_coverage_gain(

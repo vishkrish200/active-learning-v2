@@ -511,6 +511,35 @@ class OfflineActiveBenchmarkTests(unittest.TestCase):
             self.assertFalse(set(episode.support_group_ids) & set(episode.target_group_ids))
             self.assertFalse(set(episode.candidate_group_ids) & set(episode.target_group_ids))
 
+    def test_source_family_label_holdout_can_hold_out_multiple_target_families(self):
+        clips = _source_family_label_holdout_clips()
+
+        episodes = build_source_family_label_holdout_episodes(
+            clips,
+            n_folds=1,
+            candidate_groups_per_episode=6,
+            target_groups_per_episode=4,
+            target_candidate_groups_per_episode=4,
+            target_families_per_episode=2,
+            max_support_groups=4,
+            representation="window",
+            source_family_count=4,
+        )
+
+        episode = episodes[0]
+        target_families = {_literal_family(group) for group in episode.target_group_ids}
+        candidate_families = {_literal_family(group) for group in episode.candidate_group_ids}
+        support_families = {_literal_family(group) for group in episode.support_group_ids}
+        bridge_groups = [group for group in episode.candidate_group_ids if _literal_family(group) in target_families]
+
+        self.assertEqual(len(target_families), 2)
+        self.assertEqual(len(bridge_groups), 4)
+        self.assertTrue(target_families <= candidate_families)
+        self.assertFalse(target_families & support_families)
+        self.assertFalse(set(episode.support_group_ids) & set(episode.candidate_group_ids))
+        self.assertFalse(set(episode.support_group_ids) & set(episode.target_group_ids))
+        self.assertFalse(set(episode.candidate_group_ids) & set(episode.target_group_ids))
+
     def test_url_runner_can_select_difficulty_targeted_episode_strategy(self):
         clips = _separated_source_group_clips()
 

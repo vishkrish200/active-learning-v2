@@ -167,6 +167,43 @@ class ActiveCoverageBenchmarkTests(unittest.TestCase):
         self.assertGreater(report["oracle_capture_vs_baseline"]["ts2vec_kcenter_v1"]["mean_oracle_capture"], 0.99)
         self.assertEqual(report["decision"]["downstream_training"], "hold")
 
+    def test_target_family_oracle_selects_bridge_candidates(self):
+        clips = [
+            _clip("support_a", "fam_a_worker_support", (0.0, 0.0)),
+            _clip("candidate_bridge", "fam_c_worker_candidate", (0.0, 10.0), quality=0.91),
+            _clip("candidate_distractor", "fam_b_worker_candidate", (9.0, 0.0), quality=0.99),
+            _clip("target_c", "fam_c_worker_target", (0.0, 11.0)),
+        ]
+        episode = EpisodeSpec(
+            episode_id="episode-smoke",
+            fold_id=0,
+            support_ids=("support_a",),
+            candidate_ids=("candidate_distractor", "candidate_bridge"),
+            target_ids=("target_c",),
+            support_group_ids=("fam_a_worker_support",),
+            candidate_group_ids=("fam_b_worker_candidate", "fam_c_worker_candidate"),
+            target_group_ids=("fam_c_worker_target",),
+        )
+
+        result = run_coverage_benchmark(
+            clips,
+            [episode],
+            CoverageBenchmarkConfig(
+                budgets=(1,),
+                policies=("quality_only_v1", "oracle_greedy_target_family_v1"),
+                eval_views=("window",),
+                primary_eval_views=("window",),
+                source_family_count=3,
+                source_family_label_view="window",
+            ),
+        )
+
+        self.assertEqual(_selected_ids(result, "quality_only_v1", 1), ("candidate_distractor",))
+        self.assertEqual(_selected_ids(result, "oracle_greedy_target_family_v1", 1), ("candidate_bridge",))
+        oracle_row = _metric_row(result, "oracle_greedy_target_family_v1", 1, "window", "coverage_gain_rel")
+        self.assertTrue(oracle_row.uses_target_for_selection)
+        self.assertFalse(oracle_row.primary_eval)
+
 
 def _coverage_fixture_episode() -> EpisodeSpec:
     return EpisodeSpec(

@@ -36,10 +36,27 @@ def build_downstream_coverage_supervised_rows(
     budgets = (0, *tuple(int(budget) for budget in result.budgets))
     rows: list[dict[str, object]] = []
     for episode in result.episodes:
+        target_labels = _labels_for_ids(labels_by_id, episode.target_ids)
+        support_labels = _labels_for_ids(labels_by_id, episode.support_ids)
+        candidate_bridge_ids = tuple(
+            str(sample_id)
+            for sample_id in episode.candidate_ids
+            if labels_by_id.get(str(sample_id)) in target_labels
+        )
+        candidate_bridge_labels = _labels_for_ids(labels_by_id, candidate_bridge_ids)
         for policy_id in result.policies:
             for budget_k in budgets:
                 selected_ids = selected_by_key.get((episode.episode_id, str(policy_id), int(budget_k)), ())
                 support_ids_after = (*episode.support_ids, *selected_ids)
+                selected_bridge_ids = tuple(
+                    str(sample_id)
+                    for sample_id in selected_ids
+                    if labels_by_id.get(str(sample_id)) in target_labels
+                )
+                selected_bridge_labels = _labels_for_ids(labels_by_id, selected_bridge_ids)
+                after_known_labels = set(support_labels)
+                after_known_labels.update(_labels_for_ids(labels_by_id, selected_ids))
+                discovery_rate = float(len(selected_bridge_labels) / len(target_labels)) if target_labels else 0.0
                 for representation in downstream_representations:
                     baseline = nearest_centroid_classification_metrics(
                         clips_by_id,
@@ -72,6 +89,14 @@ def build_downstream_coverage_supervised_rows(
                             "support_count_before": int(len(episode.support_ids)),
                             "support_count_after": int(len(support_ids_after)),
                             "target_count": int(len(episode.target_ids)),
+                            "target_family_count": int(len(target_labels)),
+                            "candidate_bridge_count": int(len(candidate_bridge_ids)),
+                            "candidate_bridge_family_count": int(len(candidate_bridge_labels)),
+                            "selected_bridge_count": int(len(selected_bridge_ids)),
+                            "selected_bridge_family_count": int(len(selected_bridge_labels)),
+                            "target_family_discovery_rate": float(discovery_rate),
+                            "known_target_family_count_before": int(len(target_labels & support_labels)),
+                            "known_target_family_count_after": int(len(target_labels & after_known_labels)),
                             "baseline_accuracy": float(baseline["accuracy"]),
                             "after_accuracy": float(after["accuracy"]),
                             "accuracy_gain": float(accuracy_gain),
@@ -196,6 +221,11 @@ def _mean_row_values(rows: Sequence[dict[str, object]]) -> dict[str, float | int
         "mean_relative_nll_reduction": _mean(rows, "relative_nll_reduction"),
         "mean_baseline_known_target_fraction": _mean(rows, "baseline_known_target_fraction"),
         "mean_after_known_target_fraction": _mean(rows, "after_known_target_fraction"),
+        "mean_target_family_count": _mean(rows, "target_family_count"),
+        "mean_candidate_bridge_count": _mean(rows, "candidate_bridge_count"),
+        "mean_selected_bridge_count": _mean(rows, "selected_bridge_count"),
+        "mean_target_family_discovery_rate": _mean(rows, "target_family_discovery_rate"),
+        "mean_known_target_family_count_after": _mean(rows, "known_target_family_count_after"),
     }
 
 
@@ -214,11 +244,14 @@ def _decision(summary: dict[str, object], *, top_policy: str, baseline_policy: s
     baseline_gain = _metric_value(baseline, "mean_balanced_accuracy_gain")
     top_nll = _metric_value(top, "mean_nll_reduction")
     baseline_nll = _metric_value(baseline, "mean_nll_reduction")
+    top_discovery = _metric_value(top, "mean_target_family_discovery_rate")
+    baseline_discovery = _metric_value(baseline, "mean_target_family_discovery_rate")
     balanced_accuracy_delta = top_gain - baseline_gain if top_gain is not None and baseline_gain is not None else None
     nll_delta = top_nll - baseline_nll if top_nll is not None and baseline_nll is not None else None
+    discovery_delta = top_discovery - baseline_discovery if top_discovery is not None and baseline_discovery is not None else None
     read = (
-        "source-family pseudo-label downstream smoke ran; keep this as a tiny gate and do not treat it as real "
-        "challenge-label downstream proof."
+        "source-family pseudo-label bridge downstream benchmark ran; keep this as an identifiability gate and do "
+        "not treat it as real challenge-label downstream proof."
     )
     return {
         "downstream_training": "hold_large_training",
@@ -228,11 +261,14 @@ def _decision(summary: dict[str, object], *, top_policy: str, baseline_policy: s
         "top_mean_balanced_accuracy_gain": top_gain,
         "baseline_mean_balanced_accuracy_gain": baseline_gain,
         "balanced_accuracy_delta_vs_baseline": balanced_accuracy_delta,
+        "top_mean_target_family_discovery_rate": top_discovery,
+        "baseline_mean_target_family_discovery_rate": baseline_discovery,
+        "target_family_discovery_delta_vs_baseline": discovery_delta,
         "top_mean_nll_reduction": top_nll,
         "baseline_mean_nll_reduction": baseline_nll,
         "nll_delta_vs_baseline": nll_delta,
         "next_steps": [
-            "Use this only to decide whether a tiny downstream probe is non-flat.",
+            "Use this only to decide whether the bridge-candidate downstream probe is identifiable and non-flat.",
             "Require the TS2Vec k-center policy to beat quality-stratified random before any larger downstream run.",
             "Do not retrain TS2Vec from this smoke.",
         ],
@@ -261,6 +297,7 @@ def _markdown_report(report: dict[str, object]) -> str:
         f"- read: {decision.get('read')}",
         f"- top policy: `{decision.get('top_policy')}`",
         f"- baseline policy: `{decision.get('baseline_policy')}`",
+        f"- target-family discovery delta vs baseline: `{_fmt(decision.get('target_family_discovery_delta_vs_baseline'))}`",
         f"- balanced accuracy delta vs baseline: `{_fmt(decision.get('balanced_accuracy_delta_vs_baseline'))}`",
         f"- NLL delta vs baseline: `{_fmt(decision.get('nll_delta_vs_baseline'))}`",
         "",
@@ -272,8 +309,8 @@ def _markdown_report(report: dict[str, object]) -> str:
         "",
         "## Budget Means",
         "",
-        "| policy | budget | balanced accuracy gain | NLL reduction | after known target frac | rows |",
-        "|---|---:|---:|---:|---:|---:|",
+        "| policy | budget | discovery rate | bridge clips | balanced accuracy gain | NLL reduction | after known target frac | rows |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     if isinstance(policy_budget_means, dict):
         for policy_id, budget_map in sorted(policy_budget_means.items()):
@@ -283,9 +320,11 @@ def _markdown_report(report: dict[str, object]) -> str:
                 if not isinstance(values, dict):
                     continue
                 lines.append(
-                    "| {policy} | {budget} | {bal} | {nll} | {known} | {rows} |".format(
+                    "| {policy} | {budget} | {disc} | {bridges} | {bal} | {nll} | {known} | {rows} |".format(
                         policy=policy_id,
                         budget=budget_k,
+                        disc=_fmt(values.get("mean_target_family_discovery_rate")),
+                        bridges=_fmt(values.get("mean_selected_bridge_count")),
                         bal=_fmt(values.get("mean_balanced_accuracy_gain")),
                         nll=_fmt(values.get("mean_nll_reduction")),
                         known=_fmt(values.get("mean_after_known_target_fraction")),
@@ -302,6 +341,10 @@ def _markdown_report(report: dict[str, object]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _labels_for_ids(labels_by_id: dict[str, str], sample_ids: Sequence[str]) -> set[str]:
+    return {str(labels_by_id[str(sample_id)]) for sample_id in sample_ids if str(sample_id) in labels_by_id}
 
 
 def _fmt(value: object) -> str:
