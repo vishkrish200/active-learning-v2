@@ -11,6 +11,12 @@ import numpy as np
 
 DEFAULT_BASELINE_POLICY = "quality_stratified_random_v1"
 ORACLE_POLICY = "oracle_greedy_eval_view_v1"
+DOWNSTREAM_BRIDGE_METRICS = (
+    "target_family_discovery_rate",
+    "after_known_target_fraction",
+    "balanced_accuracy_gain",
+    "nll_reduction",
+)
 
 
 def build_coverage_decision_report(
@@ -19,11 +25,18 @@ def build_coverage_decision_report(
     report_names: Sequence[str] | None = None,
     baseline_policy: str = DEFAULT_BASELINE_POLICY,
     oracle_policy: str = ORACLE_POLICY,
+    downstream_reports: Sequence[Mapping[str, Any]] | None = None,
+    downstream_report_names: Sequence[str] | None = None,
     bootstrap_replicates: int = 2000,
     bootstrap_seed: int = 20260508,
     eps: float = 1.0e-12,
 ) -> dict[str, Any]:
     names = _report_names(reports, report_names)
+    downstream_reports = tuple(downstream_reports or ())
+    if downstream_reports and downstream_report_names is None and len(downstream_reports) == len(names):
+        downstream_names: Sequence[str] | None = names
+    else:
+        downstream_names = downstream_report_names
     records = _primary_view_gain_records(reports, names)
     final_budget = max((int(budget) for report in reports for budget in report.get("budgets", [])), default=0)
     final_records = [record for record in records if int(record["budget_k"]) == final_budget]
@@ -47,6 +60,14 @@ def build_coverage_decision_report(
         bootstrap_replicates=bootstrap_replicates,
         bootstrap_seed=bootstrap_seed + 9173,
         eps=eps,
+    )
+    downstream_bridge = _downstream_bridge_proxy_summary(
+        downstream_reports,
+        report_names=downstream_names,
+        baseline_policy=baseline_policy,
+        oracle_policy=oracle_policy,
+        bootstrap_replicates=bootstrap_replicates,
+        bootstrap_seed=bootstrap_seed + 21119,
     )
     gates = _decision_gates(
         final_records=final_records,
@@ -76,6 +97,7 @@ def build_coverage_decision_report(
         "policy_budget_summary": budget_summary,
         "pairwise_vs_baseline": pairwise,
         "oracle_capture_vs_baseline": oracle_capture,
+        "downstream_bridge_proxy": downstream_bridge,
         "gates": gates,
         "decision": _decision(gates),
     }
@@ -89,6 +111,8 @@ def write_coverage_decision_reports(
     report_names: Sequence[str] | None = None,
     baseline_policy: str = DEFAULT_BASELINE_POLICY,
     oracle_policy: str = ORACLE_POLICY,
+    downstream_reports: Sequence[Mapping[str, Any]] | None = None,
+    downstream_report_names: Sequence[str] | None = None,
     bootstrap_replicates: int = 2000,
     bootstrap_seed: int = 20260508,
 ) -> dict[str, str]:
@@ -97,6 +121,8 @@ def write_coverage_decision_reports(
         report_names=report_names,
         baseline_policy=baseline_policy,
         oracle_policy=oracle_policy,
+        downstream_reports=downstream_reports,
+        downstream_report_names=downstream_report_names,
         bootstrap_replicates=bootstrap_replicates,
         bootstrap_seed=bootstrap_seed,
     )
@@ -195,6 +221,70 @@ def render_coverage_decision_markdown(report: Mapping[str, Any]) -> str:
             )
     else:
         lines.extend(["", "## Oracle Capture", "", "- Missing: no oracle policy rows were present in these reports."])
+
+    downstream_bridge = report.get("downstream_bridge_proxy", {})
+    if isinstance(downstream_bridge, Mapping) and downstream_bridge.get("units", {}).get("independent_episode_count", 0):
+        decision = downstream_bridge.get("decision", {})
+        units = downstream_bridge.get("units", {})
+        lines.extend(
+            [
+                "",
+                "## Downstream Bridge Proxy",
+                "",
+                "This is a source-family pseudo-label nearest-centroid proxy on frozen embeddings, not real challenge-label downstream proof.",
+                "",
+                f"- downstream training: `{decision.get('downstream_training', '')}`",
+                f"- read: {decision.get('read', '')}",
+                f"- top deployable policy by balanced accuracy: `{decision.get('top_deployable_policy_by_balanced_accuracy', '')}`",
+                f"- independent final episodes: `{units.get('independent_episode_count', 0)}`",
+                f"- final budget: `{units.get('final_budget', 0)}`",
+                "",
+                "### Downstream Final Means",
+                "",
+                "| policy | episodes | discovery | known target frac | balanced accuracy gain | NLL reduction |",
+                "|---|---:|---:|---:|---:|---:|",
+            ]
+        )
+        for policy, row in _ranked_downstream_policy_items(downstream_bridge.get("policy_final_summary", {})):
+            metrics = row.get("metrics", {})
+            lines.append(
+                "| `{policy}` | {episodes} | {disc} | {known} | {bal} | {nll} |".format(
+                    policy=policy,
+                    episodes=int(row.get("episode_count", 0)),
+                    disc=_fmt_metric(metrics, "target_family_discovery_rate", "mean"),
+                    known=_fmt_metric(metrics, "after_known_target_fraction", "mean"),
+                    bal=_fmt_metric(metrics, "balanced_accuracy_gain", "mean"),
+                    nll=_fmt_metric(metrics, "nll_reduction", "mean"),
+                )
+            )
+        lines.extend(
+            [
+                "",
+                "### Paired Downstream Deltas Vs Baseline",
+                "",
+                "| policy | metric | mean delta | median delta | CI95 low | CI95 high | win frac | paired episodes |",
+                "|---|---|---:|---:|---:|---:|---:|---:|",
+            ]
+        )
+        for policy, metrics in sorted(downstream_bridge.get("pairwise_vs_baseline", {}).items()):
+            if not isinstance(metrics, Mapping):
+                continue
+            for metric in DOWNSTREAM_BRIDGE_METRICS:
+                row = metrics.get(metric, {})
+                if not isinstance(row, Mapping):
+                    continue
+                lines.append(
+                    "| `{policy}` | `{metric}` | {mean} | {median} | {low} | {high} | {win} | {episodes} |".format(
+                        policy=policy,
+                        metric=metric,
+                        mean=_fmt(row.get("mean_delta")),
+                        median=_fmt(row.get("median_delta")),
+                        low=_fmt(row.get("bootstrap_ci95_low")),
+                        high=_fmt(row.get("bootstrap_ci95_high")),
+                        win=_fmt(row.get("win_fraction")),
+                        episodes=int(row.get("paired_episode_count", 0)),
+                    )
+                )
 
     lines.extend(
         [
@@ -426,6 +516,209 @@ def _oracle_capture_summaries(
     return summaries
 
 
+def _downstream_bridge_proxy_summary(
+    downstream_reports: Sequence[Mapping[str, Any]],
+    *,
+    report_names: Sequence[str] | None,
+    baseline_policy: str,
+    oracle_policy: str,
+    bootstrap_replicates: int,
+    bootstrap_seed: int,
+) -> dict[str, Any]:
+    if not downstream_reports:
+        return {}
+    names = _report_names(downstream_reports, report_names)
+    records = _downstream_bridge_final_records(downstream_reports, names)
+    if not records:
+        return {}
+    final_by_key = _downstream_records_by_policy_unit(records)
+    policy_final = _downstream_policy_final_summary(
+        records,
+        bootstrap_replicates=bootstrap_replicates,
+        bootstrap_seed=bootstrap_seed + 17,
+    )
+    pairwise = _downstream_pairwise_summaries(
+        final_by_key,
+        baseline_policy=baseline_policy,
+        bootstrap_replicates=bootstrap_replicates,
+        bootstrap_seed=bootstrap_seed + 101,
+    )
+    return {
+        "units": {
+            "report_count": len(downstream_reports),
+            "independent_episode_count": len({str(record["unit_id"]) for record in records}),
+            "final_budget": max((int(record["budget_k"]) for record in records), default=0),
+            "record_count": len(records),
+            "source_row_count": sum(int(record.get("source_row_count", 0)) for record in records),
+        },
+        "metrics": list(DOWNSTREAM_BRIDGE_METRICS),
+        "policy_final_summary": policy_final,
+        "pairwise_vs_baseline": pairwise,
+        "decision": _downstream_bridge_decision(
+            policy_final,
+            pairwise,
+            baseline_policy=baseline_policy,
+            oracle_policy=oracle_policy,
+        ),
+    }
+
+
+def _downstream_bridge_final_records(
+    downstream_reports: Sequence[Mapping[str, Any]],
+    names: Sequence[str],
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for report, report_name in zip(downstream_reports, names):
+        rows = [dict(row) for row in report.get("rows", []) if isinstance(row, Mapping)]
+        final_budget = max((int(row.get("budget_k", 0)) for row in rows), default=0)
+        by_key: dict[tuple[str, str, int, str], list[dict[str, Any]]] = defaultdict(list)
+        for row in rows:
+            if int(row.get("budget_k", 0)) != final_budget:
+                continue
+            key = (
+                str(report_name),
+                str(row.get("episode_id", "")),
+                int(row.get("budget_k", 0)),
+                str(row.get("policy_id", "")),
+            )
+            by_key[key].append(row)
+        for (name, episode_id, budget_k, policy_id), unit_rows in sorted(by_key.items()):
+            metrics = {
+                metric: _mean_finite([row.get(metric) for row in unit_rows])
+                for metric in DOWNSTREAM_BRIDGE_METRICS
+            }
+            records.append(
+                {
+                    "report_name": name,
+                    "episode_id": episode_id,
+                    "unit_id": f"{name}:{episode_id}",
+                    "budget_k": int(budget_k),
+                    "policy_id": policy_id,
+                    "metrics": metrics,
+                    "source_row_count": len(unit_rows),
+                    "representations": sorted({str(row.get("representation", "")) for row in unit_rows}),
+                }
+            )
+    return records
+
+
+def _downstream_records_by_policy_unit(records: Sequence[Mapping[str, Any]]) -> dict[tuple[str, str], Mapping[str, Any]]:
+    return {(str(record["unit_id"]), str(record["policy_id"])): record for record in records}
+
+
+def _downstream_policy_final_summary(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    bootstrap_replicates: int,
+    bootstrap_seed: int,
+) -> dict[str, dict[str, Any]]:
+    by_policy: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for record in records:
+        by_policy[str(record["policy_id"])].append(record)
+    summary: dict[str, dict[str, Any]] = {}
+    for index, (policy_id, policy_records) in enumerate(sorted(by_policy.items())):
+        metric_summary = {}
+        for metric in DOWNSTREAM_BRIDGE_METRICS:
+            values = [
+                float(record.get("metrics", {}).get(metric))
+                for record in policy_records
+                if record.get("metrics", {}).get(metric) is not None
+            ]
+            ci_low, ci_high = _bootstrap_ci95(values, seed=bootstrap_seed + index + len(metric), replicates=bootstrap_replicates)
+            metric_summary[metric] = {
+                "mean": mean(values) if values else None,
+                "median": median(values) if values else None,
+                "bootstrap_ci95_low": ci_low,
+                "bootstrap_ci95_high": ci_high,
+                "value_count": len(values),
+            }
+        summary[policy_id] = {
+            "episode_count": len(policy_records),
+            "metrics": metric_summary,
+        }
+    return summary
+
+
+def _downstream_pairwise_summaries(
+    final_by_key: Mapping[tuple[str, str], Mapping[str, Any]],
+    *,
+    baseline_policy: str,
+    bootstrap_replicates: int,
+    bootstrap_seed: int,
+) -> dict[str, dict[str, Any]]:
+    policies = sorted({policy for _unit, policy in final_by_key})
+    units = sorted({unit for unit, _policy in final_by_key})
+    summaries: dict[str, dict[str, Any]] = {}
+    for policy_index, policy in enumerate(policies):
+        if policy == baseline_policy:
+            continue
+        metric_summaries: dict[str, dict[str, Any]] = {}
+        for metric_index, metric in enumerate(DOWNSTREAM_BRIDGE_METRICS):
+            deltas = []
+            for unit in units:
+                policy_row = final_by_key.get((unit, policy))
+                baseline_row = final_by_key.get((unit, baseline_policy))
+                if policy_row is None or baseline_row is None:
+                    continue
+                policy_value = policy_row.get("metrics", {}).get(metric)
+                baseline_value = baseline_row.get("metrics", {}).get(metric)
+                if policy_value is None or baseline_value is None:
+                    continue
+                deltas.append(float(policy_value) - float(baseline_value))
+            ci_low, ci_high = _bootstrap_ci95(
+                deltas,
+                seed=bootstrap_seed + policy_index * 100 + metric_index,
+                replicates=bootstrap_replicates,
+            )
+            metric_summaries[metric] = {
+                "baseline_policy": baseline_policy,
+                "paired_episode_count": len(deltas),
+                "mean_delta": mean(deltas) if deltas else None,
+                "median_delta": median(deltas) if deltas else None,
+                "bootstrap_ci95_low": ci_low,
+                "bootstrap_ci95_high": ci_high,
+                "win_fraction": _win_fraction(deltas),
+            }
+        summaries[policy] = metric_summaries
+    return summaries
+
+
+def _downstream_bridge_decision(
+    policy_final: Mapping[str, Mapping[str, Any]],
+    pairwise: Mapping[str, Mapping[str, Any]],
+    *,
+    baseline_policy: str,
+    oracle_policy: str,
+) -> dict[str, Any]:
+    top_policy = _top_downstream_policy(
+        policy_final,
+        exclude={baseline_policy, oracle_policy},
+        metric="balanced_accuracy_gain",
+    )
+    top_pair = pairwise.get(top_policy or "", {}) if top_policy else {}
+    balanced_row = top_pair.get("balanced_accuracy_gain", {}) if isinstance(top_pair, Mapping) else {}
+    nll_row = top_pair.get("nll_reduction", {}) if isinstance(top_pair, Mapping) else {}
+    discovery_row = top_pair.get("target_family_discovery_rate", {}) if isinstance(top_pair, Mapping) else {}
+    read = (
+        "bridge proxy is aggregated with episode-level paired intervals; use it as an identifiability gate, "
+        "not real challenge-label downstream proof."
+    )
+    return {
+        "downstream_training": "hold_large_training",
+        "baseline_policy": baseline_policy,
+        "oracle_policy": oracle_policy,
+        "top_deployable_policy_by_balanced_accuracy": top_policy,
+        "balanced_accuracy_ci95_low_vs_baseline": balanced_row.get("bootstrap_ci95_low") if isinstance(balanced_row, Mapping) else None,
+        "nll_ci95_low_vs_baseline": nll_row.get("bootstrap_ci95_low") if isinstance(nll_row, Mapping) else None,
+        "target_family_discovery_mean_delta_vs_baseline": discovery_row.get("mean_delta") if isinstance(discovery_row, Mapping) else None,
+        "read": read,
+        "next_steps": [
+            "Keep this in CPU/offline benchmark mode until episode count and paired CIs are stronger.",
+            "Do not treat bridge pseudo-label gains as real downstream model training proof.",
+        ],
+    }
+
+
 def _decision_gates(
     *,
     final_records: Sequence[Mapping[str, Any]],
@@ -442,7 +735,7 @@ def _decision_gates(
         {
             "name": "episode_count",
             "status": "pass" if episode_count >= 20 else "warn",
-            "read": f"{episode_count} independent final episodes; use as smoke only below 20.",
+            "read": f"{episode_count} independent final episodes; require at least 20 before downstream spend.",
             "evidence": {"independent_episode_count": episode_count},
         },
         {
@@ -522,6 +815,28 @@ def _top_non_target_policy(policy_final: Mapping[str, Mapping[str, Any]]) -> tup
     return policy, candidates[policy]
 
 
+def _top_downstream_policy(
+    policy_final: Mapping[str, Mapping[str, Any]],
+    *,
+    exclude: set[str],
+    metric: str,
+) -> str | None:
+    candidates: dict[str, float] = {}
+    for policy, row in policy_final.items():
+        if policy in exclude:
+            continue
+        metrics = row.get("metrics", {})
+        if not isinstance(metrics, Mapping):
+            continue
+        metric_row = metrics.get(metric, {})
+        if not isinstance(metric_row, Mapping) or metric_row.get("mean") is None:
+            continue
+        candidates[policy] = float(metric_row["mean"])
+    if not candidates:
+        return None
+    return max(candidates, key=lambda policy: (candidates[policy], policy))
+
+
 def _bootstrap_ci95(values: Sequence[float], *, seed: int, replicates: int) -> tuple[float | None, float | None]:
     clean = np.asarray([float(value) for value in values if np.isfinite(float(value))], dtype=float)
     if clean.size == 0:
@@ -545,6 +860,22 @@ def _ranked_items(rows: Mapping[str, Mapping[str, Any]], metric: str) -> list[tu
     return sorted(rows.items(), key=lambda item: _none_low(item[1].get(metric)), reverse=True)
 
 
+def _ranked_downstream_policy_items(rows: Any) -> list[tuple[str, Mapping[str, Any]]]:
+    if not isinstance(rows, Mapping):
+        return []
+
+    def key(item: tuple[str, Mapping[str, Any]]) -> float:
+        metrics = item[1].get("metrics", {})
+        if not isinstance(metrics, Mapping):
+            return float("-inf")
+        metric_row = metrics.get("balanced_accuracy_gain", {})
+        if not isinstance(metric_row, Mapping):
+            return float("-inf")
+        return _none_low(metric_row.get("mean"))
+
+    return sorted(rows.items(), key=key, reverse=True)
+
+
 def _none_low(value: Any) -> float:
     if value is None:
         return float("-inf")
@@ -561,7 +892,27 @@ def _fmt(value: Any) -> str:
     return f"{float(value):.4f}"
 
 
+def _fmt_metric(metrics: Any, metric: str, field: str) -> str:
+    if not isinstance(metrics, Mapping):
+        return ""
+    row = metrics.get(metric, {})
+    if not isinstance(row, Mapping):
+        return ""
+    return _fmt(row.get(field))
+
+
 def _pool_range(value: Any) -> str:
     if not isinstance(value, Mapping) or value.get("min") is None:
         return "unknown"
     return f"{int(value.get('min', 0))}-{int(value.get('max', 0))} clips, median {float(value.get('median', 0.0)):.1f}"
+
+
+def _mean_finite(values: Sequence[Any]) -> float | None:
+    clean = []
+    for value in values:
+        if value is None:
+            continue
+        numeric = float(value)
+        if np.isfinite(numeric):
+            clean.append(numeric)
+    return mean(clean) if clean else None

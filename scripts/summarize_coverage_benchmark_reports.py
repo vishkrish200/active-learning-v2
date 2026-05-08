@@ -17,6 +17,7 @@ def main() -> None:
     report_paths = [Path(path) for path in args.reports]
     reports = [json.loads(path.read_text(encoding="utf-8")) for path in report_paths]
     report_names = _parse_names(args.report_names, report_paths)
+    downstream_reports, downstream_report_names = _load_sibling_downstream_reports(report_paths, report_names)
     paths = write_coverage_decision_reports(
         reports,
         output_json=args.output_json,
@@ -24,6 +25,8 @@ def main() -> None:
         report_names=report_names,
         baseline_policy=args.baseline_policy,
         oracle_policy=args.oracle_policy,
+        downstream_reports=downstream_reports,
+        downstream_report_names=downstream_report_names,
         bootstrap_replicates=args.bootstrap_replicates,
         bootstrap_seed=args.bootstrap_seed,
     )
@@ -50,6 +53,21 @@ def _parse_names(value: str, report_paths: list[Path]) -> list[str]:
             raise ValueError("--report-names must have the same number of entries as reports.")
         return names
     return [path.parent.name or f"report_{index:03d}" for index, path in enumerate(report_paths)]
+
+
+def _load_sibling_downstream_reports(
+    report_paths: list[Path],
+    report_names: list[str],
+) -> tuple[list[dict[str, object]], list[str]]:
+    reports: list[dict[str, object]] = []
+    names: list[str] = []
+    for report_path, report_name in zip(report_paths, report_names):
+        downstream_path = report_path.parent / "downstream_coverage_supervised_smoke_report.json"
+        if not downstream_path.exists():
+            continue
+        reports.append(json.loads(downstream_path.read_text(encoding="utf-8")))
+        names.append(str(report_name))
+    return reports, names
 
 
 if __name__ == "__main__":

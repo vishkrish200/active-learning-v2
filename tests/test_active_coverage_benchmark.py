@@ -13,6 +13,7 @@ from marginal_value.active_benchmark import (
     run_coverage_benchmark,
     write_coverage_reports,
 )
+from marginal_value.active_benchmark.coverage_decision import render_coverage_decision_markdown
 from marginal_value.active_benchmark.coverage_reports import coverage_result_to_json
 
 
@@ -167,6 +168,52 @@ class ActiveCoverageBenchmarkTests(unittest.TestCase):
         self.assertGreater(report["oracle_capture_vs_baseline"]["ts2vec_kcenter_v1"]["mean_oracle_capture"], 0.99)
         self.assertEqual(report["decision"]["downstream_training"], "hold")
 
+    def test_coverage_decision_report_aggregates_downstream_bridge_proxy(self):
+        result = run_coverage_benchmark(
+            _coverage_fixture_clips(),
+            [_coverage_fixture_episode()],
+            CoverageBenchmarkConfig(
+                budgets=(1,),
+                policies=("quality_stratified_random_v1", "ts2vec_kcenter_v1"),
+                eval_views=("morph_stats_v1",),
+                primary_eval_views=("morph_stats_v1",),
+                ts2vec_view="ts2vec",
+                window_view="window",
+                random_seed=11,
+            ),
+        )
+        downstream_report = {
+            "rows": [
+                _downstream_row("quality_stratified_random_v1", "window", balanced=0.20, nll=1.0, discovery=0.0),
+                _downstream_row("quality_stratified_random_v1", "raw_shape_stats", balanced=0.20, nll=1.0, discovery=0.0),
+                _downstream_row("ts2vec_kcenter_v1", "window", balanced=0.70, nll=5.0, discovery=1.0),
+                _downstream_row("ts2vec_kcenter_v1", "raw_shape_stats", balanced=0.50, nll=3.0, discovery=1.0),
+            ]
+        }
+
+        report = build_coverage_decision_report(
+            [coverage_result_to_json(result)],
+            report_names=["seed_fixture"],
+            baseline_policy="quality_stratified_random_v1",
+            downstream_reports=[downstream_report],
+            bootstrap_replicates=10,
+        )
+        proxy = report["downstream_bridge_proxy"]
+
+        self.assertEqual(proxy["units"]["independent_episode_count"], 1)
+        self.assertEqual(proxy["units"]["final_budget"], 1)
+        self.assertEqual(proxy["decision"]["top_deployable_policy_by_balanced_accuracy"], "ts2vec_kcenter_v1")
+        ts2vec_summary = proxy["policy_final_summary"]["ts2vec_kcenter_v1"]
+        ts2vec_delta = proxy["pairwise_vs_baseline"]["ts2vec_kcenter_v1"]["balanced_accuracy_gain"]
+        self.assertAlmostEqual(ts2vec_summary["metrics"]["balanced_accuracy_gain"]["mean"], 0.60)
+        self.assertAlmostEqual(ts2vec_delta["mean_delta"], 0.40)
+        self.assertAlmostEqual(ts2vec_delta["bootstrap_ci95_low"], 0.40)
+        self.assertAlmostEqual(
+            proxy["pairwise_vs_baseline"]["ts2vec_kcenter_v1"]["target_family_discovery_rate"]["mean_delta"],
+            1.0,
+        )
+        self.assertIn("## Downstream Bridge Proxy", render_coverage_decision_markdown(report))
+
     def test_target_family_oracle_selects_bridge_candidates(self):
         clips = [
             _clip("support_a", "fam_a_worker_support", (0.0, 0.0)),
@@ -250,6 +297,27 @@ def _clip(
         quality_score=quality,
         artifact_score=artifact,
     )
+
+
+def _downstream_row(
+    policy_id: str,
+    representation: str,
+    *,
+    balanced: float,
+    nll: float,
+    discovery: float,
+) -> dict[str, object]:
+    return {
+        "episode_id": "episode-smoke",
+        "fold_id": 0,
+        "policy_id": policy_id,
+        "budget_k": 1,
+        "representation": representation,
+        "target_family_discovery_rate": discovery,
+        "after_known_target_fraction": discovery,
+        "balanced_accuracy_gain": balanced,
+        "nll_reduction": nll,
+    }
 
 
 def _selected_ids(result, policy_id: str, budget_k: int) -> tuple[str, ...]:

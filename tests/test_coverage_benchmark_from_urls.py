@@ -137,6 +137,28 @@ class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
         )
         self.assertIn("source-group leakage is false for all seeds", config["acceptance"]["required_checks"])
 
+    def test_bridge_three_seed_eight_fold_config_is_episode_count_gate(self):
+        config_path = Path("configs/coverage_bridge_benchmark_gcp_ts2vec_kcenter_3seed_8fold.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["no_downstream_training"])
+        self.assertEqual(config["data"]["selection_seeds"], [17, 23, 37])
+        self.assertLessEqual(config["data"]["max_rows_per_seed"], 540)
+        self.assertEqual(config["benchmark"]["episode_strategy"], "source_family_label_holdout")
+        self.assertEqual(config["benchmark"]["folds"], 8)
+        self.assertEqual(config["benchmark"]["candidate_groups_per_episode"], 12)
+        self.assertEqual(config["benchmark"]["target_candidate_groups_per_episode"], 4)
+        self.assertEqual(config["benchmark"]["target_families_per_episode"], 2)
+        self.assertEqual(config["benchmark"]["budgets"], [1, 2, 4])
+        self.assertEqual(config["acceptance"]["minimum_completed_seeds"], 3)
+        self.assertEqual(config["acceptance"]["minimum_episodes_per_seed"], 8)
+        self.assertEqual(config["acceptance"]["minimum_independent_episodes"], 24)
+        self.assertIn("downstream bridge proxy is aggregated in the coverage decision report", config["acceptance"]["required_checks"])
+        self.assertIn("at least 24 independent seed-episode units are summarized", config["acceptance"]["required_checks"])
+
     def test_gcp_launcher_download_copy_avoids_gsutil_parallel_hang(self):
         calls = []
         original_run = launch_coverage_benchmark_gcp._run
