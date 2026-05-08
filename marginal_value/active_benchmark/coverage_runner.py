@@ -14,6 +14,8 @@ SUPPORTED_COVERAGE_POLICIES = (
     "random_valid_v1",
     "quality_stratified_random_v1",
     "quality_only_v1",
+    "window_support_novelty_v1",
+    "window_kcenter_v1",
     "ts2vec_support_novelty_v1",
     "ts2vec_kcenter_v1",
     "submitted_full_replay_v1",
@@ -253,6 +255,9 @@ def _validate_config(config: CoverageBenchmarkConfig, *, policies: Sequence[str]
         raise ValueError("Coverage benchmark blend_alpha must be in [0, 1].")
     if config.max_artifact_score is not None and float(config.max_artifact_score) < 0.0:
         raise ValueError("Coverage benchmark max_artifact_score must be non-negative when provided.")
+    if any(policy in {"window_support_novelty_v1", "window_kcenter_v1", "submitted_full_replay_v1"} for policy in policies):
+        if not str(config.window_view):
+            raise ValueError("Window coverage policies require window_view.")
     if any(policy in {"ts2vec_support_novelty_v1", "ts2vec_kcenter_v1", "submitted_full_replay_v1"} for policy in policies):
         if not str(config.ts2vec_view):
             raise ValueError("TS2Vec coverage policies require ts2vec_view.")
@@ -300,6 +305,10 @@ def _policy_spec(policy_id: str, config: CoverageBenchmarkConfig) -> _PolicySpec
         return _PolicySpec(policy_id=policy_id, selector_view=None, selector_feature_families=("quality",))
     if policy_id == "quality_only_v1":
         return _PolicySpec(policy_id=policy_id, selector_view=None, selector_feature_families=("quality",))
+    if policy_id == "window_support_novelty_v1":
+        return _PolicySpec(policy_id=policy_id, selector_view=config.window_view, selector_feature_families=("window",))
+    if policy_id == "window_kcenter_v1":
+        return _PolicySpec(policy_id=policy_id, selector_view=config.window_view, selector_feature_families=("window",))
     if policy_id == "ts2vec_support_novelty_v1":
         return _PolicySpec(policy_id=policy_id, selector_view=config.ts2vec_view, selector_feature_families=("ts2vec",))
     if policy_id == "ts2vec_kcenter_v1":
@@ -347,6 +356,22 @@ def _rank_candidates(
     if policy_spec.policy_id == "quality_only_v1":
         order = _quality_order(clips_by_id, eligible)
         return order, {sample_id: float(clips_by_id[sample_id].quality_score) for sample_id in order}
+    if policy_spec.policy_id == "window_support_novelty_v1":
+        return _support_novelty_order(
+            clips_by_id,
+            support_ids=episode.support_ids,
+            candidate_ids=eligible,
+            representation=str(config.window_view),
+            config=config,
+        )
+    if policy_spec.policy_id == "window_kcenter_v1":
+        return _kcenter_order(
+            clips_by_id,
+            support_ids=episode.support_ids,
+            candidate_ids=eligible,
+            representation=str(config.window_view),
+            config=config,
+        )
     if policy_spec.policy_id == "ts2vec_support_novelty_v1":
         return _support_novelty_order(
             clips_by_id,

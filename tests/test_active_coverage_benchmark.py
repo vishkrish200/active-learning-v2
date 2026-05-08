@@ -23,18 +23,20 @@ class ActiveCoverageBenchmarkTests(unittest.TestCase):
                 budgets=(1, 2),
                 policies=(
                     "quality_only_v1",
+                    "window_support_novelty_v1",
+                    "window_kcenter_v1",
                     "ts2vec_support_novelty_v1",
                     "ts2vec_kcenter_v1",
                     "submitted_full_replay_v1",
                 ),
-                eval_views=("morph_stats_v1", "ts2vec"),
+                eval_views=("morph_stats_v1", "window", "ts2vec"),
                 primary_eval_views=("morph_stats_v1",),
                 ts2vec_view="ts2vec",
                 window_view="window",
                 eval_view_families={
                     "morph_stats_v1": "morphology",
-                    "ts2vec": "ts2vec",
                     "window": "window",
+                    "ts2vec": "ts2vec",
                 },
                 quality_threshold=0.85,
                 max_artifact_score=0.05,
@@ -43,6 +45,8 @@ class ActiveCoverageBenchmarkTests(unittest.TestCase):
         )
 
         self.assertEqual(_selected_ids(result, "quality_only_v1", 1), ("pool_near_high_quality",))
+        self.assertEqual(_selected_ids(result, "window_support_novelty_v1", 1), ("pool_target_cover",))
+        self.assertEqual(_selected_ids(result, "window_kcenter_v1", 1), ("pool_target_cover",))
         self.assertEqual(_selected_ids(result, "ts2vec_support_novelty_v1", 1), ("pool_target_cover",))
         self.assertEqual(_selected_ids(result, "ts2vec_kcenter_v1", 1), ("pool_target_cover",))
         self.assertEqual(_selected_ids(result, "submitted_full_replay_v1", 1), ("pool_target_cover",))
@@ -54,19 +58,24 @@ class ActiveCoverageBenchmarkTests(unittest.TestCase):
         quality_gain = _metric(result, "quality_only_v1", 1, "morph_stats_v1", "coverage_gain_rel")
         novelty_gain = _metric(result, "ts2vec_support_novelty_v1", 1, "morph_stats_v1", "coverage_gain_rel")
         kcenter_gain = _metric(result, "ts2vec_kcenter_v1", 1, "morph_stats_v1", "coverage_gain_rel")
+        window_gain = _metric(result, "window_support_novelty_v1", 1, "morph_stats_v1", "coverage_gain_rel")
         submitted_gain = _metric(result, "submitted_full_replay_v1", 1, "morph_stats_v1", "coverage_gain_rel")
 
         self.assertLess(quality_gain, 0.05)
         self.assertGreater(novelty_gain, 0.95)
         self.assertGreater(kcenter_gain, 0.95)
+        self.assertGreater(window_gain, 0.95)
         self.assertGreater(submitted_gain, 0.95)
 
         morph_row = _metric_row(result, "ts2vec_support_novelty_v1", 1, "morph_stats_v1", "coverage_gain_rel")
         ts2vec_row = _metric_row(result, "ts2vec_support_novelty_v1", 1, "ts2vec", "coverage_gain_rel")
+        window_row = _metric_row(result, "window_support_novelty_v1", 1, "window", "coverage_gain_rel")
         self.assertTrue(morph_row.primary_eval)
         self.assertFalse(morph_row.selector_feature_overlap)
         self.assertFalse(ts2vec_row.primary_eval)
         self.assertTrue(ts2vec_row.selector_feature_overlap)
+        self.assertFalse(window_row.primary_eval)
+        self.assertTrue(window_row.selector_feature_overlap)
 
     def test_coverage_benchmark_rejects_source_group_leakage_between_roles(self):
         episode = EpisodeSpec(
