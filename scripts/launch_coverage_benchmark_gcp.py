@@ -165,6 +165,7 @@ def _startup_script(
     eval_view_families = ",".join(f"{key}:{value}" for key, value in benchmark["eval_view_families"].items())
     max_artifact_score = benchmark.get("max_artifact_score")
     artifact_arg = "none" if max_artifact_score is None else str(max_artifact_score)
+    downstream_args = _downstream_args(config)
 
     return f"""#!/usr/bin/env bash
 set -euo pipefail
@@ -251,6 +252,7 @@ for SEED in {seeds}; do
     --ts2vec-batch-size {int(config["ts2vec"]["batch_size"])} \\
     --blend-alpha {float(benchmark["blend_alpha"])} \\
     --distance-metric {shlex.quote(str(benchmark["distance_metric"]))} \\
+{downstream_args}
     --seed "$SEED" 2>&1 | tee -a "$LOG"
   echo '{{"event":"seed_done","seed":'$SEED',"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
 done
@@ -302,6 +304,22 @@ def _gsutil_stat(path: str) -> bool:
 
 def _remote_status_exists(gcs_prefix: str, filename: str) -> bool:
     return _gsutil_stat(f"{gcs_prefix}/status/{filename}") or _gsutil_stat(f"{gcs_prefix}/status/status/{filename}")
+
+
+def _downstream_args(config: dict[str, Any]) -> str:
+    downstream = config.get("downstream", {})
+    if not isinstance(downstream, dict) or str(downstream.get("label_source", "none")) == "none":
+        return ""
+    continuation = "\\"
+    args = [
+        f"--downstream-supervised-label-source {shlex.quote(str(downstream['label_source']))}",
+        f"--downstream-supervised-label-representation {shlex.quote(str(downstream.get('label_representation', 'window')))}",
+        f"--downstream-supervised-source-family-count {int(downstream.get('source_family_count', 4))}",
+        f"--downstream-supervised-representations {shlex.quote(','.join(str(item) for item in downstream.get('representations', ['window', 'raw_shape_stats'])))}",
+        f"--downstream-supervised-top-policy {shlex.quote(str(downstream.get('top_policy', 'ts2vec_kcenter_v1')))}",
+        f"--downstream-supervised-baseline-policy {shlex.quote(str(downstream.get('baseline_policy', 'quality_stratified_random_v1')))}",
+    ]
+    return "\n".join(f"    {arg} {continuation}" for arg in args)
 
 
 def _run(command: list[str], *, cwd: Path, check: bool = True) -> subprocess.CompletedProcess[str]:

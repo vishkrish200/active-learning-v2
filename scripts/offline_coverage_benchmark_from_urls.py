@@ -14,6 +14,10 @@ import numpy as np
 
 from marginal_value.active_benchmark import CoverageBenchmarkConfig, run_coverage_benchmark, write_coverage_reports
 from marginal_value.active_benchmark.coverage_reports import coverage_result_to_json
+from marginal_value.active_benchmark.downstream_coverage_smoke import (
+    build_downstream_coverage_supervised_report,
+    write_downstream_coverage_supervised_reports,
+)
 from scripts.offline_active_benchmark_from_urls import (
     _build_episodes_from_clips,
     _load_clips_from_urls,
@@ -109,6 +113,24 @@ def main() -> None:
         report_paths=paths,
         elapsed_seconds=time.time() - started,
     )
+    if args.downstream_supervised_label_source != "none":
+        downstream_report = build_downstream_coverage_supervised_report(
+            result,
+            clips,
+            downstream_representations=_parse_csv_list(args.downstream_supervised_representations),
+            label_source=args.downstream_supervised_label_source,
+            label_representation=args.downstream_supervised_label_representation,
+            source_family_count=args.downstream_supervised_source_family_count,
+            top_policy=args.downstream_supervised_top_policy,
+            baseline_policy=args.downstream_supervised_baseline_policy,
+        )
+        downstream_paths = write_downstream_coverage_supervised_reports(downstream_report, output_dir)
+        proof["downstream_coverage_supervised_report"] = {
+            "json": str(downstream_paths["json"]),
+            "markdown": str(downstream_paths["markdown"]),
+            "decision": downstream_report["decision"],
+            "summary": downstream_report["summary"],
+        }
     proof_path = output_dir / "coverage_proof_summary.json"
     proof_path.write_text(json.dumps(proof, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps({"event": "done", **proof}, sort_keys=True), flush=True)
@@ -161,6 +183,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--ts2vec-batch-size", type=int, default=32)
     parser.add_argument("--blend-alpha", type=float, default=0.5)
     parser.add_argument("--distance-metric", choices=["euclidean", "cosine"], default="euclidean")
+    parser.add_argument("--downstream-supervised-label-source", choices=["none", "source_family"], default="none")
+    parser.add_argument("--downstream-supervised-label-representation", default="window")
+    parser.add_argument("--downstream-supervised-source-family-count", type=int, default=4)
+    parser.add_argument("--downstream-supervised-representations", default="window,raw_shape_stats")
+    parser.add_argument("--downstream-supervised-top-policy", default="ts2vec_kcenter_v1")
+    parser.add_argument("--downstream-supervised-baseline-policy", default="quality_stratified_random_v1")
     parser.add_argument("--seed", type=int, default=17)
     return parser.parse_args()
 
