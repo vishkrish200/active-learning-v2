@@ -20,6 +20,11 @@ def main() -> None:
     repo_root = Path(args.repo_root).resolve()
     config_path = Path(args.config).resolve()
     config = json.loads(config_path.read_text(encoding="utf-8"))
+    _apply_runtime_overrides(
+        config,
+        machine_type=args.machine_type_override,
+        selection_seeds=args.selection_seeds,
+    )
     run_id = args.run_id or _default_run_id(config_path)
     zone = str(config["execution"]["zone"])
     vm_name = args.vm_name or _default_vm_name(run_id)
@@ -116,17 +121,38 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--image-project", default="debian-cloud")
     parser.add_argument("--boot-disk-size", default="50GB")
     parser.add_argument("--poll-seconds", type=int, default=30)
+    parser.add_argument("--machine-type-override", default="", help="Override config execution.machine_type.")
+    parser.add_argument(
+        "--selection-seeds",
+        default="",
+        help="Comma-separated override for config data.selection_seeds, useful for seed-parallel GCP runs.",
+    )
     parser.add_argument("--preemptible", action="store_true")
     parser.add_argument("--detach", action="store_true")
     parser.add_argument("--no-launch", action="store_true", help="Stage inputs and print the VM create command without launching.")
     return parser.parse_args()
 
 
+def _apply_runtime_overrides(config: dict[str, Any], *, machine_type: str, selection_seeds: str) -> None:
+    if machine_type:
+        config["execution"]["machine_type"] = machine_type
+    if selection_seeds:
+        seeds = [int(seed.strip()) for seed in selection_seeds.split(",") if seed.strip()]
+        if not seeds:
+            raise ValueError("--selection-seeds must contain at least one integer seed.")
+        config["data"]["selection_seeds"] = seeds
+
+
 def _assert_inputs(*, repo_root: Path, manifest_path: Path, checkpoint_path: Path) -> None:
     for path in (manifest_path, checkpoint_path):
         if not path.exists():
             raise FileNotFoundError(path)
-    for relative in ("pyproject.toml", "marginal_value", "scripts/offline_coverage_benchmark_from_urls.py"):
+    for relative in (
+        "pyproject.toml",
+        "marginal_value",
+        "scripts/offline_coverage_benchmark_from_urls.py",
+        "scripts/downstream_utility_smoke_from_urls.py",
+    ):
         if not (repo_root / relative).exists():
             raise FileNotFoundError(repo_root / relative)
 
@@ -137,6 +163,7 @@ def _write_repo_bundle(repo_root: Path, bundle_path: Path) -> None:
         "marginal_value",
         "scripts/offline_active_benchmark_from_urls.py",
         "scripts/offline_coverage_benchmark_from_urls.py",
+        "scripts/downstream_utility_smoke_from_urls.py",
         "scripts/summarize_coverage_benchmark_reports.py",
     ]
     with tarfile.open(bundle_path, "w:gz") as archive:
@@ -153,6 +180,19 @@ def _startup_script(
     manifest_name: str,
     checkpoint_name: str,
 ) -> str:
+    runner = str(config.get("execution", {}).get("runner", "coverage"))
+    if runner == "downstream_utility_smoke":
+        return _downstream_utility_smoke_startup_script(
+            config=config,
+            run_id=run_id,
+            gcs_prefix=gcs_prefix,
+            bundle_name=bundle_name,
+            manifest_name=manifest_name,
+            checkpoint_name=checkpoint_name,
+        )
+    if runner != "coverage":
+        raise ValueError(f"Unsupported GCP benchmark runner: {runner}")
+
     data = config["data"]
     benchmark = config["benchmark"]
     reporting = config["reporting"]
@@ -165,10 +205,28 @@ def _startup_script(
     eval_view_families = ",".join(f"{key}:{value}" for key, value in benchmark["eval_view_families"].items())
     max_artifact_score = benchmark.get("max_artifact_score")
     artifact_arg = "none" if max_artifact_score is None else str(max_artifact_score)
-    target_candidate_groups = int(
-        benchmark.get("target_candidate_groups_per_episode", max(1, int(benchmark["candidate_groups_per_episode"]) // 2))
-    )
     target_families = int(benchmark.get("target_families_per_episode", 1))
+    oracle_exact_combination_limit = int(benchmark.get("oracle_exact_combination_limit", 100_000))
+    pool_specs = _candidate_group_sweep_specs(benchmark)
+    if len(pool_specs) == 1 and not pool_specs[0][0]:
+        _label, candidate_groups, target_candidate_groups = pool_specs[0]
+        pool_loop_header = (
+            f"CANDIDATE_GROUPS={candidate_groups}\n"
+            f"TARGET_CANDIDATE_GROUPS={target_candidate_groups}\n"
+            f"for SEED in {seeds}; do"
+        )
+        pool_loop_footer = "done"
+        output_dir = '"$OUT/seed_$SEED"'
+    else:
+        pool_spec_words = " ".join(f'"{label}:{candidate}:{target}"' for label, candidate, target in pool_specs)
+        pool_loop_header = (
+            f"POOL_SPECS=({pool_spec_words})\n"
+            'for POOL_SPEC in "${POOL_SPECS[@]}"; do\n'
+            '  IFS=: read -r POOL_LABEL CANDIDATE_GROUPS TARGET_CANDIDATE_GROUPS <<< "$POOL_SPEC"\n'
+            f"  for SEED in {seeds}; do"
+        )
+        pool_loop_footer = "  done\ndone"
+        output_dir = '"$OUT/$POOL_LABEL/seed_$SEED"'
     downstream_args = _downstream_args(config)
 
     return f"""#!/usr/bin/env bash
@@ -219,12 +277,12 @@ import scripts.summarize_coverage_benchmark_reports
 print({{"event":"import_smoke_ok","torch": torch.__version__}})
 PY
 
-echo '{{"event":"policy_list","policy_count":{len(benchmark["policies"])},"budgets":{json.dumps(benchmark["budgets"])},"representations":{json.dumps(benchmark["representations"])},"no_gpu":true,"no_ts2vec_retraining":true,"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
-for SEED in {seeds}; do
+echo '{{"event":"policy_list","policy_count":{len(benchmark["policies"])},"budgets":{json.dumps(benchmark["budgets"])},"representations":{json.dumps(benchmark["representations"])},"no_gpu":true,"no_ts2vec_retraining":true,"pool_spec_count":{len(pool_specs)},"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
+{pool_loop_header}
   echo '{{"event":"seed_start","seed":'$SEED',"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
   python scripts/offline_coverage_benchmark_from_urls.py \\
     --manifest "$WORK/manifest.txt" \\
-    --output-dir "$OUT/seed_$SEED" \\
+    --output-dir {output_dir} \\
     --max-rows {int(data["max_rows_per_seed"])} \\
     --max-groups {int(data["max_groups"])} \\
     --clips-per-group {int(data["clips_per_group"])} \\
@@ -236,9 +294,9 @@ for SEED in {seeds}; do
     --episode-strategy {shlex.quote(str(benchmark["episode_strategy"]))} \\
     --episode-representation {shlex.quote(str(benchmark["episode_representation"]))} \\
     --source-family-count {int(benchmark["source_family_count"])} \\
-    --candidate-groups-per-episode {int(benchmark["candidate_groups_per_episode"])} \\
+    --candidate-groups-per-episode "$CANDIDATE_GROUPS" \\
     --target-groups-per-episode {int(benchmark["target_groups_per_episode"])} \\
-    --target-candidate-groups-per-episode {target_candidate_groups} \\
+    --target-candidate-groups-per-episode "$TARGET_CANDIDATE_GROUPS" \\
     --target-families-per-episode {target_families} \\
     --max-support-groups {int(benchmark["max_support_groups"])} \\
     --budgets {shlex.quote(budgets)} \\
@@ -258,10 +316,11 @@ for SEED in {seeds}; do
     --ts2vec-batch-size {int(config["ts2vec"]["batch_size"])} \\
     --blend-alpha {float(benchmark["blend_alpha"])} \\
     --distance-metric {shlex.quote(str(benchmark["distance_metric"]))} \\
+    --oracle-exact-combination-limit {oracle_exact_combination_limit} \\
 {downstream_args}
     --seed "$SEED" 2>&1 | tee -a "$LOG"
   echo '{{"event":"seed_done","seed":'$SEED',"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
-done
+{pool_loop_footer}
 
 mapfile -t REPORTS < <(find "$OUT" -path '*/blind_target_coverage_benchmark_report.json' | sort)
 python scripts/summarize_coverage_benchmark_reports.py "${{REPORTS[@]}}" \\
@@ -277,6 +336,172 @@ gsutil cp "$WORK/results_${{RUN_ID}}.tgz" "$GCS_PREFIX/results_${{RUN_ID}}.tgz"
 echo '{{"run_id":"'$RUN_ID'","state":"success","exit_code":0,"ts":"'"$(date -Iseconds)"'"}}' > "$STATUS/success.json"
 gsutil cp "$STATUS/success.json" "$GCS_PREFIX/status/success.json"
 """
+
+
+def _downstream_utility_smoke_startup_script(
+    *,
+    config: dict[str, Any],
+    run_id: str,
+    gcs_prefix: str,
+    bundle_name: str,
+    manifest_name: str,
+    checkpoint_name: str,
+) -> str:
+    data = config["data"]
+    benchmark = config["benchmark"]
+    downstream = config.get("downstream", {})
+    downstream_utility = config.get("downstream_utility", downstream)
+    seeds = " ".join(str(seed) for seed in data["selection_seeds"])
+    policies = ",".join(str(policy) for policy in benchmark["policies"])
+    representations = ",".join(str(item) for item in benchmark["representations"])
+    primary_representations = ",".join(str(item) for item in benchmark["primary_representations"])
+    downstream_representations = ",".join(
+        str(item) for item in downstream_utility.get("representations", ["window", "raw_shape_stats"])
+    )
+    supervised_representations = ",".join(
+        str(item) for item in downstream.get("representations", ["window", "raw_shape_stats"])
+    )
+    max_artifact_score = benchmark.get("max_artifact_score")
+    artifact_arg = "none" if max_artifact_score is None else str(max_artifact_score)
+    target_candidate_groups = int(
+        benchmark.get("target_candidate_groups_per_episode", max(1, int(benchmark["candidate_groups_per_episode"]) // 2))
+    )
+    target_families = int(benchmark.get("target_families_per_episode", 1))
+    oracle_candidate_arg = ""
+    if benchmark.get("oracle_candidate_cap") is not None:
+        oracle_candidate_arg = f"    --oracle-candidate-cap {int(benchmark['oracle_candidate_cap'])} \\\n"
+    supervised_args = ""
+    if isinstance(downstream, dict) and str(downstream.get("label_source", "none")) != "none":
+        supervised_args = f"""    --supervised-downstream-label-source {shlex.quote(str(downstream["label_source"]))} \\
+    --supervised-downstream-label-representation {shlex.quote(str(downstream.get("label_representation", "window")))} \\
+    --supervised-downstream-source-family-count {int(downstream.get("source_family_count", 4))} \\
+    --supervised-downstream-representations {shlex.quote(supervised_representations)} \\
+    --supervised-downstream-baseline-policy {shlex.quote(str(downstream.get("baseline_policy", "old_novelty_ts2vec")))} \\
+    --supervised-downstream-random-policy {shlex.quote(str(downstream.get("random_policy", "random_valid")))} \\
+"""
+
+    return f"""#!/usr/bin/env bash
+set -euo pipefail
+
+RUN_ID={shlex.quote(run_id)}
+GCS_PREFIX={shlex.quote(gcs_prefix)}
+WORK=/opt/offline-active-loop
+OUT="$WORK/out/$RUN_ID"
+STATUS="$WORK/status"
+LOG="$OUT/run_all.log"
+mkdir -p "$WORK" "$OUT" "$STATUS"
+
+finish_failure() {{
+  code=$?
+  set +e
+  echo '{{"run_id":"'$RUN_ID'","state":"failure","exit_code":'$code',"ts":"'"$(date -Iseconds)"'"}}' > "$STATUS/failure.json"
+  if [ -f "$LOG" ]; then cp "$LOG" "$STATUS/run_all.log"; fi
+  tar -czf "$WORK/partial_${{RUN_ID}}.tgz" -C "$WORK" out status
+  gsutil cp "$STATUS/failure.json" "$GCS_PREFIX/status/failure.json" >/dev/null 2>&1 || true
+  if [ -f "$STATUS/run_all.log" ]; then gsutil cp "$STATUS/run_all.log" "$GCS_PREFIX/status/run_all.log" >/dev/null 2>&1 || true; fi
+  gsutil cp "$WORK/partial_${{RUN_ID}}.tgz" "$GCS_PREFIX/partial_${{RUN_ID}}.tgz" >/dev/null 2>&1 || true
+  exit "$code"
+}}
+trap finish_failure ERR
+
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip curl ca-certificates gnupg tar build-essential libglib2.0-0
+
+gsutil cp "$GCS_PREFIX/inputs/{bundle_name}" "$WORK/repo_bundle.tgz"
+gsutil cp "$GCS_PREFIX/inputs/{manifest_name}" "$WORK/manifest.txt"
+gsutil cp "$GCS_PREFIX/inputs/{checkpoint_name}" "$WORK/ts2vec_best.pt"
+
+cd "$WORK"
+tar -xzf repo_bundle.tgz
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e .
+python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+
+python - <<'PY'
+import torch
+import marginal_value
+import scripts.downstream_utility_smoke_from_urls
+print({{"event":"import_smoke_ok","torch": torch.__version__}})
+PY
+
+echo '{{"event":"round_loop_policy_list","policy_count":{len(benchmark["policies"])},"representations":{json.dumps(benchmark["representations"])},"no_gpu":true,"no_ts2vec_retraining":true,"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
+for SEED in {seeds}; do
+  echo '{{"event":"seed_start","seed":'$SEED',"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
+  python scripts/downstream_utility_smoke_from_urls.py \\
+    --manifest "$WORK/manifest.txt" \\
+    --output-dir "$OUT/seed_$SEED" \\
+    --max-rows {int(data["max_rows_per_seed"])} \\
+    --max-groups {int(data["max_groups"])} \\
+    --clips-per-group {int(data["clips_per_group"])} \\
+    --sampling-mode {shlex.quote(str(data["sampling_mode"]))} \\
+    --selection-seed "$SEED" \\
+    --max-samples {int(data["max_samples_per_clip"])} \\
+    --download-workers 16 \\
+    --folds {int(benchmark["folds"])} \\
+    --episode-strategy {shlex.quote(str(benchmark["episode_strategy"]))} \\
+    --episode-representation {shlex.quote(str(benchmark["episode_representation"]))} \\
+    --source-family-count {int(benchmark["source_family_count"])} \\
+    --candidate-groups-per-episode {int(benchmark["candidate_groups_per_episode"])} \\
+    --target-groups-per-episode {int(benchmark["target_groups_per_episode"])} \\
+    --target-candidate-groups-per-episode {target_candidate_groups} \\
+    --target-families-per-episode {target_families} \\
+    --max-support-groups {int(benchmark["max_support_groups"])} \\
+    --rounds {int(benchmark["rounds"])} \\
+    --batch-size {int(benchmark["batch_size"])} \\
+    --quality-threshold {float(benchmark["quality_threshold"])} \\
+    --max-stationary-fraction {float(benchmark["max_stationary_fraction"])} \\
+    --max-abs-value {float(benchmark["max_abs_value"])} \\
+    --max-artifact-score {shlex.quote(artifact_arg)} \\
+    --policies {shlex.quote(policies)} \\
+    --representations {shlex.quote(representations)} \\
+    --primary-representations {shlex.quote(primary_representations)} \\
+    --ts2vec-checkpoint "$WORK/ts2vec_best.pt" \\
+    --ts2vec-device cpu \\
+    --ts2vec-batch-size {int(config["ts2vec"]["batch_size"])} \\
+    --blend-left-representation {shlex.quote(str(benchmark["blend_left_representation"]))} \\
+    --blend-right-representation {shlex.quote(str(benchmark["blend_right_representation"]))} \\
+    --blend-alpha {float(benchmark["blend_alpha"])} \\
+{oracle_candidate_arg}    --oracle-exact-combination-limit {int(benchmark.get("oracle_exact_combination_limit", 100_000))} \\
+    --downstream-representations {shlex.quote(downstream_representations)} \\
+    --downstream-max-components {int(downstream_utility.get("max_components", 4))} \\
+    --downstream-baseline-policy {shlex.quote(str(downstream_utility.get("baseline_policy", downstream.get("baseline_policy", "old_novelty_ts2vec"))))} \\
+    --downstream-random-policy {shlex.quote(str(downstream_utility.get("random_policy", downstream.get("random_policy", "random_valid"))))} \\
+{supervised_args}    --seed "$SEED" 2>&1 | tee -a "$LOG"
+  echo '{{"event":"seed_done","seed":'$SEED',"ts":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}}' | tee -a "$LOG"
+done
+
+tar -czf "$WORK/results_${{RUN_ID}}.tgz" -C "$WORK/out" "$RUN_ID"
+gsutil -m cp -r "$OUT" "$GCS_PREFIX/results/"
+gsutil cp "$WORK/results_${{RUN_ID}}.tgz" "$GCS_PREFIX/results_${{RUN_ID}}.tgz"
+echo '{{"run_id":"'$RUN_ID'","state":"success","exit_code":0,"ts":"'"$(date -Iseconds)"'"}}' > "$STATUS/success.json"
+gsutil cp "$STATUS/success.json" "$GCS_PREFIX/status/success.json"
+"""
+
+
+def _candidate_group_sweep_specs(benchmark: dict[str, Any]) -> list[tuple[str, int, int]]:
+    sweep = benchmark.get("candidate_group_sweep")
+    if isinstance(sweep, list) and sweep:
+        specs = []
+        for item in sweep:
+            if not isinstance(item, dict):
+                raise ValueError("candidate_group_sweep entries must be objects.")
+            label = str(item.get("label", "")).strip()
+            if not label or any(char.isspace() or char == ":" for char in label):
+                raise ValueError("candidate_group_sweep labels must be non-empty and contain no spaces or colons.")
+            candidate_groups = int(item["candidate_groups_per_episode"])
+            target_candidate_groups = int(
+                item.get("target_candidate_groups_per_episode", max(1, candidate_groups // 2))
+            )
+            specs.append((label, candidate_groups, target_candidate_groups))
+        return specs
+
+    candidate_groups = int(benchmark["candidate_groups_per_episode"])
+    target_candidate_groups = int(
+        benchmark.get("target_candidate_groups_per_episode", max(1, candidate_groups // 2))
+    )
+    return [("", candidate_groups, target_candidate_groups)]
 
 
 def _poll_status(*, gcs_prefix: str, run_id: str, timeout_seconds: int, poll_seconds: int) -> str:
@@ -313,18 +538,45 @@ def _remote_status_exists(gcs_prefix: str, filename: str) -> bool:
 
 
 def _downstream_args(config: dict[str, Any]) -> str:
+    args: list[str] = []
     downstream = config.get("downstream", {})
-    if not isinstance(downstream, dict) or str(downstream.get("label_source", "none")) == "none":
-        return ""
     continuation = "\\"
-    args = [
-        f"--downstream-supervised-label-source {shlex.quote(str(downstream['label_source']))}",
-        f"--downstream-supervised-label-representation {shlex.quote(str(downstream.get('label_representation', 'window')))}",
-        f"--downstream-supervised-source-family-count {int(downstream.get('source_family_count', 4))}",
-        f"--downstream-supervised-representations {shlex.quote(','.join(str(item) for item in downstream.get('representations', ['window', 'raw_shape_stats'])))}",
-        f"--downstream-supervised-top-policy {shlex.quote(str(downstream.get('top_policy', 'ts2vec_kcenter_v1')))}",
-        f"--downstream-supervised-baseline-policy {shlex.quote(str(downstream.get('baseline_policy', 'quality_stratified_random_v1')))}",
-    ]
+    if isinstance(downstream, dict) and str(downstream.get("label_source", "none")) != "none":
+        args.extend(
+            [
+                f"--downstream-supervised-label-source {shlex.quote(str(downstream['label_source']))}",
+                f"--downstream-supervised-label-representation {shlex.quote(str(downstream.get('label_representation', 'window')))}",
+                f"--downstream-supervised-source-family-count {int(downstream.get('source_family_count', 4))}",
+                f"--downstream-supervised-representations {shlex.quote(','.join(str(item) for item in downstream.get('representations', ['window', 'raw_shape_stats'])))}",
+                f"--downstream-supervised-models {shlex.quote(','.join(str(item) for item in downstream.get('models', ['nearest_centroid'])))}",
+                f"--downstream-supervised-top-policy {shlex.quote(str(downstream.get('top_policy', 'ts2vec_kcenter_v1')))}",
+                f"--downstream-supervised-baseline-policy {shlex.quote(str(downstream.get('baseline_policy', 'quality_stratified_random_v1')))}",
+            ]
+        )
+    utility = config.get("downstream_utility", {})
+    if isinstance(utility, dict) and str(utility.get("model", "none")) != "none":
+        args.extend(
+            [
+                "--downstream-utility-enable",
+                f"--downstream-utility-representations {shlex.quote(','.join(str(item) for item in utility.get('representations', ['window', 'raw_shape_stats'])))}",
+                f"--downstream-utility-max-components {int(utility.get('max_components', 4))}",
+                f"--downstream-utility-top-policy {shlex.quote(str(utility.get('top_policy', 'ts2vec_kcenter_v1')))}",
+                f"--downstream-utility-baseline-policy {shlex.quote(str(utility.get('baseline_policy', 'quality_stratified_random_v1')))}",
+            ]
+        )
+    forecast = config.get("downstream_forecast", {})
+    if isinstance(forecast, dict) and str(forecast.get("model", "none")) != "none":
+        args.extend(
+            [
+                "--downstream-forecast-enable",
+                f"--downstream-forecast-history-steps {int(forecast.get('history_steps', 8))}",
+                f"--downstream-forecast-horizon-steps {int(forecast.get('horizon_steps', 1))}",
+                f"--downstream-forecast-ridge-alpha {float(forecast.get('ridge_alpha', 1.0e-2))}",
+                f"--downstream-forecast-max-windows-per-clip {int(forecast.get('max_windows_per_clip', 128))}",
+                f"--downstream-forecast-top-policy {shlex.quote(str(forecast.get('top_policy', 'ts2vec_kcenter_v1')))}",
+                f"--downstream-forecast-baseline-policy {shlex.quote(str(forecast.get('baseline_policy', 'quality_stratified_random_v1')))}",
+            ]
+        )
     return "\n".join(f"    {arg} {continuation}" for arg in args)
 
 

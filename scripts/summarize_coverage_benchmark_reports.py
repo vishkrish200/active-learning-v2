@@ -52,7 +52,16 @@ def _parse_names(value: str, report_paths: list[Path]) -> list[str]:
         if len(names) != len(report_paths):
             raise ValueError("--report-names must have the same number of entries as reports.")
         return names
-    return [path.parent.name or f"report_{index:03d}" for index, path in enumerate(report_paths)]
+    names = [path.parent.name or f"report_{index:03d}" for index, path in enumerate(report_paths)]
+    if len(set(names)) == len(names):
+        return names
+    expanded = [
+        f"{path.parent.parent.name}_{path.parent.name}".strip("_") or f"report_{index:03d}"
+        for index, path in enumerate(report_paths)
+    ]
+    if len(set(expanded)) == len(expanded):
+        return expanded
+    return [f"{name}_{index:03d}" for index, name in enumerate(expanded)]
 
 
 def _load_sibling_downstream_reports(

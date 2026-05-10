@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -20,6 +23,82 @@ from marginal_value.active_benchmark.downstream_smoke import (
 
 
 class DownstreamUtilitySmokeTests(unittest.TestCase):
+    def test_downstream_utility_url_runner_exposes_label_holdout_candidate_controls(self):
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", None)
+        repo_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "scripts/downstream_utility_smoke_from_urls.py", "--help"],
+            cwd=repo_root,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--target-candidate-groups-per-episode", result.stdout)
+        self.assertIn("--target-families-per-episode", result.stdout)
+        self.assertIn("--supervised-downstream-label-source", result.stdout)
+
+    def test_round_loop_active_learning_gcp_config_is_fast_cpu_only(self):
+        config_path = Path("configs/downstream_active_loop_gcp_ts2vec_kcenter_3seed_fast.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(config["execution"]["runner"], "downstream_utility_smoke")
+        self.assertEqual(config["execution"]["machine_type"], "n2-standard-16")
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["linear_model_only"])
+        self.assertEqual(config["data"]["selection_seeds"], [17, 23, 37])
+        self.assertLessEqual(config["data"]["max_rows_per_seed"], 720)
+        self.assertEqual(config["benchmark"]["episode_strategy"], "source_family_label_holdout")
+        self.assertEqual(config["benchmark"]["folds"], 6)
+        self.assertEqual(config["benchmark"]["rounds"], 2)
+        self.assertEqual(config["benchmark"]["batch_size"], 2)
+        self.assertLessEqual(config["benchmark"]["oracle_exact_combination_limit"], 5000)
+        self.assertEqual(config["benchmark"]["target_candidate_groups_per_episode"], 4)
+        self.assertEqual(config["benchmark"]["target_families_per_episode"], 2)
+        self.assertEqual(
+            config["benchmark"]["policies"],
+            [
+                "quality_stratified_random",
+                "quality_only",
+                "kcenter_quality_gated_window",
+                "submitted_full_replay",
+                "kcenter_quality_gated_ts2vec",
+            ],
+        )
+        self.assertEqual(config["downstream"]["baseline_policy"], "kcenter_quality_gated_ts2vec")
+        self.assertEqual(config["downstream"]["random_policy"], "quality_stratified_random")
+        self.assertEqual(config["downstream"]["label_source"], "source_family")
+        self.assertIn("round-loop active-learning reports are written for every seed", config["acceptance"]["required_checks"])
+        self.assertIn("large neural downstream training remains hold", config["acceptance"]["required_checks"])
+
+    def test_round_loop_decision_gcp_config_expands_episode_evidence_without_training(self):
+        config_path = Path("configs/downstream_active_loop_gcp_ts2vec_kcenter_3seed_decision.json")
+        self.assertTrue(config_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(config["execution"]["runner"], "downstream_utility_smoke")
+        self.assertEqual(config["execution"]["machine_type"], "n2-standard-16")
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["linear_model_only"])
+        self.assertEqual(config["data"]["selection_seeds"], [17, 23, 37])
+        self.assertLessEqual(config["data"]["max_rows_per_seed"], 960)
+        self.assertEqual(config["benchmark"]["folds"], 10)
+        self.assertEqual(config["benchmark"]["rounds"], 2)
+        self.assertEqual(config["benchmark"]["batch_size"], 3)
+        self.assertEqual(config["benchmark"]["candidate_groups_per_episode"], 16)
+        self.assertEqual(config["benchmark"]["target_candidate_groups_per_episode"], 6)
+        self.assertLessEqual(config["benchmark"]["oracle_exact_combination_limit"], 5000)
+        self.assertEqual(config["downstream_utility"]["baseline_policy"], "kcenter_quality_gated_ts2vec")
+        self.assertEqual(config["downstream_utility"]["random_policy"], "quality_stratified_random")
+        self.assertIn("downstream utility pairing audit clears random and window control", config["acceptance"]["required_checks"])
+        self.assertIn("no large neural downstream training is launched", config["acceptance"]["required_checks"])
+
     def test_gcp_tiny_ts2vec_smoke_config_is_bounded_linear_only(self):
         config_path = Path("configs/downstream_utility_smoke_gcp_ts2vec_tiny.json")
         self.assertTrue(config_path.exists())

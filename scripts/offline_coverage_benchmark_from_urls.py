@@ -16,11 +16,17 @@ from marginal_value.active_benchmark import CoverageBenchmarkConfig, run_coverag
 from marginal_value.active_benchmark.coverage_reports import coverage_result_to_json
 from marginal_value.active_benchmark.downstream_coverage_smoke import (
     build_downstream_coverage_supervised_report,
+    build_downstream_coverage_utility_report,
     write_downstream_coverage_supervised_reports,
+    write_downstream_coverage_utility_reports,
+)
+from marginal_value.active_benchmark.downstream_forecast_task import (
+    build_downstream_forecast_report,
+    write_downstream_forecast_reports,
 )
 from scripts.offline_active_benchmark_from_urls import (
     _build_episodes_from_clips,
-    _load_clips_from_urls,
+    _load_clips_and_samples_from_urls,
     _parse_csv_list,
     _parse_optional_float,
     _print_progress_event,
@@ -66,7 +72,7 @@ def main() -> None:
     primary_eval_views = _parse_csv_list(args.primary_eval_views)
     _validate_loaded_views(representations=representations, eval_views=eval_views, primary_eval_views=primary_eval_views)
 
-    clips = _load_clips_from_urls(
+    clips, samples_by_id = _load_clips_and_samples_from_urls(
         urls,
         max_samples=args.max_samples,
         sample_rate=args.sample_rate,
@@ -106,6 +112,7 @@ def main() -> None:
         distance_metric=args.distance_metric,
         source_family_count=args.source_family_count,
         source_family_label_view=args.downstream_supervised_label_representation,
+        oracle_exact_combination_limit=args.oracle_exact_combination_limit,
     )
     result = run_coverage_benchmark(clips, episodes, config, progress_callback=_print_progress_event)
     paths = write_coverage_reports(result, output_dir)
@@ -122,6 +129,7 @@ def main() -> None:
             result,
             clips,
             downstream_representations=_parse_csv_list(args.downstream_supervised_representations),
+            downstream_models=_parse_csv_list(args.downstream_supervised_models),
             label_source=args.downstream_supervised_label_source,
             label_representation=args.downstream_supervised_label_representation,
             source_family_count=args.downstream_supervised_source_family_count,
@@ -135,9 +143,43 @@ def main() -> None:
             "decision": downstream_report["decision"],
             "summary": downstream_report["summary"],
         }
+    if args.downstream_utility_enable:
+        utility_report = build_downstream_coverage_utility_report(
+            result,
+            clips,
+            downstream_representations=_parse_csv_list(args.downstream_utility_representations),
+            max_components=args.downstream_utility_max_components,
+            top_policy=args.downstream_utility_top_policy,
+            baseline_policy=args.downstream_utility_baseline_policy,
+        )
+        utility_paths = write_downstream_coverage_utility_reports(utility_report, output_dir)
+        proof["downstream_coverage_utility_report"] = {
+            "json": str(utility_paths["json"]),
+            "markdown": str(utility_paths["markdown"]),
+            "decision": utility_report["decision"],
+            "summary": utility_report["summary"],
+        }
+    if args.downstream_forecast_enable:
+        forecast_report = build_downstream_forecast_report(
+            result,
+            samples_by_id,
+            history_steps=args.downstream_forecast_history_steps,
+            horizon_steps=args.downstream_forecast_horizon_steps,
+            ridge_alpha=args.downstream_forecast_ridge_alpha,
+            max_windows_per_clip=args.downstream_forecast_max_windows_per_clip,
+            top_policy=args.downstream_forecast_top_policy,
+            baseline_policy=args.downstream_forecast_baseline_policy,
+        )
+        forecast_paths = write_downstream_forecast_reports(forecast_report, output_dir)
+        proof["downstream_forecast_task_report"] = {
+            "json": str(forecast_paths["json"]),
+            "markdown": str(forecast_paths["markdown"]),
+            "decision": forecast_report["decision"],
+            "summary": forecast_report["summary"],
+        }
     proof_path = output_dir / "coverage_proof_summary.json"
     proof_path.write_text(json.dumps(proof, indent=2, sort_keys=True), encoding="utf-8")
-    print(json.dumps({"event": "done", **proof}, sort_keys=True), flush=True)
+    print(json.dumps(_proof_completion_event(proof), sort_keys=True), flush=True)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -189,12 +231,26 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--ts2vec-batch-size", type=int, default=32)
     parser.add_argument("--blend-alpha", type=float, default=0.5)
     parser.add_argument("--distance-metric", choices=["euclidean", "cosine"], default="euclidean")
+    parser.add_argument("--oracle-exact-combination-limit", type=int, default=100_000)
     parser.add_argument("--downstream-supervised-label-source", choices=["none", "source_family"], default="none")
     parser.add_argument("--downstream-supervised-label-representation", default="window")
     parser.add_argument("--downstream-supervised-source-family-count", type=int, default=4)
     parser.add_argument("--downstream-supervised-representations", default="window,raw_shape_stats")
+    parser.add_argument("--downstream-supervised-models", default="nearest_centroid")
     parser.add_argument("--downstream-supervised-top-policy", default="ts2vec_kcenter_v1")
     parser.add_argument("--downstream-supervised-baseline-policy", default="quality_stratified_random_v1")
+    parser.add_argument("--downstream-utility-enable", action="store_true")
+    parser.add_argument("--downstream-utility-representations", default="window,raw_shape_stats")
+    parser.add_argument("--downstream-utility-max-components", type=int, default=4)
+    parser.add_argument("--downstream-utility-top-policy", default="ts2vec_kcenter_v1")
+    parser.add_argument("--downstream-utility-baseline-policy", default="quality_stratified_random_v1")
+    parser.add_argument("--downstream-forecast-enable", action="store_true")
+    parser.add_argument("--downstream-forecast-history-steps", type=int, default=8)
+    parser.add_argument("--downstream-forecast-horizon-steps", type=int, default=1)
+    parser.add_argument("--downstream-forecast-ridge-alpha", type=float, default=1.0e-2)
+    parser.add_argument("--downstream-forecast-max-windows-per-clip", type=int, default=128)
+    parser.add_argument("--downstream-forecast-top-policy", default="ts2vec_kcenter_v1")
+    parser.add_argument("--downstream-forecast-baseline-policy", default="quality_stratified_random_v1")
     parser.add_argument("--seed", type=int, default=17)
     return parser.parse_args()
 
@@ -260,6 +316,52 @@ def _coverage_proof_summary(
         "leakage_checks": leakage_checks,
         "elapsed_seconds": float(elapsed_seconds),
     }
+
+
+def _proof_completion_event(proof: dict) -> dict:
+    event = {
+        "event": "done",
+        "output_dir": proof["output_dir"],
+        "json_report": proof["json_report"],
+        "markdown_report": proof["markdown_report"],
+        "n_clips": proof["n_clips"],
+        "n_source_groups": proof["n_source_groups"],
+        "n_episodes": proof["n_episodes"],
+        "n_round_rows": proof["n_round_rows"],
+        "n_metric_rows": proof["n_metric_rows"],
+        "n_selected_rows": proof["n_selected_rows"],
+        "primary_coverage_metric_row_count": proof["primary_coverage_metric_row_count"],
+        "same_feature_diagnostic_metric_row_count": proof["same_feature_diagnostic_metric_row_count"],
+        "mean_primary_coverage_gain_rel": proof["mean_primary_coverage_gain_rel"],
+        "selected_invalid_rate_max": proof["selected_invalid_rate_max"],
+        "selected_out_of_pool_count_total": proof["selected_out_of_pool_count_total"],
+        "selected_target_leak_count_total": proof["selected_target_leak_count_total"],
+        "selected_duplicate_clip_count_total": proof["selected_duplicate_clip_count_total"],
+        "leakage_ok": proof["leakage_ok"],
+        "elapsed_seconds": proof["elapsed_seconds"],
+    }
+    downstream = proof.get("downstream_coverage_supervised_report")
+    if isinstance(downstream, dict):
+        event["downstream_coverage_supervised_report"] = {
+            "decision": downstream.get("decision"),
+            "json": downstream.get("json"),
+            "markdown": downstream.get("markdown"),
+        }
+    utility = proof.get("downstream_coverage_utility_report")
+    if isinstance(utility, dict):
+        event["downstream_coverage_utility_report"] = {
+            "decision": utility.get("decision"),
+            "json": utility.get("json"),
+            "markdown": utility.get("markdown"),
+        }
+    forecast = proof.get("downstream_forecast_task_report")
+    if isinstance(forecast, dict):
+        event["downstream_forecast_task_report"] = {
+            "decision": forecast.get("decision"),
+            "json": forecast.get("json"),
+            "markdown": forecast.get("markdown"),
+        }
+    return event
 
 
 def _parse_eval_view_families(value: str) -> dict[str, str]:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import combinations
 from typing import Callable, Mapping, Sequence
 
 import numpy as np
@@ -17,12 +18,15 @@ SUPPORTED_COVERAGE_POLICIES = (
     "quality_only_v1",
     "window_support_novelty_v1",
     "window_kcenter_v1",
+    "support_gap_window_probcover_v1",
     "ts2vec_support_novelty_v1",
     "ts2vec_kcenter_v1",
     "submitted_full_replay_v1",
     "oracle_greedy_eval_view_v1",
     "oracle_greedy_target_family_v1",
+    "oracle_exact_coverage_v1",
 )
+QUALITY_STRATIFIED_RANDOM_REPLAY_PREFIX = "quality_stratified_random_replay_"
 HYGIENE_EVAL_VIEW = "__hygiene__"
 
 
@@ -44,6 +48,7 @@ class CoverageBenchmarkConfig:
     distance_metric: str = "euclidean"
     source_family_count: int = 4
     source_family_label_view: str = "window"
+    oracle_exact_combination_limit: int = 100_000
     eps: float = 1.0e-12
 
 
@@ -239,7 +244,14 @@ def _validated_policies(config: CoverageBenchmarkConfig) -> tuple[str, ...]:
     policies = tuple(str(policy) for policy in config.policies)
     if not policies:
         raise ValueError("Coverage benchmark requires at least one policy.")
-    unknown = sorted(set(policies) - set(SUPPORTED_COVERAGE_POLICIES))
+    unknown = sorted(
+        {
+            policy
+            for policy in policies
+            if policy not in set(SUPPORTED_COVERAGE_POLICIES)
+            and _quality_stratified_random_replay_index(policy) is None
+        }
+    )
     if unknown:
         raise ValueError(f"Unsupported coverage benchmark policies: {unknown}")
     return policies
@@ -259,7 +271,18 @@ def _validate_config(config: CoverageBenchmarkConfig, *, policies: Sequence[str]
         raise ValueError("Coverage benchmark blend_alpha must be in [0, 1].")
     if config.max_artifact_score is not None and float(config.max_artifact_score) < 0.0:
         raise ValueError("Coverage benchmark max_artifact_score must be non-negative when provided.")
-    if any(policy in {"window_support_novelty_v1", "window_kcenter_v1", "submitted_full_replay_v1"} for policy in policies):
+    if int(config.oracle_exact_combination_limit) <= 0:
+        raise ValueError("Coverage benchmark oracle_exact_combination_limit must be positive.")
+    if any(
+        policy
+        in {
+            "window_support_novelty_v1",
+            "window_kcenter_v1",
+            "support_gap_window_probcover_v1",
+            "submitted_full_replay_v1",
+        }
+        for policy in policies
+    ):
         if not str(config.window_view):
             raise ValueError("Window coverage policies require window_view.")
     if any(policy in {"ts2vec_support_novelty_v1", "ts2vec_kcenter_v1", "submitted_full_replay_v1"} for policy in policies):
@@ -305,14 +328,20 @@ def _validate_episodes(episodes: Sequence[EpisodeSpec], clips_by_id: Mapping[str
 def _policy_spec(policy_id: str, config: CoverageBenchmarkConfig) -> _PolicySpec:
     if policy_id == "random_valid_v1":
         return _PolicySpec(policy_id=policy_id, selector_view=None, selector_feature_families=("random",))
-    if policy_id == "quality_stratified_random_v1":
-        return _PolicySpec(policy_id=policy_id, selector_view=None, selector_feature_families=("quality",))
+    if policy_id == "quality_stratified_random_v1" or _quality_stratified_random_replay_index(policy_id) is not None:
+        return _PolicySpec(policy_id=policy_id, selector_view=None, selector_feature_families=("quality", "random"))
     if policy_id == "quality_only_v1":
         return _PolicySpec(policy_id=policy_id, selector_view=None, selector_feature_families=("quality",))
     if policy_id == "window_support_novelty_v1":
         return _PolicySpec(policy_id=policy_id, selector_view=config.window_view, selector_feature_families=("window",))
     if policy_id == "window_kcenter_v1":
         return _PolicySpec(policy_id=policy_id, selector_view=config.window_view, selector_feature_families=("window",))
+    if policy_id == "support_gap_window_probcover_v1":
+        return _PolicySpec(
+            policy_id=policy_id,
+            selector_view=config.window_view,
+            selector_feature_families=("window", "quality", "artifact"),
+        )
     if policy_id == "ts2vec_support_novelty_v1":
         return _PolicySpec(policy_id=policy_id, selector_view=config.ts2vec_view, selector_feature_families=("ts2vec",))
     if policy_id == "ts2vec_kcenter_v1":
@@ -337,6 +366,13 @@ def _policy_spec(policy_id: str, config: CoverageBenchmarkConfig) -> _PolicySpec
             selector_feature_families=("oracle", "target_family"),
             uses_target_for_selection=True,
         )
+    if policy_id == "oracle_exact_coverage_v1":
+        return _PolicySpec(
+            policy_id=policy_id,
+            selector_view=None,
+            selector_feature_families=("oracle", "target", "exact_coverage"),
+            uses_target_for_selection=True,
+        )
     raise ValueError(f"Unsupported coverage benchmark policy: {policy_id}")
 
 
@@ -356,13 +392,15 @@ def _rank_candidates(
         rng = _policy_rng(config, episode_index=episode_index, policy_index=policy_index)
         order = tuple(str(sample_id) for sample_id in rng.permutation(eligible))
         return order, {sample_id: float(clips_by_id[sample_id].quality_score) for sample_id in order}
-    if policy_spec.policy_id == "quality_stratified_random_v1":
+    replay_index = _quality_stratified_random_replay_index(policy_spec.policy_id)
+    if policy_spec.policy_id == "quality_stratified_random_v1" or replay_index is not None:
         return _quality_stratified_random_order(
             clips_by_id,
             eligible,
             config=config,
             episode_index=episode_index,
             policy_index=policy_index,
+            replay_index=replay_index,
         )
     if policy_spec.policy_id == "quality_only_v1":
         order = _quality_order(clips_by_id, eligible)
@@ -377,6 +415,14 @@ def _rank_candidates(
         )
     if policy_spec.policy_id == "window_kcenter_v1":
         return _kcenter_order(
+            clips_by_id,
+            support_ids=episode.support_ids,
+            candidate_ids=eligible,
+            representation=str(config.window_view),
+            config=config,
+        )
+    if policy_spec.policy_id == "support_gap_window_probcover_v1":
+        return _support_gap_probcover_order(
             clips_by_id,
             support_ids=episode.support_ids,
             candidate_ids=eligible,
@@ -420,6 +466,13 @@ def _rank_candidates(
             candidate_ids=eligible,
             config=config,
         )
+    if policy_spec.policy_id == "oracle_exact_coverage_v1":
+        return _oracle_exact_coverage_order(
+            clips_by_id,
+            episode=episode,
+            candidate_ids=eligible,
+            config=config,
+        )
     raise ValueError(f"Unsupported coverage benchmark policy: {policy_spec.policy_id}")
 
 
@@ -441,9 +494,28 @@ def _passes_gates(clip: BenchmarkClip, config: CoverageBenchmarkConfig) -> bool:
     )
 
 
-def _policy_rng(config: CoverageBenchmarkConfig, *, episode_index: int, policy_index: int) -> np.random.Generator:
+def _policy_rng(
+    config: CoverageBenchmarkConfig,
+    *,
+    episode_index: int,
+    policy_index: int,
+    replay_index: int | None = None,
+) -> np.random.Generator:
     seed = int(config.random_seed) + int(episode_index) * 1009 + int(policy_index) * 9176
+    if replay_index is not None:
+        seed += (int(replay_index) + 1) * 104_729
     return np.random.default_rng(seed)
+
+
+def _quality_stratified_random_replay_index(policy_id: str) -> int | None:
+    if not str(policy_id).startswith(QUALITY_STRATIFIED_RANDOM_REPLAY_PREFIX):
+        return None
+    suffix = str(policy_id)[len(QUALITY_STRATIFIED_RANDOM_REPLAY_PREFIX) :]
+    if suffix.endswith("_v1"):
+        suffix = suffix[:-3]
+    if not suffix.isdigit():
+        return None
+    return int(suffix)
 
 
 def _quality_order(clips_by_id: Mapping[str, BenchmarkClip], candidate_ids: Sequence[str]) -> tuple[str, ...]:
@@ -462,12 +534,13 @@ def _quality_stratified_random_order(
     config: CoverageBenchmarkConfig,
     episode_index: int,
     policy_index: int,
+    replay_index: int | None = None,
 ) -> tuple[tuple[str, ...], dict[str, float]]:
     quality_order = list(_quality_order(clips_by_id, candidate_ids))
     stratum_size = min(len(quality_order), max(max(int(budget) for budget in config.budgets) * 2, 1))
     stratum = quality_order[:stratum_size]
     remainder = quality_order[stratum_size:]
-    rng = _policy_rng(config, episode_index=episode_index, policy_index=policy_index)
+    rng = _policy_rng(config, episode_index=episode_index, policy_index=policy_index, replay_index=replay_index)
     order = [
         *(str(sample_id) for sample_id in rng.permutation(stratum)),
         *(str(sample_id) for sample_id in rng.permutation(remainder)),
@@ -516,6 +589,138 @@ def _kcenter_order(
         selected.append(best)
         remaining.remove(best)
     return tuple(selected), scores
+
+
+def _support_gap_probcover_order(
+    clips_by_id: Mapping[str, BenchmarkClip],
+    *,
+    support_ids: Sequence[str],
+    candidate_ids: Sequence[str],
+    representation: str,
+    config: CoverageBenchmarkConfig,
+) -> tuple[tuple[str, ...], dict[str, float]]:
+    candidates_ids = tuple(str(sample_id) for sample_id in candidate_ids)
+    support = stack_embeddings(clips_by_id, support_ids, representation=representation)
+    candidates = stack_embeddings(clips_by_id, candidates_ids, representation=representation)
+    support_distances = _nearest_distances(support, candidates, metric=config.distance_metric)
+    pairwise = _pairwise_distances(candidates, candidates, metric=config.distance_metric)
+    radius = _probcover_radius(support, pairwise, metric=config.distance_metric, eps=float(config.eps))
+    undercovered = _support_gap_mask(support, support_distances, metric=config.distance_metric, eps=float(config.eps))
+
+    qualities = np.asarray([float(clips_by_id[sample_id].quality_score) for sample_id in candidates_ids], dtype=float)
+    demand_weights = np.where(undercovered, qualities, 0.0)
+    selected_indices: list[int] = []
+    remaining = set(range(len(candidates_ids)))
+    covered = np.zeros((len(candidates_ids),), dtype=bool)
+    scores: dict[str, float] = {}
+
+    while remaining:
+        best_index = max(
+            remaining,
+            key=lambda index: _probcover_candidate_key(
+                index,
+                candidates_ids=candidates_ids,
+                clips_by_id=clips_by_id,
+                pairwise=pairwise,
+                radius=radius,
+                demand_weights=demand_weights,
+                undercovered=undercovered,
+                covered=covered,
+                support_distances=support_distances,
+                eps=float(config.eps),
+            ),
+        )
+        score, newly_covered = _probcover_gain(
+            best_index,
+            pairwise=pairwise,
+            radius=radius,
+            demand_weights=demand_weights,
+            undercovered=undercovered,
+            covered=covered,
+        )
+        selected_indices.append(best_index)
+        remaining.remove(best_index)
+        covered |= newly_covered
+        scores[candidates_ids[best_index]] = float(score)
+
+    for index in selected_indices:
+        scores.setdefault(candidates_ids[index], 0.0)
+    return tuple(candidates_ids[index] for index in selected_indices), scores
+
+
+def _probcover_radius(support: np.ndarray, candidate_pairwise: np.ndarray, *, metric: str, eps: float) -> float:
+    support_radius = _support_tau(support, metric=metric)
+    if np.isfinite(support_radius) and support_radius > eps:
+        return float(support_radius)
+    pairwise = np.asarray(candidate_pairwise, dtype=float)
+    finite_positive = pairwise[np.isfinite(pairwise) & (pairwise > eps)]
+    if finite_positive.size:
+        return float(np.quantile(finite_positive, 0.20))
+    return float(eps)
+
+
+def _support_gap_mask(support: np.ndarray, support_distances: np.ndarray, *, metric: str, eps: float) -> np.ndarray:
+    distances = np.asarray(support_distances, dtype=float)
+    threshold = _support_tau(support, metric=metric)
+    if not np.isfinite(threshold) or threshold <= eps:
+        finite = distances[np.isfinite(distances)]
+        threshold = float(np.median(finite)) if finite.size else 0.0
+    mask = distances > float(threshold) + eps
+    if np.any(mask):
+        return mask
+    return np.ones_like(distances, dtype=bool)
+
+
+def _probcover_candidate_key(
+    index: int,
+    *,
+    candidates_ids: Sequence[str],
+    clips_by_id: Mapping[str, BenchmarkClip],
+    pairwise: np.ndarray,
+    radius: float,
+    demand_weights: np.ndarray,
+    undercovered: np.ndarray,
+    covered: np.ndarray,
+    support_distances: np.ndarray,
+    eps: float,
+) -> tuple[float, int, float, float, float, str]:
+    gain, newly_covered = _probcover_gain(
+        index,
+        pairwise=pairwise,
+        radius=radius,
+        demand_weights=demand_weights,
+        undercovered=undercovered,
+        covered=covered,
+    )
+    covered_indices = np.flatnonzero(newly_covered)
+    if covered_indices.size:
+        weights = demand_weights[covered_indices]
+        centrality = -float(np.average(pairwise[index, covered_indices], weights=np.maximum(weights, eps)))
+    else:
+        centrality = -float("inf")
+    sample_id = str(candidates_ids[index])
+    support_distance = float(support_distances[index]) if np.isfinite(support_distances[index]) else 0.0
+    return (
+        float(gain),
+        int(covered_indices.size),
+        centrality,
+        float(clips_by_id[sample_id].quality_score),
+        support_distance,
+        sample_id,
+    )
+
+
+def _probcover_gain(
+    index: int,
+    *,
+    pairwise: np.ndarray,
+    radius: float,
+    demand_weights: np.ndarray,
+    undercovered: np.ndarray,
+    covered: np.ndarray,
+) -> tuple[float, np.ndarray]:
+    newly_covered = (pairwise[index] <= float(radius)) & undercovered & ~covered
+    return float(np.sum(demand_weights[newly_covered])), newly_covered
 
 
 def _submitted_blend_order(
@@ -643,6 +848,125 @@ def _oracle_target_family_order(
     for sample_id in tail:
         scores[sample_id] = 0.0
     return tuple([*selected, *tail]), scores
+
+
+def _oracle_exact_coverage_order(
+    clips_by_id: Mapping[str, BenchmarkClip],
+    *,
+    episode: EpisodeSpec,
+    candidate_ids: Sequence[str],
+    config: CoverageBenchmarkConfig,
+) -> tuple[tuple[str, ...], dict[str, float]]:
+    candidates = tuple(str(sample_id) for sample_id in candidate_ids)
+    max_budget = min(max(int(budget) for budget in config.budgets), len(candidates))
+    if max_budget <= 0:
+        return (), {}
+    combination_count = _combination_count(len(candidates), max_budget)
+    if combination_count > int(config.oracle_exact_combination_limit):
+        raise ValueError(
+            "oracle_exact_coverage_v1 is not exact for this episode: "
+            f"C({len(candidates)}, {max_budget})={combination_count} exceeds "
+            f"oracle_exact_combination_limit={int(config.oracle_exact_combination_limit)}."
+        )
+
+    scorer = _ExactCoverageScorer(clips_by_id, episode=episode, candidate_ids=candidates, config=config)
+    best_indices: tuple[int, ...] | None = None
+    best_score = float("-inf")
+    for indices in combinations(range(len(candidates)), max_budget):
+        score = scorer.score_indices(indices)
+        if score > best_score + float(config.eps):
+            best_score = score
+            best_indices = tuple(indices)
+    if best_indices is None:
+        return (), {}
+
+    ordered_indices, selected_scores = _greedy_order_exact_selection(
+        best_indices,
+        candidates=candidates,
+        clips_by_id=clips_by_id,
+        scorer=scorer,
+    )
+    selected = tuple(candidates[index] for index in ordered_indices)
+    selected_set = set(selected)
+    tail = tuple(sample_id for sample_id in _quality_order(clips_by_id, candidates) if sample_id not in selected_set)
+    scores = {sample_id: float(selected_scores.get(sample_id, best_score)) for sample_id in selected}
+    scores.update({sample_id: 0.0 for sample_id in tail})
+    return tuple([*selected, *tail]), scores
+
+
+@dataclass(frozen=True)
+class _ExactCoverageScorer:
+    clips_by_id: Mapping[str, BenchmarkClip]
+    episode: EpisodeSpec
+    candidate_ids: tuple[str, ...]
+    config: CoverageBenchmarkConfig
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "_parts", self._build_parts())
+
+    def _build_parts(self) -> tuple[tuple[np.ndarray, np.ndarray], ...]:
+        parts: list[tuple[np.ndarray, np.ndarray]] = []
+        for view in self.config.primary_eval_views:
+            support = stack_embeddings(self.clips_by_id, self.episode.support_ids, representation=str(view))
+            target = stack_embeddings(self.clips_by_id, self.episode.target_ids, representation=str(view))
+            candidates = stack_embeddings(self.clips_by_id, self.candidate_ids, representation=str(view))
+            baseline = _nearest_distances(support, target, metric=self.config.distance_metric)
+            candidate_to_target = _pairwise_distances(candidates, target, metric=self.config.distance_metric)
+            parts.append((baseline, candidate_to_target))
+        return tuple(parts)
+
+    def score_indices(self, selected_indices: Sequence[int]) -> float:
+        if not selected_indices:
+            return 0.0
+        values = []
+        selected = [int(index) for index in selected_indices]
+        for baseline, candidate_to_target in self._parts:
+            if baseline.size == 0:
+                values.append(0.0)
+                continue
+            selected_distances = np.min(candidate_to_target[selected, :], axis=0)
+            after = np.minimum(baseline, selected_distances)
+            relative = np.maximum((baseline - after) / np.maximum(baseline, float(self.config.eps)), 0.0)
+            values.append(float(np.mean(relative)) if relative.size else 0.0)
+        return float(np.mean(values)) if values else 0.0
+
+
+def _greedy_order_exact_selection(
+    selected_indices: Sequence[int],
+    *,
+    candidates: Sequence[str],
+    clips_by_id: Mapping[str, BenchmarkClip],
+    scorer: _ExactCoverageScorer,
+) -> tuple[tuple[int, ...], dict[str, float]]:
+    ordered: list[int] = []
+    remaining = [int(index) for index in selected_indices]
+    scores: dict[str, float] = {}
+    while remaining:
+        by_index = {index: scorer.score_indices([*ordered, index]) for index in remaining}
+        best = max(
+            remaining,
+            key=lambda index: (
+                by_index[index],
+                float(clips_by_id[str(candidates[index])].quality_score),
+                str(candidates[index]),
+            ),
+        )
+        ordered.append(best)
+        remaining.remove(best)
+        scores[str(candidates[best])] = float(by_index[best])
+    return tuple(ordered), scores
+
+
+def _combination_count(n_items: int, batch_size: int) -> int:
+    if batch_size < 0 or batch_size > n_items:
+        return 0
+    batch = min(batch_size, n_items - batch_size)
+    numerator = 1
+    denominator = 1
+    for value in range(1, batch + 1):
+        numerator *= n_items - (batch - value)
+        denominator *= value
+    return numerator // denominator
 
 
 def _source_family_labels_by_id(

@@ -1,0 +1,136 @@
+{
+  "purpose": "Bounded three-seed downstream forecast replay for one cleaner window-coverage acquisition policy. Selected raw IMU clips are appended to support, a ridge autoregressive forecaster is retrained after acquisition, and held-out target forecast MSE is measured. This tests support_gap_window_probcover_v1 against the current window_kcenter_v1 downstream canary winner without TS2Vec retraining or neural downstream training.",
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 180,
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "no_large_downstream_training": true,
+    "actual_downstream_model_update": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt",
+    "max_rows_per_seed": 420,
+    "max_groups": 140,
+    "clips_per_group": 3,
+    "sampling_mode": "random",
+    "selection_seeds": [
+      17,
+      23,
+      37
+    ],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "source_family_label_holdout",
+    "episode_representation": "window",
+    "source_family_count": 4,
+    "folds": 4,
+    "candidate_groups_per_episode": 12,
+    "target_groups_per_episode": 6,
+    "target_candidate_groups_per_episode": 4,
+    "target_families_per_episode": 2,
+    "max_support_groups": 96,
+    "budgets": [
+      1,
+      2,
+      4
+    ],
+    "quality_threshold": 0.85,
+    "max_stationary_fraction": 0.9,
+    "max_abs_value": 60.0,
+    "max_artifact_score": 0.05,
+    "distance_metric": "euclidean",
+    "oracle_exact_combination_limit": 100000,
+    "representations": [
+      "ts2vec",
+      "window",
+      "raw_shape_stats"
+    ],
+    "eval_views": [
+      "ts2vec",
+      "window",
+      "raw_shape_stats"
+    ],
+    "primary_eval_views": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "eval_view_families": {
+      "ts2vec": "ts2vec",
+      "window": "window",
+      "raw_shape_stats": "raw_shape"
+    },
+    "ts2vec_view": "ts2vec",
+    "window_view": "window",
+    "blend_alpha": 0.5,
+    "policies": [
+      "quality_stratified_random_v1",
+      "quality_only_v1",
+      "window_kcenter_v1",
+      "support_gap_window_probcover_v1",
+      "submitted_full_replay_v1",
+      "ts2vec_kcenter_v1"
+    ]
+  },
+  "downstream_forecast": {
+    "model": "raw_imu_autoregressive_ridge",
+    "history_steps": 8,
+    "horizon_steps": 1,
+    "ridge_alpha": 0.01,
+    "max_windows_per_clip": 128,
+    "top_policy": "support_gap_window_probcover_v1",
+    "baseline_policy": "window_kcenter_v1",
+    "decision": "actual_downstream_model_update"
+  },
+  "reporting": {
+    "decision_report_script": "scripts/summarize_coverage_benchmark_reports.py",
+    "baseline_policy": "quality_stratified_random_v1",
+    "oracle_policy": "oracle_exact_coverage_v1",
+    "bootstrap_replicates": 500,
+    "bootstrap_unit": "seed_episode"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260509_support_gap_window_probcover_downstream_forecast_3seed"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 3,
+    "minimum_episodes_per_seed": 4,
+    "required_artifacts": [
+      "selected_urls.txt",
+      "blind_target_coverage_benchmark_report.json",
+      "blind_target_coverage_benchmark_report.md",
+      "coverage_proof_summary.json",
+      "downstream_forecast_task_report.json",
+      "downstream_forecast_task_report.md",
+      "coverage_decision_report.json",
+      "coverage_decision_report.md"
+    ],
+    "required_checks": [
+      "source-group leakage is false for all seeds",
+      "selected_out_of_pool_count_total is zero",
+      "selected_target_leak_count_total is zero",
+      "selected_duplicate_clip_count_total is zero",
+      "selected_invalid_rate_max is zero",
+      "frozen TS2Vec embeddings are used without retraining",
+      "budget 0 support-only forecast model is present",
+      "selected candidate clips are added to forecast training support",
+      "forecast model is retrained before held-out target MSE is measured",
+      "support_gap_window_probcover_v1 is compared directly against window_kcenter_v1",
+      "support_gap_window_probcover_v1 is compared directly against quality_stratified_random_v1",
+      "large_training remains hold",
+      "ts2vec_retraining remains no",
+      "VM spawned for this run is deleted after artifact copy"
+    ],
+    "promotion_rule": "support_gap_window_probcover_v1 must beat window_kcenter_v1 at K=4 mean held-out target forecast MSE and clearly beat quality_stratified_random_v1; otherwise kill it without tuning.",
+    "non_claim": "This is an actual raw-IMU downstream model-update task, not a source-family pseudo-label proxy, not large neural downstream training, and not TS2Vec retraining proof."
+  }
+}

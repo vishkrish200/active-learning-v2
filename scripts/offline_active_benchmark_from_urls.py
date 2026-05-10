@@ -296,6 +296,32 @@ def _load_clips_from_urls(
     ts2vec_device: str = "cpu",
     ts2vec_batch_size: int = 32,
 ) -> list[BenchmarkClip]:
+    clips, _samples_by_id = _load_clips_and_samples_from_urls(
+        urls,
+        max_samples=max_samples,
+        sample_rate=sample_rate,
+        workers=workers,
+        timeout_seconds=timeout_seconds,
+        representations=representations,
+        ts2vec_checkpoint=ts2vec_checkpoint,
+        ts2vec_device=ts2vec_device,
+        ts2vec_batch_size=ts2vec_batch_size,
+    )
+    return clips
+
+
+def _load_clips_and_samples_from_urls(
+    urls: list[str],
+    *,
+    max_samples: int,
+    sample_rate: float,
+    workers: int,
+    timeout_seconds: float,
+    representations: tuple[str, ...],
+    ts2vec_checkpoint: str = "",
+    ts2vec_device: str = "cpu",
+    ts2vec_batch_size: int = 32,
+) -> tuple[list[BenchmarkClip], dict[str, np.ndarray]]:
     if "ts2vec" in representations and not str(ts2vec_checkpoint).strip():
         raise ValueError("--ts2vec-checkpoint is required when representations include ts2vec.")
     base_representations = tuple(representation for representation in representations if representation != "ts2vec")
@@ -363,7 +389,7 @@ def _load_clips_from_urls(
             ),
             flush=True,
         )
-    return clips
+    return clips, samples_by_id
 
 
 def _attach_ts2vec_embeddings(

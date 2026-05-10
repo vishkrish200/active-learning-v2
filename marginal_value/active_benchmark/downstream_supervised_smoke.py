@@ -145,6 +145,101 @@ def nearest_centroid_classification_metrics(
     }
 
 
+def ridge_classification_metrics(
+    clips_by_id: dict[str, BenchmarkClip],
+    *,
+    labels_by_id: dict[str, str],
+    train_ids: Sequence[str],
+    target_ids: Sequence[str],
+    representation: str,
+    alpha: float = 1.0,
+) -> dict[str, float | int]:
+    train_ids = tuple(str(sample_id) for sample_id in train_ids if str(sample_id) in labels_by_id)
+    target_ids = tuple(str(sample_id) for sample_id in target_ids if str(sample_id) in labels_by_id)
+    if not train_ids or not target_ids:
+        return _empty_metrics()
+
+    train_x = stack_embeddings(clips_by_id, train_ids, representation=representation)
+    target_x = stack_embeddings(clips_by_id, target_ids, representation=representation)
+    train_y = np.asarray([labels_by_id[sample_id] for sample_id in train_ids], dtype=object)
+    target_y = np.asarray([labels_by_id[sample_id] for sample_id in target_ids], dtype=object)
+    classes = tuple(sorted({str(label) for label in train_y.tolist()}))
+    if not classes:
+        return _empty_metrics()
+
+    mean = np.mean(train_x, axis=0, keepdims=True)
+    scale = np.std(train_x, axis=0, keepdims=True)
+    scale = np.where(scale > 1.0e-9, scale, 1.0)
+    train_z = (train_x - mean) / scale
+    target_z = (target_x - mean) / scale
+    design = np.hstack([train_z, np.ones((train_z.shape[0], 1), dtype=float)])
+    target_design = np.hstack([target_z, np.ones((target_z.shape[0], 1), dtype=float)])
+    class_index = {label: index for index, label in enumerate(classes)}
+    y = np.zeros((design.shape[0], len(classes)), dtype=float)
+    for row_index, label in enumerate(train_y):
+        y[row_index, class_index[str(label)]] = 1.0
+    penalty = np.eye(design.shape[1], dtype=float) * float(alpha)
+    penalty[-1, -1] = 0.0
+    weights = np.linalg.pinv(design.T @ design + penalty) @ design.T @ y
+    scores = target_design @ weights
+    predictions = np.asarray([classes[int(index)] for index in np.argmax(scores, axis=1)], dtype=object)
+
+    accuracy = float(np.mean(predictions == target_y)) if len(target_y) else 0.0
+    target_classes = tuple(sorted({str(label) for label in target_y.tolist()}))
+    recalls = []
+    for label in target_classes:
+        mask = target_y == label
+        if label not in classes:
+            recalls.append(0.0)
+        else:
+            recalls.append(float(np.mean(predictions[mask] == label)))
+    balanced_accuracy = float(np.mean(recalls)) if recalls else 0.0
+    probabilities = _softmax(scores)
+    eps = 1.0e-12
+    true_probabilities = [
+        float(probabilities[index, class_index[str(label)]]) if str(label) in class_index else eps
+        for index, label in enumerate(target_y)
+    ]
+    negative_log_likelihood = float(np.mean([-np.log(max(probability, eps)) for probability in true_probabilities]))
+    known_target_fraction = float(np.mean([str(label) in class_index for label in target_y])) if len(target_y) else 0.0
+    return {
+        "accuracy": accuracy,
+        "balanced_accuracy": balanced_accuracy,
+        "negative_log_likelihood": negative_log_likelihood,
+        "train_class_count": int(len(classes)),
+        "target_class_count": int(len(target_classes)),
+        "known_target_fraction": known_target_fraction,
+    }
+
+
+def supervised_classification_metrics(
+    clips_by_id: dict[str, BenchmarkClip],
+    *,
+    labels_by_id: dict[str, str],
+    train_ids: Sequence[str],
+    target_ids: Sequence[str],
+    representation: str,
+    model_name: str,
+) -> dict[str, float | int]:
+    if str(model_name) == "nearest_centroid":
+        return nearest_centroid_classification_metrics(
+            clips_by_id,
+            labels_by_id=labels_by_id,
+            train_ids=train_ids,
+            target_ids=target_ids,
+            representation=representation,
+        )
+    if str(model_name) == "ridge_classifier":
+        return ridge_classification_metrics(
+            clips_by_id,
+            labels_by_id=labels_by_id,
+            train_ids=train_ids,
+            target_ids=target_ids,
+            representation=representation,
+        )
+    raise ValueError(f"Unsupported downstream supervised model: {model_name}")
+
+
 def summarize_downstream_supervised(rows: Sequence[dict[str, object]]) -> dict[str, object]:
     rows_list = [dict(row) for row in rows]
     final_rows = _final_rows(rows_list)

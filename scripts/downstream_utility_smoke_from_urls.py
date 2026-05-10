@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from marginal_value.active_benchmark import (
     OfflineBenchmarkConfig,
@@ -80,6 +85,8 @@ def main() -> None:
         folds=args.folds,
         candidate_groups_per_episode=args.candidate_groups_per_episode,
         target_groups_per_episode=args.target_groups_per_episode,
+        target_candidate_groups_per_episode=args.target_candidate_groups_per_episode,
+        target_families_per_episode=args.target_families_per_episode,
         max_support_groups=args.max_support_groups,
         episode_representation=args.episode_representation,
         source_family_count=args.source_family_count,
@@ -168,6 +175,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--source-family-count", type=int, default=4)
     parser.add_argument("--candidate-groups-per-episode", type=int, default=6)
     parser.add_argument("--target-groups-per-episode", type=int, default=2)
+    parser.add_argument("--target-candidate-groups-per-episode", type=int, default=None)
+    parser.add_argument("--target-families-per-episode", type=int, default=1)
     parser.add_argument("--max-support-groups", type=int, default=64)
     parser.add_argument("--rounds", type=int, default=2)
     parser.add_argument("--batch-size", type=int, default=2)

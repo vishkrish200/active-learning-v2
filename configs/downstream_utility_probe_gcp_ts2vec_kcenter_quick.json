@@ -1,0 +1,128 @@
+{
+  "purpose": "Quick CPU-only held-out downstream utility probe after the scaled frozen-feature bridge proxy passed. Uses the same fixed acquisition policies, adds selected candidate clips to support, and measures whether hidden-target linear reconstruction error improves. This is not challenge-label downstream training and does not retrain TS2Vec.",
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 120,
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "no_large_downstream_training": true,
+    "heldout_utility_probe": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt",
+    "max_rows_per_seed": 360,
+    "max_groups": 120,
+    "clips_per_group": 3,
+    "sampling_mode": "random",
+    "selection_seeds": [
+      17
+    ],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "source_family_label_holdout",
+    "episode_representation": "window",
+    "source_family_count": 4,
+    "folds": 4,
+    "candidate_groups_per_episode": 12,
+    "target_groups_per_episode": 6,
+    "target_candidate_groups_per_episode": 4,
+    "target_families_per_episode": 2,
+    "max_support_groups": 96,
+    "budgets": [
+      1,
+      2,
+      4
+    ],
+    "quality_threshold": 0.85,
+    "max_stationary_fraction": 0.9,
+    "max_abs_value": 60.0,
+    "max_artifact_score": 0.05,
+    "distance_metric": "euclidean",
+    "oracle_exact_combination_limit": 100000,
+    "representations": [
+      "ts2vec",
+      "window",
+      "raw_shape_stats"
+    ],
+    "eval_views": [
+      "ts2vec",
+      "window",
+      "raw_shape_stats"
+    ],
+    "primary_eval_views": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "eval_view_families": {
+      "ts2vec": "ts2vec",
+      "window": "window",
+      "raw_shape_stats": "raw_shape"
+    },
+    "ts2vec_view": "ts2vec",
+    "window_view": "window",
+    "blend_alpha": 0.5,
+    "policies": [
+      "quality_stratified_random_v1",
+      "quality_only_v1",
+      "window_kcenter_v1",
+      "submitted_full_replay_v1",
+      "ts2vec_kcenter_v1"
+    ]
+  },
+  "downstream_utility": {
+    "model": "linear_reconstruction_pca",
+    "representations": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "max_components": 4,
+    "top_policy": "ts2vec_kcenter_v1",
+    "baseline_policy": "quality_stratified_random_v1",
+    "decision": "quick_heldout_utility_probe"
+  },
+  "reporting": {
+    "decision_report_script": "scripts/summarize_coverage_benchmark_reports.py",
+    "baseline_policy": "quality_stratified_random_v1",
+    "oracle_policy": "oracle_exact_coverage_v1",
+    "bootstrap_replicates": 500,
+    "bootstrap_unit": "seed_episode"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260509_downstream_utility_probe_ts2vec_kcenter_quick"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 1,
+    "minimum_episodes_per_seed": 4,
+    "required_artifacts": [
+      "selected_urls.txt",
+      "blind_target_coverage_benchmark_report.json",
+      "blind_target_coverage_benchmark_report.md",
+      "coverage_proof_summary.json",
+      "downstream_coverage_utility_report.json",
+      "downstream_coverage_utility_report.md",
+      "coverage_decision_report.json",
+      "coverage_decision_report.md"
+    ],
+    "required_checks": [
+      "source-group leakage is false",
+      "frozen TS2Vec embeddings are used without retraining",
+      "budget 0 support-only baseline is present in downstream utility rows",
+      "ts2vec_kcenter_v1 is compared directly against quality_stratified_random_v1",
+      "hidden-target reconstruction relative gain is reported",
+      "large_training remains hold",
+      "ts2vec_retraining remains no",
+      "VM spawned for this run is deleted after artifact copy"
+    ],
+    "promotion_rule": "If this quick held-out utility probe is non-flat and ts2vec_kcenter_v1 beats quality_stratified_random_v1 on relative reconstruction gain, run a larger multi-seed held-out utility probe. Do not launch large neural downstream training or TS2Vec retraining from this quick probe alone.",
+    "non_claim": "This is a hidden-target reconstruction utility proxy, not real challenge-label downstream training proof."
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "purpose": "Decision-grade but still fast GCP round-loop active-learning benchmark. Expands episode evidence over the fast canary while staying CPU-only, frozen-representation only, and no neural downstream training.",
+  "execution": {
+    "provider": "gcp_compute",
+    "runner": "downstream_utility_smoke",
+    "machine_type": "n2-standard-16",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 240,
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "linear_model_only": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt",
+    "max_rows_per_seed": 960,
+    "max_groups": 320,
+    "clips_per_group": 3,
+    "sampling_mode": "random",
+    "selection_seeds": [
+      17,
+      23,
+      37
+    ],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "source_family_label_holdout",
+    "episode_representation": "window",
+    "source_family_count": 4,
+    "folds": 10,
+    "candidate_groups_per_episode": 16,
+    "target_groups_per_episode": 8,
+    "target_candidate_groups_per_episode": 6,
+    "target_families_per_episode": 2,
+    "max_support_groups": 128,
+    "rounds": 2,
+    "batch_size": 3,
+    "quality_threshold": 0.85,
+    "max_stationary_fraction": 0.9,
+    "max_abs_value": 60.0,
+    "oracle_candidate_cap": null,
+    "oracle_exact_combination_limit": 5000,
+    "representations": [
+      "ts2vec",
+      "window",
+      "raw_shape_stats"
+    ],
+    "primary_representations": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "blend_left_representation": "ts2vec",
+    "blend_right_representation": "window",
+    "blend_alpha": 0.5,
+    "max_artifact_score": 0.05,
+    "policies": [
+      "quality_stratified_random",
+      "quality_only",
+      "kcenter_quality_gated_window",
+      "submitted_full_replay",
+      "kcenter_quality_gated_ts2vec"
+    ]
+  },
+  "downstream": {
+    "model": "source_family_supervised_nearest_centroid",
+    "label_source": "source_family",
+    "label_representation": "window",
+    "source_family_count": 4,
+    "representations": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "baseline_policy": "kcenter_quality_gated_ts2vec",
+    "random_policy": "quality_stratified_random",
+    "decision": "round_loop_active_decision_proxy"
+  },
+  "downstream_utility": {
+    "model": "linear_reconstruction_pca",
+    "representations": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "max_components": 4,
+    "baseline_policy": "kcenter_quality_gated_ts2vec",
+    "random_policy": "quality_stratified_random",
+    "decision": "round_loop_hidden_target_utility"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260509_downstream_active_loop_ts2vec_kcenter_3seed_decision"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 3,
+    "minimum_episodes_per_seed": 10,
+    "required_artifacts": [
+      "selected_urls.txt",
+      "offline_active_benchmark_report.json",
+      "offline_active_benchmark_report.md",
+      "downstream_utility_smoke_report.json",
+      "downstream_utility_smoke_report.md",
+      "downstream_supervised_smoke_report.json",
+      "downstream_supervised_smoke_report.md",
+      "proof_summary.json",
+      "downstream_utility_pairing_audit.json",
+      "downstream_utility_pairing_audit.md",
+      "downstream_supervised_pairing_audit.json",
+      "downstream_supervised_pairing_audit.md"
+    ],
+    "required_checks": [
+      "source-group leakage is false for all seeds",
+      "support grows after every acquisition round",
+      "candidate pool shrinks after every acquisition round",
+      "frozen TS2Vec embeddings are used without retraining",
+      "kcenter_quality_gated_ts2vec is compared against quality_stratified_random, quality_only, window k-center, and submitted_full_replay",
+      "downstream utility pairing audit clears random and window control",
+      "source-family pseudo-label supervised smoke remains a proxy only",
+      "no large neural downstream training is launched",
+      "VMs spawned for this run are deleted after artifact copy"
+    ],
+    "promotion_rule": "If kcenter_quality_gated_ts2vec beats quality_stratified_random and kcenter_quality_gated_window on paired total hidden-target reconstruction utility with a positive bootstrap interval, treat TS2Vec acquisition as scientifically alive and run one bounded real downstream target canary. Otherwise keep improving acquisition/evaluation before training.",
+    "non_claim": "This is a round-loop active-learning benchmark with frozen representations and proxy utility. It is not challenge-label downstream training proof."
+  }
+}
