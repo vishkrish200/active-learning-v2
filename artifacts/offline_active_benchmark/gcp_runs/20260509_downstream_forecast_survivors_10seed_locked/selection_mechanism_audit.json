@@ -1,0 +1,5256 @@
+{
+  "focal_pairwise_contrasts": [
+    {
+      "comparison_lower_mse_count": 24,
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "exact_match_rate": 0.0,
+      "focal_lower_mse_count": 16,
+      "focal_policy": "window_kcenter_v1",
+      "mean_after_mse_advantage_focal_over_comparison": 0.002496179025837195,
+      "mean_comparison_only_clip_count": 2.65,
+      "mean_focal_only_clip_count": 2.65,
+      "mean_jaccard": 0.22547619047619047,
+      "mean_jaccard_when_comparison_wins": 0.25476190476190474,
+      "mean_jaccard_when_focal_wins": 0.18154761904761904,
+      "mean_shared_clip_count": 1.35,
+      "mean_source_jaccard": 0.38821428571428573,
+      "paired_unit_count": 40,
+      "tie_count": 0,
+      "top_comparison_only_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00032"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00342"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00156"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00024"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00060"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00109"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00031"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00068"
+        }
+      ],
+      "top_focal_only_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00316"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00153"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00228"
+        }
+      ]
+    },
+    {
+      "comparison_lower_mse_count": 16,
+      "comparison_policy": "submitted_full_replay_v1",
+      "exact_match_rate": 0.1,
+      "focal_lower_mse_count": 20,
+      "focal_policy": "window_kcenter_v1",
+      "mean_after_mse_advantage_focal_over_comparison": 0.002510257587416542,
+      "mean_comparison_only_clip_count": 1.225,
+      "mean_focal_only_clip_count": 1.225,
+      "mean_jaccard": 0.5571428571428572,
+      "mean_jaccard_when_comparison_wins": 0.5261904761904762,
+      "mean_jaccard_when_focal_wins": 0.4933333333333333,
+      "mean_shared_clip_count": 2.775,
+      "mean_source_jaccard": 0.7108333333333333,
+      "paired_unit_count": 40,
+      "tie_count": 4,
+      "top_comparison_only_source_groups": [
+        {
+          "count": 4,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00153"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00255"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00342"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00026"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00259"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00323"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00075"
+        }
+      ],
+      "top_focal_only_source_groups": [
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00316"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00153"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00228"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00113"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00031"
+        }
+      ]
+    },
+    {
+      "comparison_lower_mse_count": 12,
+      "comparison_policy": "quality_stratified_random_v1",
+      "exact_match_rate": 0.0,
+      "focal_lower_mse_count": 28,
+      "focal_policy": "window_kcenter_v1",
+      "mean_after_mse_advantage_focal_over_comparison": 0.0042250042697135415,
+      "mean_comparison_only_clip_count": 3.4,
+      "mean_focal_only_clip_count": 3.4,
+      "mean_jaccard": 0.09166666666666666,
+      "mean_jaccard_when_comparison_wins": 0.0992063492063492,
+      "mean_jaccard_when_focal_wins": 0.08843537414965986,
+      "mean_shared_clip_count": 0.6,
+      "mean_source_jaccard": 0.2356547619047619,
+      "paired_unit_count": 40,
+      "tie_count": 0,
+      "top_comparison_only_source_groups": [
+        {
+          "count": 9,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00123"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00068"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00077"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00008"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00112"
+        }
+      ],
+      "top_focal_only_source_groups": [
+        {
+          "count": 8,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00401"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00261"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00090"
+        }
+      ]
+    }
+  ],
+  "focal_policy_episode_diagnostics": [
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.05816042991437689,
+      "comparison_after_mse": 0.25808019472915433,
+      "comparison_only_selected_ids": [
+        "worker00058_clip012",
+        "worker00079_clip001",
+        "worker00342_clip012"
+      ],
+      "comparison_only_source_groups": [
+        "worker00058",
+        "worker00079",
+        "worker00342"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.19991976481477744,
+      "focal_only_selected_ids": [
+        "worker00079_clip005",
+        "worker00259_clip013",
+        "worker00452_clip009"
+      ],
+      "focal_only_source_groups": [
+        "worker00079",
+        "worker00259",
+        "worker00452"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00200_clip017"
+      ],
+      "unit_id": "seed_37:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.05816042991437689,
+      "comparison_after_mse": 0.25808019472915433,
+      "comparison_only_selected_ids": [
+        "worker00058_clip012",
+        "worker00079_clip001",
+        "worker00342_clip012"
+      ],
+      "comparison_only_source_groups": [
+        "worker00058",
+        "worker00079",
+        "worker00342"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.19991976481477744,
+      "focal_only_selected_ids": [
+        "worker00079_clip005",
+        "worker00259_clip013",
+        "worker00452_clip009"
+      ],
+      "focal_only_source_groups": [
+        "worker00079",
+        "worker00259",
+        "worker00452"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00200_clip017"
+      ],
+      "unit_id": "seed_37:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.039068364358928076,
+      "comparison_after_mse": 0.027265960226391547,
+      "comparison_only_selected_ids": [
+        "worker00032_clip013",
+        "worker00060_clip009",
+        "worker00414_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00032",
+        "worker00060",
+        "worker00414"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.06633432458531963,
+      "focal_only_selected_ids": [
+        "worker00064_clip018",
+        "worker00401_clip003",
+        "worker00401_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00064",
+        "worker00401"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00032_clip001"
+      ],
+      "unit_id": "seed_101:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.023148114695677013,
+      "comparison_after_mse": 0.40740017499230763,
+      "comparison_only_selected_ids": [
+        "worker00022_clip018",
+        "worker00109_clip010",
+        "worker00109_clip013"
+      ],
+      "comparison_only_source_groups": [
+        "worker00022",
+        "worker00109"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.3842520602966306,
+      "focal_only_selected_ids": [
+        "worker00022_clip020",
+        "worker00113_clip012",
+        "worker00479_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00022",
+        "worker00113",
+        "worker00479"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00401_clip003"
+      ],
+      "unit_id": "seed_101:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.014471794918961584,
+      "comparison_after_mse": 0.21374371492802705,
+      "comparison_only_selected_ids": [
+        "worker00016_clip016",
+        "worker00018_clip013",
+        "worker00259_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00016",
+        "worker00018",
+        "worker00259"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.19927192000906546,
+      "focal_only_selected_ids": [
+        "worker00018_clip012",
+        "worker00129_clip017",
+        "worker00228_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00018",
+        "worker00129",
+        "worker00228"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00031_clip015"
+      ],
+      "unit_id": "seed_41:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.014471794918961584,
+      "comparison_after_mse": 0.21374371492802705,
+      "comparison_only_selected_ids": [
+        "worker00016_clip016",
+        "worker00018_clip013",
+        "worker00259_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00016",
+        "worker00018",
+        "worker00259"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.19927192000906546,
+      "focal_only_selected_ids": [
+        "worker00018_clip012",
+        "worker00129_clip017",
+        "worker00228_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00018",
+        "worker00129",
+        "worker00228"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00031_clip015"
+      ],
+      "unit_id": "seed_41:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.013299834688414836,
+      "comparison_after_mse": 0.32004011823224493,
+      "comparison_only_selected_ids": [
+        "worker00037_clip010",
+        "worker00222_clip009",
+        "worker00235_clip006",
+        "worker00375_clip019"
+      ],
+      "comparison_only_source_groups": [
+        "worker00037",
+        "worker00222",
+        "worker00235",
+        "worker00375"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.33333995292065977,
+      "focal_only_selected_ids": [
+        "worker00037_clip003",
+        "worker00222_clip003",
+        "worker00235_clip013",
+        "worker00311_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00037",
+        "worker00222",
+        "worker00235",
+        "worker00311"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_23:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.013299834688414836,
+      "comparison_after_mse": 0.32004011823224493,
+      "comparison_only_selected_ids": [
+        "worker00037_clip010",
+        "worker00222_clip009",
+        "worker00235_clip006",
+        "worker00375_clip019"
+      ],
+      "comparison_only_source_groups": [
+        "worker00037",
+        "worker00222",
+        "worker00235",
+        "worker00375"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.33333995292065977,
+      "focal_only_selected_ids": [
+        "worker00037_clip003",
+        "worker00222_clip003",
+        "worker00235_clip013",
+        "worker00311_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00037",
+        "worker00222",
+        "worker00235",
+        "worker00311"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_23:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0112838295792929,
+      "comparison_after_mse": 0.07543248883452253,
+      "comparison_only_selected_ids": [
+        "worker00032_clip010",
+        "worker00032_clip011",
+        "worker00075_clip011"
+      ],
+      "comparison_only_source_groups": [
+        "worker00032",
+        "worker00075"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.08671631841381543,
+      "focal_only_selected_ids": [
+        "worker00075_clip012",
+        "worker00090_clip017",
+        "worker00212_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00075",
+        "worker00090",
+        "worker00212"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00046_clip003"
+      ],
+      "unit_id": "seed_53:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0112838295792929,
+      "comparison_after_mse": 0.07543248883452253,
+      "comparison_only_selected_ids": [
+        "worker00032_clip010",
+        "worker00032_clip011",
+        "worker00075_clip011"
+      ],
+      "comparison_only_source_groups": [
+        "worker00032",
+        "worker00075"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.08671631841381543,
+      "focal_only_selected_ids": [
+        "worker00075_clip012",
+        "worker00090_clip017",
+        "worker00212_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00075",
+        "worker00090",
+        "worker00212"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00046_clip003"
+      ],
+      "unit_id": "seed_53:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.006555128242159633,
+      "comparison_after_mse": 0.0812802703085392,
+      "comparison_only_selected_ids": [
+        "worker00342_clip001",
+        "worker00364_clip020",
+        "worker00411_clip018"
+      ],
+      "comparison_only_source_groups": [
+        "worker00342",
+        "worker00364",
+        "worker00411"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.07472514206637956,
+      "focal_only_selected_ids": [
+        "worker00364_clip004",
+        "worker00364_clip008",
+        "worker00411_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00364",
+        "worker00411"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00479_clip020"
+      ],
+      "unit_id": "seed_37:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.006555128242159633,
+      "comparison_after_mse": 0.0812802703085392,
+      "comparison_only_selected_ids": [
+        "worker00342_clip001",
+        "worker00364_clip020",
+        "worker00411_clip018"
+      ],
+      "comparison_only_source_groups": [
+        "worker00342",
+        "worker00364",
+        "worker00411"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.07472514206637956,
+      "focal_only_selected_ids": [
+        "worker00364_clip004",
+        "worker00364_clip008",
+        "worker00411_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00364",
+        "worker00411"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00479_clip020"
+      ],
+      "unit_id": "seed_37:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.005337929662551533,
+      "comparison_after_mse": 0.13374912234844463,
+      "comparison_only_selected_ids": [
+        "worker00054_clip017",
+        "worker00079_clip016",
+        "worker00166_clip013"
+      ],
+      "comparison_only_source_groups": [
+        "worker00054",
+        "worker00079",
+        "worker00166"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.1284111926858931,
+      "focal_only_selected_ids": [
+        "worker00067_clip014",
+        "worker00090_clip001",
+        "worker00122_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00067",
+        "worker00090",
+        "worker00122"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00051_clip017"
+      ],
+      "unit_id": "seed_97:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.005337929662551533,
+      "comparison_after_mse": 0.13374912234844463,
+      "comparison_only_selected_ids": [
+        "worker00054_clip017",
+        "worker00079_clip016",
+        "worker00166_clip013"
+      ],
+      "comparison_only_source_groups": [
+        "worker00054",
+        "worker00079",
+        "worker00166"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.1284111926858931,
+      "focal_only_selected_ids": [
+        "worker00067_clip014",
+        "worker00090_clip001",
+        "worker00122_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00067",
+        "worker00090",
+        "worker00122"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00051_clip017"
+      ],
+      "unit_id": "seed_97:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.001427191410790618,
+      "comparison_after_mse": 0.3828547354436854,
+      "comparison_only_selected_ids": [
+        "worker00214_clip005",
+        "worker00254_clip007",
+        "worker00335_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00214",
+        "worker00254",
+        "worker00335"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.3814275440328948,
+      "focal_only_selected_ids": [
+        "worker00028_clip015",
+        "worker00037_clip011",
+        "worker00254_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00028",
+        "worker00037",
+        "worker00254"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00065_clip008"
+      ],
+      "unit_id": "seed_97:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.001427191410790618,
+      "comparison_after_mse": 0.3828547354436854,
+      "comparison_only_selected_ids": [
+        "worker00214_clip005",
+        "worker00254_clip007",
+        "worker00335_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00214",
+        "worker00254",
+        "worker00335"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.3814275440328948,
+      "focal_only_selected_ids": [
+        "worker00028_clip015",
+        "worker00037_clip011",
+        "worker00254_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00028",
+        "worker00037",
+        "worker00254"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00065_clip008"
+      ],
+      "unit_id": "seed_97:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0010284920655328489,
+      "comparison_after_mse": 0.05164345555762297,
+      "comparison_only_selected_ids": [
+        "worker00102_clip014",
+        "worker00303_clip020",
+        "worker00323_clip019",
+        "worker00361_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00102",
+        "worker00303",
+        "worker00323",
+        "worker00361"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.05267194762315582,
+      "focal_only_selected_ids": [
+        "worker00102_clip020",
+        "worker00335_clip018",
+        "worker00361_clip008",
+        "worker00368_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00102",
+        "worker00335",
+        "worker00361",
+        "worker00368"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_53:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0010284920655328489,
+      "comparison_after_mse": 0.05164345555762297,
+      "comparison_only_selected_ids": [
+        "worker00102_clip014",
+        "worker00303_clip020",
+        "worker00323_clip019",
+        "worker00361_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00102",
+        "worker00303",
+        "worker00323",
+        "worker00361"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.05267194762315582,
+      "focal_only_selected_ids": [
+        "worker00102_clip020",
+        "worker00335_clip018",
+        "worker00361_clip008",
+        "worker00368_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00102",
+        "worker00335",
+        "worker00361",
+        "worker00368"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_53:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0007664712138369528,
+      "comparison_after_mse": 0.11716828108918426,
+      "comparison_only_selected_ids": [
+        "worker00207_clip016",
+        "worker00255_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00207",
+        "worker00255"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.11793475230302121,
+      "focal_only_selected_ids": [
+        "worker00113_clip011",
+        "worker00156_clip007"
+      ],
+      "focal_only_source_groups": [
+        "worker00113",
+        "worker00156"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00047_clip015",
+        "worker00200_clip010"
+      ],
+      "unit_id": "seed_23:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0007664712138369528,
+      "comparison_after_mse": 0.11716828108918426,
+      "comparison_only_selected_ids": [
+        "worker00207_clip016",
+        "worker00255_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00207",
+        "worker00255"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.11793475230302121,
+      "focal_only_selected_ids": [
+        "worker00113_clip011",
+        "worker00156_clip007"
+      ],
+      "focal_only_source_groups": [
+        "worker00113",
+        "worker00156"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00047_clip015",
+        "worker00200_clip010"
+      ],
+      "unit_id": "seed_23:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0007055415145004601,
+      "comparison_after_mse": 0.10281513312672225,
+      "comparison_only_selected_ids": [
+        "worker00014_clip012",
+        "worker00347_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00014",
+        "worker00347"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.1035206746412227,
+      "focal_only_selected_ids": [
+        "worker00316_clip014",
+        "worker00351_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00316",
+        "worker00351"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00020_clip013",
+        "worker00479_clip014"
+      ],
+      "unit_id": "seed_83:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0007055415145004601,
+      "comparison_after_mse": 0.10281513312672225,
+      "comparison_only_selected_ids": [
+        "worker00014_clip012",
+        "worker00347_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00014",
+        "worker00347"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.1035206746412227,
+      "focal_only_selected_ids": [
+        "worker00316_clip014",
+        "worker00351_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00316",
+        "worker00351"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00020_clip013",
+        "worker00479_clip014"
+      ],
+      "unit_id": "seed_83:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00039179368787282953,
+      "comparison_after_mse": 0.034146433064005124,
+      "comparison_only_selected_ids": [
+        "worker00030_clip012",
+        "worker00141_clip005",
+        "worker00156_clip010"
+      ],
+      "comparison_only_source_groups": [
+        "worker00030",
+        "worker00141",
+        "worker00156"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.034538226751877954,
+      "focal_only_selected_ids": [
+        "worker00119_clip010",
+        "worker00317_clip011",
+        "worker00364_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00119",
+        "worker00317",
+        "worker00364"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00364_clip014"
+      ],
+      "unit_id": "seed_79:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00039179368787282953,
+      "comparison_after_mse": 0.034146433064005124,
+      "comparison_only_selected_ids": [
+        "worker00030_clip012",
+        "worker00141_clip005",
+        "worker00156_clip010"
+      ],
+      "comparison_only_source_groups": [
+        "worker00030",
+        "worker00141",
+        "worker00156"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.034538226751877954,
+      "focal_only_selected_ids": [
+        "worker00119_clip010",
+        "worker00317_clip011",
+        "worker00364_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00119",
+        "worker00317",
+        "worker00364"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00364_clip014"
+      ],
+      "unit_id": "seed_79:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00031529190366967434,
+      "comparison_after_mse": 0.014429823967387054,
+      "comparison_only_selected_ids": [
+        "worker00060_clip005",
+        "worker00345_clip010"
+      ],
+      "comparison_only_source_groups": [
+        "worker00060",
+        "worker00345"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.014745115871056728,
+      "focal_only_selected_ids": [
+        "worker00295_clip004",
+        "worker00485_clip008"
+      ],
+      "focal_only_source_groups": [
+        "worker00295",
+        "worker00485"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00335_clip017",
+        "worker00430_clip013"
+      ],
+      "unit_id": "seed_101:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00028112800184494635,
+      "comparison_after_mse": 0.08458482865471445,
+      "comparison_only_selected_ids": [
+        "worker00156_clip016",
+        "worker00489_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00156",
+        "worker00489"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.0848659566565594,
+      "focal_only_selected_ids": [
+        "worker00129_clip017",
+        "worker00261_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00129",
+        "worker00261"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00129_clip008",
+        "worker00190_clip017"
+      ],
+      "unit_id": "seed_41:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00028112800184494635,
+      "comparison_after_mse": 0.08458482865471445,
+      "comparison_only_selected_ids": [
+        "worker00156_clip016",
+        "worker00489_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00156",
+        "worker00489"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.0848659566565594,
+      "focal_only_selected_ids": [
+        "worker00129_clip017",
+        "worker00261_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00129",
+        "worker00261"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00129_clip008",
+        "worker00190_clip017"
+      ],
+      "unit_id": "seed_41:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00021324330703488548,
+      "comparison_after_mse": 0.042030273730847174,
+      "comparison_only_selected_ids": [
+        "worker00085_clip004",
+        "worker00363_clip002"
+      ],
+      "comparison_only_source_groups": [
+        "worker00085",
+        "worker00363"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.04224351703788206,
+      "focal_only_selected_ids": [
+        "worker00030_clip004",
+        "worker00316_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00030",
+        "worker00316"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00049_clip001",
+        "worker00419_clip011"
+      ],
+      "unit_id": "seed_83:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00021324330703488548,
+      "comparison_after_mse": 0.042030273730847174,
+      "comparison_only_selected_ids": [
+        "worker00085_clip004",
+        "worker00363_clip002"
+      ],
+      "comparison_only_source_groups": [
+        "worker00085",
+        "worker00363"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.04224351703788206,
+      "focal_only_selected_ids": [
+        "worker00030_clip004",
+        "worker00316_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00030",
+        "worker00316"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00049_clip001",
+        "worker00419_clip011"
+      ],
+      "unit_id": "seed_83:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.00016627429581941855,
+      "comparison_after_mse": 0.08841306427996595,
+      "comparison_only_selected_ids": [
+        "worker00031_clip004",
+        "worker00068_clip001"
+      ],
+      "comparison_only_source_groups": [
+        "worker00031",
+        "worker00068"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.08824678998414653,
+      "focal_only_selected_ids": [
+        "worker00125_clip019",
+        "worker00408_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00125",
+        "worker00408"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00043_clip006",
+        "worker00112_clip010"
+      ],
+      "unit_id": "seed_17:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.00016627429581941855,
+      "comparison_after_mse": 0.08841306427996595,
+      "comparison_only_selected_ids": [
+        "worker00031_clip004",
+        "worker00068_clip001"
+      ],
+      "comparison_only_source_groups": [
+        "worker00031",
+        "worker00068"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.08824678998414653,
+      "focal_only_selected_ids": [
+        "worker00125_clip019",
+        "worker00408_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00125",
+        "worker00408"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00043_clip006",
+        "worker00112_clip010"
+      ],
+      "unit_id": "seed_17:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00015667889130683427,
+      "comparison_after_mse": 0.05602189766449042,
+      "comparison_only_selected_ids": [
+        "worker00024_clip008",
+        "worker00024_clip009",
+        "worker00155_clip008",
+        "worker00411_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00024",
+        "worker00155",
+        "worker00411"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.056178576555797256,
+      "focal_only_selected_ids": [
+        "worker00112_clip013",
+        "worker00155_clip005",
+        "worker00311_clip010",
+        "worker00411_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00112",
+        "worker00155",
+        "worker00311",
+        "worker00411"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_67:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00015667889130683427,
+      "comparison_after_mse": 0.05602189766449042,
+      "comparison_only_selected_ids": [
+        "worker00024_clip008",
+        "worker00024_clip009",
+        "worker00155_clip008",
+        "worker00411_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00024",
+        "worker00155",
+        "worker00411"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.056178576555797256,
+      "focal_only_selected_ids": [
+        "worker00112_clip013",
+        "worker00155_clip005",
+        "worker00311_clip010",
+        "worker00411_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00112",
+        "worker00155",
+        "worker00311",
+        "worker00411"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_67:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 4.316046670608392e-05,
+      "comparison_after_mse": 0.02424991070120126,
+      "comparison_only_selected_ids": [
+        "worker00073_clip005",
+        "worker00120_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00073",
+        "worker00120"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.024206750234495176,
+      "focal_only_selected_ids": [
+        "worker00073_clip002",
+        "worker00090_clip020"
+      ],
+      "focal_only_source_groups": [
+        "worker00073",
+        "worker00090"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00048_clip011",
+        "worker00261_clip003"
+      ],
+      "unit_id": "seed_79:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 4.316046670608392e-05,
+      "comparison_after_mse": 0.02424991070120126,
+      "comparison_only_selected_ids": [
+        "worker00073_clip005",
+        "worker00120_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00073",
+        "worker00120"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.024206750234495176,
+      "focal_only_selected_ids": [
+        "worker00073_clip002",
+        "worker00090_clip020"
+      ],
+      "focal_only_source_groups": [
+        "worker00073",
+        "worker00090"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00048_clip011",
+        "worker00261_clip003"
+      ],
+      "unit_id": "seed_79:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 3.1374950582162275e-05,
+      "comparison_after_mse": 0.03217019305428943,
+      "comparison_only_selected_ids": [
+        "worker00032_clip001",
+        "worker00063_clip014",
+        "worker00153_clip009",
+        "worker00295_clip012"
+      ],
+      "comparison_only_source_groups": [
+        "worker00032",
+        "worker00063",
+        "worker00153",
+        "worker00295"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.032138818103707265,
+      "focal_only_selected_ids": [
+        "worker00092_clip010",
+        "worker00153_clip012",
+        "worker00228_clip017",
+        "worker00401_clip003"
+      ],
+      "focal_only_source_groups": [
+        "worker00092",
+        "worker00153",
+        "worker00228",
+        "worker00401"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_101:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -8.350198237042084e-06,
+      "comparison_after_mse": 0.059901681316932895,
+      "comparison_only_selected_ids": [
+        "worker00041_clip002"
+      ],
+      "comparison_only_source_groups": [
+        "worker00041"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.05991003151516994,
+      "focal_only_selected_ids": [
+        "worker00102_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00102"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00047_clip009",
+        "worker00049_clip007",
+        "worker00049_clip011"
+      ],
+      "unit_id": "seed_17:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -8.350198237042084e-06,
+      "comparison_after_mse": 0.059901681316932895,
+      "comparison_only_selected_ids": [
+        "worker00041_clip002"
+      ],
+      "comparison_only_source_groups": [
+        "worker00041"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.05991003151516994,
+      "focal_only_selected_ids": [
+        "worker00102_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00102"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00047_clip009",
+        "worker00049_clip007",
+        "worker00049_clip011"
+      ],
+      "unit_id": "seed_17:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -8.819385780359235e-07,
+      "comparison_after_mse": 0.05500718570646198,
+      "comparison_only_selected_ids": [
+        "worker00025_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00025"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.055008067645040015,
+      "focal_only_selected_ids": [
+        "worker00153_clip001"
+      ],
+      "focal_only_source_groups": [
+        "worker00153"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00123_clip015",
+        "worker00145_clip014",
+        "worker00163_clip018"
+      ],
+      "unit_id": "seed_67:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -8.819385780359235e-07,
+      "comparison_after_mse": 0.05500718570646198,
+      "comparison_only_selected_ids": [
+        "worker00025_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00025"
+      ],
+      "comparison_policy": "ts2vec_kcenter_v1",
+      "focal_after_mse": 0.055008067645040015,
+      "focal_only_selected_ids": [
+        "worker00153_clip001"
+      ],
+      "focal_only_source_groups": [
+        "worker00153"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00123_clip015",
+        "worker00145_clip014",
+        "worker00163_clip018"
+      ],
+      "unit_id": "seed_67:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.02663384680622971,
+      "comparison_after_mse": 0.09296817139154934,
+      "comparison_only_selected_ids": [
+        "worker00060_clip009",
+        "worker00153_clip009"
+      ],
+      "comparison_only_source_groups": [
+        "worker00060",
+        "worker00153"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.06633432458531963,
+      "focal_only_selected_ids": [
+        "worker00064_clip018",
+        "worker00401_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00064",
+        "worker00401"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00032_clip001",
+        "worker00401_clip003"
+      ],
+      "unit_id": "seed_101:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0231565187916844,
+      "comparison_after_mse": 0.407408579088315,
+      "comparison_only_selected_ids": [
+        "worker00022_clip018",
+        "worker00109_clip013"
+      ],
+      "comparison_only_source_groups": [
+        "worker00022",
+        "worker00109"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.3842520602966306,
+      "focal_only_selected_ids": [
+        "worker00022_clip020",
+        "worker00479_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00022",
+        "worker00479"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00113_clip012",
+        "worker00401_clip003"
+      ],
+      "unit_id": "seed_101:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.00961772674069375,
+      "comparison_after_mse": 0.2088896467497592,
+      "comparison_only_selected_ids": [
+        "worker00026_clip007",
+        "worker00259_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00026",
+        "worker00259"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.19927192000906546,
+      "focal_only_selected_ids": [
+        "worker00031_clip015",
+        "worker00228_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00031",
+        "worker00228"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00018_clip012",
+        "worker00129_clip017"
+      ],
+      "unit_id": "seed_41:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.00961772674069375,
+      "comparison_after_mse": 0.2088896467497592,
+      "comparison_only_selected_ids": [
+        "worker00026_clip007",
+        "worker00259_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00026",
+        "worker00259"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.19927192000906546,
+      "focal_only_selected_ids": [
+        "worker00031_clip015",
+        "worker00228_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00031",
+        "worker00228"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00018_clip012",
+        "worker00129_clip017"
+      ],
+      "unit_id": "seed_41:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.008929010734043674,
+      "comparison_after_mse": 0.20884877554882111,
+      "comparison_only_selected_ids": [
+        "worker00079_clip001"
+      ],
+      "comparison_only_source_groups": [
+        "worker00079"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.19991976481477744,
+      "focal_only_selected_ids": [
+        "worker00200_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00200"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00079_clip005",
+        "worker00259_clip013",
+        "worker00452_clip009"
+      ],
+      "unit_id": "seed_37:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.008929010734043674,
+      "comparison_after_mse": 0.20884877554882111,
+      "comparison_only_selected_ids": [
+        "worker00079_clip001"
+      ],
+      "comparison_only_source_groups": [
+        "worker00079"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.19991976481477744,
+      "focal_only_selected_ids": [
+        "worker00200_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00200"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00079_clip005",
+        "worker00259_clip013",
+        "worker00452_clip009"
+      ],
+      "unit_id": "seed_37:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.006190919016242705,
+      "comparison_after_mse": 0.08091606108262227,
+      "comparison_only_selected_ids": [
+        "worker00342_clip014"
+      ],
+      "comparison_only_source_groups": [
+        "worker00342"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.07472514206637956,
+      "focal_only_selected_ids": [
+        "worker00364_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00364"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00364_clip008",
+        "worker00411_clip010",
+        "worker00479_clip020"
+      ],
+      "unit_id": "seed_37:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.006190919016242705,
+      "comparison_after_mse": 0.08091606108262227,
+      "comparison_only_selected_ids": [
+        "worker00342_clip014"
+      ],
+      "comparison_only_source_groups": [
+        "worker00342"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.07472514206637956,
+      "focal_only_selected_ids": [
+        "worker00364_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00364"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00364_clip008",
+        "worker00411_clip010",
+        "worker00479_clip020"
+      ],
+      "unit_id": "seed_37:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.004375684115034195,
+      "comparison_after_mse": 0.1327868768009273,
+      "comparison_only_selected_ids": [
+        "worker00079_clip016",
+        "worker00090_clip019"
+      ],
+      "comparison_only_source_groups": [
+        "worker00079",
+        "worker00090"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.1284111926858931,
+      "focal_only_selected_ids": [
+        "worker00090_clip001",
+        "worker00122_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00090",
+        "worker00122"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00051_clip017",
+        "worker00067_clip014"
+      ],
+      "unit_id": "seed_97:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.004375684115034195,
+      "comparison_after_mse": 0.1327868768009273,
+      "comparison_only_selected_ids": [
+        "worker00079_clip016",
+        "worker00090_clip019"
+      ],
+      "comparison_only_source_groups": [
+        "worker00079",
+        "worker00090"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.1284111926858931,
+      "focal_only_selected_ids": [
+        "worker00090_clip001",
+        "worker00122_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00090",
+        "worker00122"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00051_clip017",
+        "worker00067_clip014"
+      ],
+      "unit_id": "seed_97:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0018597620134643278,
+      "comparison_after_mse": 0.33148019090719544,
+      "comparison_only_selected_ids": [
+        "worker00037_clip010"
+      ],
+      "comparison_only_source_groups": [
+        "worker00037"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.33333995292065977,
+      "focal_only_selected_ids": [
+        "worker00311_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00311"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00037_clip003",
+        "worker00222_clip003",
+        "worker00235_clip013"
+      ],
+      "unit_id": "seed_23:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0018597620134643278,
+      "comparison_after_mse": 0.33148019090719544,
+      "comparison_only_selected_ids": [
+        "worker00037_clip010"
+      ],
+      "comparison_only_source_groups": [
+        "worker00037"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.33333995292065977,
+      "focal_only_selected_ids": [
+        "worker00311_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00311"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00037_clip003",
+        "worker00222_clip003",
+        "worker00235_clip013"
+      ],
+      "unit_id": "seed_23:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0011451377888917133,
+      "comparison_after_mse": 0.03339308896298624,
+      "comparison_only_selected_ids": [
+        "worker00317_clip018"
+      ],
+      "comparison_only_source_groups": [
+        "worker00317"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.034538226751877954,
+      "focal_only_selected_ids": [
+        "worker00364_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00364"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00119_clip010",
+        "worker00317_clip011",
+        "worker00364_clip014"
+      ],
+      "unit_id": "seed_79:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0011451377888917133,
+      "comparison_after_mse": 0.03339308896298624,
+      "comparison_only_selected_ids": [
+        "worker00317_clip018"
+      ],
+      "comparison_only_source_groups": [
+        "worker00317"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.034538226751877954,
+      "focal_only_selected_ids": [
+        "worker00364_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00364"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00119_clip010",
+        "worker00317_clip011",
+        "worker00364_clip014"
+      ],
+      "unit_id": "seed_79:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00030274791709090226,
+      "comparison_after_mse": 0.03183607018661636,
+      "comparison_only_selected_ids": [
+        "worker00153_clip009",
+        "worker00295_clip012"
+      ],
+      "comparison_only_source_groups": [
+        "worker00153",
+        "worker00295"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.032138818103707265,
+      "focal_only_selected_ids": [
+        "worker00153_clip012",
+        "worker00228_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00153",
+        "worker00228"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00092_clip010",
+        "worker00401_clip003"
+      ],
+      "unit_id": "seed_101:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0002832309936874819,
+      "comparison_after_mse": 0.05238871662946834,
+      "comparison_only_selected_ids": [
+        "worker00323_clip019"
+      ],
+      "comparison_only_source_groups": [
+        "worker00323"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.05267194762315582,
+      "focal_only_selected_ids": [
+        "worker00335_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00335"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00102_clip020",
+        "worker00361_clip008",
+        "worker00368_clip005"
+      ],
+      "unit_id": "seed_53:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0002832309936874819,
+      "comparison_after_mse": 0.05238871662946834,
+      "comparison_only_selected_ids": [
+        "worker00323_clip019"
+      ],
+      "comparison_only_source_groups": [
+        "worker00323"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.05267194762315582,
+      "focal_only_selected_ids": [
+        "worker00335_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00335"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00102_clip020",
+        "worker00361_clip008",
+        "worker00368_clip005"
+      ],
+      "unit_id": "seed_53:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00022370509001864297,
+      "comparison_after_mse": 0.04201981194786342,
+      "comparison_only_selected_ids": [
+        "worker00046_clip003"
+      ],
+      "comparison_only_source_groups": [
+        "worker00046"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.04224351703788206,
+      "focal_only_selected_ids": [
+        "worker00316_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00316"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00030_clip004",
+        "worker00049_clip001",
+        "worker00419_clip011"
+      ],
+      "unit_id": "seed_83:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00022370509001864297,
+      "comparison_after_mse": 0.04201981194786342,
+      "comparison_only_selected_ids": [
+        "worker00046_clip003"
+      ],
+      "comparison_only_source_groups": [
+        "worker00046"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.04224351703788206,
+      "focal_only_selected_ids": [
+        "worker00316_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00316"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00030_clip004",
+        "worker00049_clip001",
+        "worker00419_clip011"
+      ],
+      "unit_id": "seed_83:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0002196736034575375,
+      "comparison_after_mse": 0.08693599201727296,
+      "comparison_only_selected_ids": [
+        "worker00075_clip011",
+        "worker00112_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00075",
+        "worker00112"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.08671631841381543,
+      "focal_only_selected_ids": [
+        "worker00075_clip012",
+        "worker00090_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00075",
+        "worker00090"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00046_clip003",
+        "worker00212_clip012"
+      ],
+      "unit_id": "seed_53:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0002196736034575375,
+      "comparison_after_mse": 0.08693599201727296,
+      "comparison_only_selected_ids": [
+        "worker00075_clip011",
+        "worker00112_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00075",
+        "worker00112"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.08671631841381543,
+      "focal_only_selected_ids": [
+        "worker00075_clip012",
+        "worker00090_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00075",
+        "worker00090"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00046_clip003",
+        "worker00212_clip012"
+      ],
+      "unit_id": "seed_53:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00020591012547223342,
+      "comparison_after_mse": 0.05597266643032502,
+      "comparison_only_selected_ids": [
+        "worker00024_clip008",
+        "worker00126_clip020",
+        "worker00411_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00024",
+        "worker00126",
+        "worker00411"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.056178576555797256,
+      "focal_only_selected_ids": [
+        "worker00112_clip013",
+        "worker00311_clip010",
+        "worker00411_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00112",
+        "worker00311",
+        "worker00411"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00155_clip005"
+      ],
+      "unit_id": "seed_67:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00020591012547223342,
+      "comparison_after_mse": 0.05597266643032502,
+      "comparison_only_selected_ids": [
+        "worker00024_clip008",
+        "worker00126_clip020",
+        "worker00411_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00024",
+        "worker00126",
+        "worker00411"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.056178576555797256,
+      "focal_only_selected_ids": [
+        "worker00112_clip013",
+        "worker00311_clip010",
+        "worker00411_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00112",
+        "worker00311",
+        "worker00411"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00155_clip005"
+      ],
+      "unit_id": "seed_67:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00019960730321773312,
+      "comparison_after_mse": 0.11773514499980348,
+      "comparison_only_selected_ids": [
+        "worker00255_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00255"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.11793475230302121,
+      "focal_only_selected_ids": [
+        "worker00113_clip011"
+      ],
+      "focal_only_source_groups": [
+        "worker00113"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00047_clip015",
+        "worker00156_clip007",
+        "worker00200_clip010"
+      ],
+      "unit_id": "seed_23:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.00019960730321773312,
+      "comparison_after_mse": 0.11773514499980348,
+      "comparison_only_selected_ids": [
+        "worker00255_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00255"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.11793475230302121,
+      "focal_only_selected_ids": [
+        "worker00113_clip011"
+      ],
+      "focal_only_source_groups": [
+        "worker00113"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00047_clip015",
+        "worker00156_clip007",
+        "worker00200_clip010"
+      ],
+      "unit_id": "seed_23:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 6.280709472257853e-05,
+      "comparison_after_mse": 0.024269557329217754,
+      "comparison_only_selected_ids": [
+        "worker00073_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00073"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.024206750234495176,
+      "focal_only_selected_ids": [
+        "worker00073_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00073"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00048_clip011",
+        "worker00090_clip020",
+        "worker00261_clip003"
+      ],
+      "unit_id": "seed_79:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 6.280709472257853e-05,
+      "comparison_after_mse": 0.024269557329217754,
+      "comparison_only_selected_ids": [
+        "worker00073_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00073"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.024206750234495176,
+      "focal_only_selected_ids": [
+        "worker00073_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00073"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00048_clip011",
+        "worker00090_clip020",
+        "worker00261_clip003"
+      ],
+      "unit_id": "seed_79:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -6.158587351112396e-05,
+      "comparison_after_mse": 0.014683529997545604,
+      "comparison_only_selected_ids": [
+        "worker00345_clip010"
+      ],
+      "comparison_only_source_groups": [
+        "worker00345"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.014745115871056728,
+      "focal_only_selected_ids": [
+        "worker00295_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00295"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00335_clip017",
+        "worker00430_clip013",
+        "worker00485_clip008"
+      ],
+      "unit_id": "seed_101:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 8.815275042456383e-06,
+      "comparison_after_mse": 0.10352948991626516,
+      "comparison_only_selected_ids": [
+        "worker00014_clip012"
+      ],
+      "comparison_only_source_groups": [
+        "worker00014"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.1035206746412227,
+      "focal_only_selected_ids": [
+        "worker00316_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00316"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00020_clip013",
+        "worker00351_clip018",
+        "worker00479_clip014"
+      ],
+      "unit_id": "seed_83:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 8.815275042456383e-06,
+      "comparison_after_mse": 0.10352948991626516,
+      "comparison_only_selected_ids": [
+        "worker00014_clip012"
+      ],
+      "comparison_only_source_groups": [
+        "worker00014"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.1035206746412227,
+      "focal_only_selected_ids": [
+        "worker00316_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00316"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00020_clip013",
+        "worker00351_clip018",
+        "worker00479_clip014"
+      ],
+      "unit_id": "seed_83:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 3.1824065741536955e-06,
+      "comparison_after_mse": 0.38143072643946896,
+      "comparison_only_selected_ids": [
+        "worker00254_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00254"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.3814275440328948,
+      "focal_only_selected_ids": [
+        "worker00254_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00254"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00028_clip015",
+        "worker00037_clip011",
+        "worker00065_clip008"
+      ],
+      "unit_id": "seed_97:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 3.1824065741536955e-06,
+      "comparison_after_mse": 0.38143072643946896,
+      "comparison_only_selected_ids": [
+        "worker00254_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00254"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.3814275440328948,
+      "focal_only_selected_ids": [
+        "worker00254_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00254"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00028_clip015",
+        "worker00037_clip011",
+        "worker00065_clip008"
+      ],
+      "unit_id": "seed_97:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 2.552112193313083e-06,
+      "comparison_after_mse": 0.05991258362736325,
+      "comparison_only_selected_ids": [
+        "worker00102_clip017"
+      ],
+      "comparison_only_source_groups": [
+        "worker00102"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.05991003151516994,
+      "focal_only_selected_ids": [
+        "worker00102_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00102"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00047_clip009",
+        "worker00049_clip007",
+        "worker00049_clip011"
+      ],
+      "unit_id": "seed_17:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 2.552112193313083e-06,
+      "comparison_after_mse": 0.05991258362736325,
+      "comparison_only_selected_ids": [
+        "worker00102_clip017"
+      ],
+      "comparison_only_source_groups": [
+        "worker00102"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.05991003151516994,
+      "focal_only_selected_ids": [
+        "worker00102_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00102"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00047_clip009",
+        "worker00049_clip007",
+        "worker00049_clip011"
+      ],
+      "unit_id": "seed_17:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -8.819385772587673e-07,
+      "comparison_after_mse": 0.055007185706462756,
+      "comparison_only_selected_ids": [
+        "worker00025_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00025"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.055008067645040015,
+      "focal_only_selected_ids": [
+        "worker00153_clip001"
+      ],
+      "focal_only_source_groups": [
+        "worker00153"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00123_clip015",
+        "worker00145_clip014",
+        "worker00163_clip018"
+      ],
+      "unit_id": "seed_67:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -8.819385772587673e-07,
+      "comparison_after_mse": 0.055007185706462756,
+      "comparison_only_selected_ids": [
+        "worker00025_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00025"
+      ],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.055008067645040015,
+      "focal_only_selected_ids": [
+        "worker00153_clip001"
+      ],
+      "focal_only_source_groups": [
+        "worker00153"
+      ],
+      "jaccard": 0.6,
+      "shared_selected_ids": [
+        "worker00123_clip015",
+        "worker00145_clip014",
+        "worker00163_clip018"
+      ],
+      "unit_id": "seed_67:episode_003"
+    },
+    {
+      "advantage_direction": "tie",
+      "after_mse_advantage": -1.6653345369377348e-16,
+      "comparison_after_mse": 0.08486595665655923,
+      "comparison_only_selected_ids": [],
+      "comparison_only_source_groups": [],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.0848659566565594,
+      "focal_only_selected_ids": [],
+      "focal_only_source_groups": [],
+      "jaccard": 1.0,
+      "shared_selected_ids": [
+        "worker00129_clip008",
+        "worker00129_clip017",
+        "worker00190_clip017",
+        "worker00261_clip005"
+      ],
+      "unit_id": "seed_41:episode_000"
+    },
+    {
+      "advantage_direction": "tie",
+      "after_mse_advantage": -1.6653345369377348e-16,
+      "comparison_after_mse": 0.08486595665655923,
+      "comparison_only_selected_ids": [],
+      "comparison_only_source_groups": [],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.0848659566565594,
+      "focal_only_selected_ids": [],
+      "focal_only_source_groups": [],
+      "jaccard": 1.0,
+      "shared_selected_ids": [
+        "worker00129_clip008",
+        "worker00129_clip017",
+        "worker00190_clip017",
+        "worker00261_clip005"
+      ],
+      "unit_id": "seed_41:episode_002"
+    },
+    {
+      "advantage_direction": "tie",
+      "after_mse_advantage": 0.0,
+      "comparison_after_mse": 0.08824678998414653,
+      "comparison_only_selected_ids": [],
+      "comparison_only_source_groups": [],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.08824678998414653,
+      "focal_only_selected_ids": [],
+      "focal_only_source_groups": [],
+      "jaccard": 1.0,
+      "shared_selected_ids": [
+        "worker00043_clip006",
+        "worker00112_clip010",
+        "worker00125_clip019",
+        "worker00408_clip012"
+      ],
+      "unit_id": "seed_17:episode_000"
+    },
+    {
+      "advantage_direction": "tie",
+      "after_mse_advantage": 0.0,
+      "comparison_after_mse": 0.08824678998414653,
+      "comparison_only_selected_ids": [],
+      "comparison_only_source_groups": [],
+      "comparison_policy": "submitted_full_replay_v1",
+      "focal_after_mse": 0.08824678998414653,
+      "focal_only_selected_ids": [],
+      "focal_only_source_groups": [],
+      "jaccard": 1.0,
+      "shared_selected_ids": [
+        "worker00043_clip006",
+        "worker00112_clip010",
+        "worker00125_clip019",
+        "worker00408_clip012"
+      ],
+      "unit_id": "seed_17:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.05702509207388326,
+      "comparison_after_mse": 0.2569448568886607,
+      "comparison_only_selected_ids": [
+        "worker00058_clip005",
+        "worker00058_clip008",
+        "worker00077_clip006",
+        "worker00079_clip001"
+      ],
+      "comparison_only_source_groups": [
+        "worker00058",
+        "worker00077",
+        "worker00079"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.19991976481477744,
+      "focal_only_selected_ids": [
+        "worker00079_clip005",
+        "worker00200_clip017",
+        "worker00259_clip013",
+        "worker00452_clip009"
+      ],
+      "focal_only_source_groups": [
+        "worker00079",
+        "worker00200",
+        "worker00259",
+        "worker00452"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_37:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.056960896096469954,
+      "comparison_after_mse": 0.2568806609112474,
+      "comparison_only_selected_ids": [
+        "worker00058_clip005",
+        "worker00058_clip008",
+        "worker00058_clip012",
+        "worker00077_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00058",
+        "worker00077"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.19991976481477744,
+      "focal_only_selected_ids": [
+        "worker00079_clip005",
+        "worker00200_clip017",
+        "worker00259_clip013",
+        "worker00452_clip009"
+      ],
+      "focal_only_source_groups": [
+        "worker00079",
+        "worker00200",
+        "worker00259",
+        "worker00452"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_37:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.04161475646441821,
+      "comparison_after_mse": 0.024719568120901418,
+      "comparison_only_selected_ids": [
+        "worker00022_clip020",
+        "worker00032_clip013",
+        "worker00060_clip001"
+      ],
+      "comparison_only_source_groups": [
+        "worker00022",
+        "worker00032",
+        "worker00060"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.06633432458531963,
+      "focal_only_selected_ids": [
+        "worker00064_clip018",
+        "worker00401_clip003",
+        "worker00401_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00064",
+        "worker00401"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00032_clip001"
+      ],
+      "unit_id": "seed_101:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.03720443179425903,
+      "comparison_after_mse": 0.42145649209088965,
+      "comparison_only_selected_ids": [
+        "worker00006_clip001",
+        "worker00006_clip003",
+        "worker00006_clip013"
+      ],
+      "comparison_only_source_groups": [
+        "worker00006"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.3842520602966306,
+      "focal_only_selected_ids": [
+        "worker00113_clip012",
+        "worker00401_clip003",
+        "worker00479_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00113",
+        "worker00401",
+        "worker00479"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00022_clip020"
+      ],
+      "unit_id": "seed_101:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.020019385509887494,
+      "comparison_after_mse": 0.09474452757626706,
+      "comparison_only_selected_ids": [
+        "worker00058_clip005",
+        "worker00058_clip008",
+        "worker00092_clip013",
+        "worker00104_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00058",
+        "worker00092",
+        "worker00104"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.07472514206637956,
+      "focal_only_selected_ids": [
+        "worker00364_clip004",
+        "worker00364_clip008",
+        "worker00411_clip010",
+        "worker00479_clip020"
+      ],
+      "focal_only_source_groups": [
+        "worker00364",
+        "worker00411",
+        "worker00479"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_37:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.018113706479011976,
+      "comparison_after_mse": 0.09283884854539154,
+      "comparison_only_selected_ids": [
+        "worker00058_clip008",
+        "worker00058_clip012",
+        "worker00092_clip013",
+        "worker00092_clip018"
+      ],
+      "comparison_only_source_groups": [
+        "worker00058",
+        "worker00092"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.07472514206637956,
+      "focal_only_selected_ids": [
+        "worker00364_clip004",
+        "worker00364_clip008",
+        "worker00411_clip010",
+        "worker00479_clip020"
+      ],
+      "focal_only_source_groups": [
+        "worker00364",
+        "worker00411",
+        "worker00479"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_37:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.017961670319525475,
+      "comparison_after_mse": 0.21723359032859094,
+      "comparison_only_selected_ids": [
+        "worker00016_clip016",
+        "worker00016_clip020",
+        "worker00018_clip014",
+        "worker00129_clip008"
+      ],
+      "comparison_only_source_groups": [
+        "worker00016",
+        "worker00018",
+        "worker00129"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.19927192000906546,
+      "focal_only_selected_ids": [
+        "worker00018_clip012",
+        "worker00031_clip015",
+        "worker00129_clip017",
+        "worker00228_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00018",
+        "worker00031",
+        "worker00129",
+        "worker00228"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_41:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.01641686492698577,
+      "comparison_after_mse": 0.07029945348682966,
+      "comparison_only_selected_ids": [
+        "worker00046_clip017",
+        "worker00090_clip006",
+        "worker00090_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00046",
+        "worker00090"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.08671631841381543,
+      "focal_only_selected_ids": [
+        "worker00075_clip012",
+        "worker00090_clip017",
+        "worker00212_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00075",
+        "worker00090",
+        "worker00212"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00046_clip003"
+      ],
+      "unit_id": "seed_53:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.015151272763558904,
+      "comparison_after_mse": 0.21442319277262437,
+      "comparison_only_selected_ids": [
+        "worker00016_clip016",
+        "worker00026_clip007",
+        "worker00031_clip011",
+        "worker00129_clip008"
+      ],
+      "comparison_only_source_groups": [
+        "worker00016",
+        "worker00026",
+        "worker00031",
+        "worker00129"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.19927192000906546,
+      "focal_only_selected_ids": [
+        "worker00018_clip012",
+        "worker00031_clip015",
+        "worker00129_clip017",
+        "worker00228_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00018",
+        "worker00031",
+        "worker00129",
+        "worker00228"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_41:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.014806383004802248,
+      "comparison_after_mse": 0.07190993540901318,
+      "comparison_only_selected_ids": [
+        "worker00046_clip017",
+        "worker00075_clip011"
+      ],
+      "comparison_only_source_groups": [
+        "worker00046",
+        "worker00075"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.08671631841381543,
+      "focal_only_selected_ids": [
+        "worker00090_clip017",
+        "worker00212_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00090",
+        "worker00212"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00046_clip003",
+        "worker00075_clip012"
+      ],
+      "unit_id": "seed_53:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.005976405417248379,
+      "comparison_after_mse": 0.09084236207380778,
+      "comparison_only_selected_ids": [
+        "worker00008_clip009",
+        "worker00008_clip011",
+        "worker00045_clip011",
+        "worker00045_clip017"
+      ],
+      "comparison_only_source_groups": [
+        "worker00008",
+        "worker00045"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.0848659566565594,
+      "focal_only_selected_ids": [
+        "worker00129_clip008",
+        "worker00129_clip017",
+        "worker00190_clip017",
+        "worker00261_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00129",
+        "worker00190",
+        "worker00261"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_41:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.005613536122645868,
+      "comparison_after_mse": 0.3277264167980139,
+      "comparison_only_selected_ids": [
+        "worker00028_clip004",
+        "worker00212_clip009",
+        "worker00222_clip009"
+      ],
+      "comparison_only_source_groups": [
+        "worker00028",
+        "worker00212",
+        "worker00222"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.33333995292065977,
+      "focal_only_selected_ids": [
+        "worker00037_clip003",
+        "worker00222_clip003",
+        "worker00311_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00037",
+        "worker00222",
+        "worker00311"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00235_clip013"
+      ],
+      "unit_id": "seed_23:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.005490845688728596,
+      "comparison_after_mse": 0.32784910723193117,
+      "comparison_only_selected_ids": [
+        "worker00028_clip004",
+        "worker00037_clip010",
+        "worker00212_clip009",
+        "worker00222_clip009"
+      ],
+      "comparison_only_source_groups": [
+        "worker00028",
+        "worker00037",
+        "worker00212",
+        "worker00222"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.33333995292065977,
+      "focal_only_selected_ids": [
+        "worker00037_clip003",
+        "worker00222_clip003",
+        "worker00235_clip013",
+        "worker00311_clip017"
+      ],
+      "focal_only_source_groups": [
+        "worker00037",
+        "worker00222",
+        "worker00235",
+        "worker00311"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_23:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.005212381012041245,
+      "comparison_after_mse": 0.13362357369793434,
+      "comparison_only_selected_ids": [
+        "worker00006_clip002",
+        "worker00028_clip014",
+        "worker00028_clip015"
+      ],
+      "comparison_only_source_groups": [
+        "worker00006",
+        "worker00028"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.1284111926858931,
+      "focal_only_selected_ids": [
+        "worker00067_clip014",
+        "worker00090_clip001",
+        "worker00122_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00067",
+        "worker00090",
+        "worker00122"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00051_clip017"
+      ],
+      "unit_id": "seed_97:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.005004737237080892,
+      "comparison_after_mse": 0.133415929922974,
+      "comparison_only_selected_ids": [
+        "worker00006_clip002",
+        "worker00028_clip003",
+        "worker00028_clip015",
+        "worker00051_clip010"
+      ],
+      "comparison_only_source_groups": [
+        "worker00006",
+        "worker00028",
+        "worker00051"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.1284111926858931,
+      "focal_only_selected_ids": [
+        "worker00051_clip017",
+        "worker00067_clip014",
+        "worker00090_clip001",
+        "worker00122_clip002"
+      ],
+      "focal_only_source_groups": [
+        "worker00051",
+        "worker00067",
+        "worker00090",
+        "worker00122"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_97:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0043742113519193715,
+      "comparison_after_mse": 0.08924016800847877,
+      "comparison_only_selected_ids": [
+        "worker00008_clip009",
+        "worker00008_clip011",
+        "worker00045_clip017"
+      ],
+      "comparison_only_source_groups": [
+        "worker00008",
+        "worker00045"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.0848659566565594,
+      "focal_only_selected_ids": [
+        "worker00129_clip017",
+        "worker00190_clip017",
+        "worker00261_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00129",
+        "worker00190",
+        "worker00261"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00129_clip008"
+      ],
+      "unit_id": "seed_41:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.003190614517481448,
+      "comparison_after_mse": 0.05586256214063727,
+      "comparison_only_selected_ids": [
+        "worker00093_clip001",
+        "worker00093_clip004",
+        "worker00112_clip015"
+      ],
+      "comparison_only_source_groups": [
+        "worker00093",
+        "worker00112"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.05267194762315582,
+      "focal_only_selected_ids": [
+        "worker00335_clip018",
+        "worker00361_clip008",
+        "worker00368_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00335",
+        "worker00361",
+        "worker00368"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00102_clip020"
+      ],
+      "unit_id": "seed_53:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.002791437821705531,
+      "comparison_after_mse": 0.05546338544486135,
+      "comparison_only_selected_ids": [
+        "worker00093_clip004",
+        "worker00102_clip014",
+        "worker00112_clip005",
+        "worker00112_clip015"
+      ],
+      "comparison_only_source_groups": [
+        "worker00093",
+        "worker00102",
+        "worker00112"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.05267194762315582,
+      "focal_only_selected_ids": [
+        "worker00102_clip020",
+        "worker00335_clip018",
+        "worker00361_clip008",
+        "worker00368_clip005"
+      ],
+      "focal_only_source_groups": [
+        "worker00102",
+        "worker00335",
+        "worker00361",
+        "worker00368"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_53:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.002560333078098687,
+      "comparison_after_mse": 0.017305448949155415,
+      "comparison_only_selected_ids": [
+        "worker00060_clip005",
+        "worker00068_clip013",
+        "worker00335_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00060",
+        "worker00068",
+        "worker00335"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.014745115871056728,
+      "focal_only_selected_ids": [
+        "worker00335_clip017",
+        "worker00430_clip013",
+        "worker00485_clip008"
+      ],
+      "focal_only_source_groups": [
+        "worker00335",
+        "worker00430",
+        "worker00485"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00295_clip004"
+      ],
+      "unit_id": "seed_101:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0009089797075344519,
+      "comparison_after_mse": 0.38233652374042926,
+      "comparison_only_selected_ids": [
+        "worker00028_clip003",
+        "worker00065_clip007"
+      ],
+      "comparison_only_source_groups": [
+        "worker00028",
+        "worker00065"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.3814275440328948,
+      "focal_only_selected_ids": [
+        "worker00037_clip011",
+        "worker00254_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00037",
+        "worker00254"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00028_clip015",
+        "worker00065_clip008"
+      ],
+      "unit_id": "seed_97:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0008003773598492386,
+      "comparison_after_mse": 0.11713437494317197,
+      "comparison_only_selected_ids": [
+        "worker00047_clip008",
+        "worker00047_clip020",
+        "worker00113_clip007",
+        "worker00156_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00047",
+        "worker00113",
+        "worker00156"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.11793475230302121,
+      "focal_only_selected_ids": [
+        "worker00047_clip015",
+        "worker00113_clip011",
+        "worker00156_clip007",
+        "worker00200_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00047",
+        "worker00113",
+        "worker00156",
+        "worker00200"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_23:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0007039894906006594,
+      "comparison_after_mse": 0.10422466413182337,
+      "comparison_only_selected_ids": [
+        "worker00014_clip004",
+        "worker00014_clip012",
+        "worker00020_clip018",
+        "worker00038_clip019"
+      ],
+      "comparison_only_source_groups": [
+        "worker00014",
+        "worker00020",
+        "worker00038"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.1035206746412227,
+      "focal_only_selected_ids": [
+        "worker00020_clip013",
+        "worker00316_clip014",
+        "worker00351_clip018",
+        "worker00479_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00020",
+        "worker00316",
+        "worker00351",
+        "worker00479"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_83:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0006785902320929627,
+      "comparison_after_mse": 0.11725616207092825,
+      "comparison_only_selected_ids": [
+        "worker00113_clip007",
+        "worker00156_clip020",
+        "worker00200_clip016"
+      ],
+      "comparison_only_source_groups": [
+        "worker00113",
+        "worker00156",
+        "worker00200"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.11793475230302121,
+      "focal_only_selected_ids": [
+        "worker00047_clip015",
+        "worker00156_clip007",
+        "worker00200_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00047",
+        "worker00156",
+        "worker00200"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00113_clip011"
+      ],
+      "unit_id": "seed_23:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0006413379801999061,
+      "comparison_after_mse": 0.03278015608390717,
+      "comparison_only_selected_ids": [
+        "worker00006_clip001",
+        "worker00006_clip003",
+        "worker00032_clip013",
+        "worker00063_clip014"
+      ],
+      "comparison_only_source_groups": [
+        "worker00006",
+        "worker00032",
+        "worker00063"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.032138818103707265,
+      "focal_only_selected_ids": [
+        "worker00092_clip010",
+        "worker00153_clip012",
+        "worker00228_clip017",
+        "worker00401_clip003"
+      ],
+      "focal_only_source_groups": [
+        "worker00092",
+        "worker00153",
+        "worker00228",
+        "worker00401"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_101:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0006075358550219206,
+      "comparison_after_mse": 0.03393069089685603,
+      "comparison_only_selected_ids": [
+        "worker00006_clip009",
+        "worker00006_clip015",
+        "worker00030_clip014",
+        "worker00077_clip006"
+      ],
+      "comparison_only_source_groups": [
+        "worker00006",
+        "worker00030",
+        "worker00077"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.034538226751877954,
+      "focal_only_selected_ids": [
+        "worker00119_clip010",
+        "worker00317_clip011",
+        "worker00364_clip002",
+        "worker00364_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00119",
+        "worker00317",
+        "worker00364"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_79:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0005260115262106166,
+      "comparison_after_mse": 0.060436043041380554,
+      "comparison_only_selected_ids": [
+        "worker00041_clip002",
+        "worker00059_clip001",
+        "worker00059_clip015"
+      ],
+      "comparison_only_source_groups": [
+        "worker00041",
+        "worker00059"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.05991003151516994,
+      "focal_only_selected_ids": [
+        "worker00049_clip007",
+        "worker00049_clip011",
+        "worker00102_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00049",
+        "worker00102"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00047_clip009"
+      ],
+      "unit_id": "seed_17:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0005051858248754648,
+      "comparison_after_mse": 0.088751975809022,
+      "comparison_only_selected_ids": [
+        "worker00012_clip007",
+        "worker00012_clip014",
+        "worker00040_clip014",
+        "worker00068_clip001"
+      ],
+      "comparison_only_source_groups": [
+        "worker00012",
+        "worker00040",
+        "worker00068"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.08824678998414653,
+      "focal_only_selected_ids": [
+        "worker00043_clip006",
+        "worker00112_clip010",
+        "worker00125_clip019",
+        "worker00408_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00043",
+        "worker00112",
+        "worker00125",
+        "worker00408"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_17:episode_000"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0004902262712560765,
+      "comparison_after_mse": 0.04175329076662598,
+      "comparison_only_selected_ids": [
+        "worker00030_clip003",
+        "worker00046_clip003",
+        "worker00046_clip017",
+        "worker00133_clip013"
+      ],
+      "comparison_only_source_groups": [
+        "worker00030",
+        "worker00046",
+        "worker00133"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.04224351703788206,
+      "focal_only_selected_ids": [
+        "worker00030_clip004",
+        "worker00049_clip001",
+        "worker00316_clip014",
+        "worker00419_clip011"
+      ],
+      "focal_only_source_groups": [
+        "worker00030",
+        "worker00049",
+        "worker00316",
+        "worker00419"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_83:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.00040433571931610193,
+      "comparison_after_mse": 0.024611085953811278,
+      "comparison_only_selected_ids": [
+        "worker00090_clip009",
+        "worker00090_clip011",
+        "worker00119_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00090",
+        "worker00119"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.024206750234495176,
+      "focal_only_selected_ids": [
+        "worker00048_clip011",
+        "worker00073_clip002",
+        "worker00261_clip003"
+      ],
+      "focal_only_source_groups": [
+        "worker00048",
+        "worker00073",
+        "worker00261"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00090_clip020"
+      ],
+      "unit_id": "seed_79:episode_002"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0003897804565988691,
+      "comparison_after_mse": 0.034148446295279085,
+      "comparison_only_selected_ids": [
+        "worker00030_clip005",
+        "worker00030_clip014",
+        "worker00041_clip013",
+        "worker00077_clip002"
+      ],
+      "comparison_only_source_groups": [
+        "worker00030",
+        "worker00041",
+        "worker00077"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.034538226751877954,
+      "focal_only_selected_ids": [
+        "worker00119_clip010",
+        "worker00317_clip011",
+        "worker00364_clip002",
+        "worker00364_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00119",
+        "worker00317",
+        "worker00364"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_79:episode_003"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -0.0003330313330407314,
+      "comparison_after_mse": 0.10318764330818198,
+      "comparison_only_selected_ids": [
+        "worker00014_clip012",
+        "worker00014_clip015",
+        "worker00020_clip018"
+      ],
+      "comparison_only_source_groups": [
+        "worker00014",
+        "worker00020"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.1035206746412227,
+      "focal_only_selected_ids": [
+        "worker00316_clip014",
+        "worker00351_clip018",
+        "worker00479_clip014"
+      ],
+      "focal_only_source_groups": [
+        "worker00316",
+        "worker00351",
+        "worker00479"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00020_clip013"
+      ],
+      "unit_id": "seed_83:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0002833885418526451,
+      "comparison_after_mse": 0.02449013877634782,
+      "comparison_only_selected_ids": [
+        "worker00090_clip009",
+        "worker00119_clip004"
+      ],
+      "comparison_only_source_groups": [
+        "worker00090",
+        "worker00119"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.024206750234495176,
+      "focal_only_selected_ids": [
+        "worker00073_clip002",
+        "worker00261_clip003"
+      ],
+      "focal_only_source_groups": [
+        "worker00073",
+        "worker00261"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00048_clip011",
+        "worker00090_clip020"
+      ],
+      "unit_id": "seed_79:episode_000"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0002578629781922262,
+      "comparison_after_mse": 0.042501380016074286,
+      "comparison_only_selected_ids": [
+        "worker00043_clip002",
+        "worker00046_clip013",
+        "worker00133_clip007",
+        "worker00133_clip013"
+      ],
+      "comparison_only_source_groups": [
+        "worker00043",
+        "worker00046",
+        "worker00133"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.04224351703788206,
+      "focal_only_selected_ids": [
+        "worker00030_clip004",
+        "worker00049_clip001",
+        "worker00316_clip014",
+        "worker00419_clip011"
+      ],
+      "focal_only_source_groups": [
+        "worker00030",
+        "worker00049",
+        "worker00316",
+        "worker00419"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_83:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.00014159407530629775,
+      "comparison_after_mse": 0.056320170631103554,
+      "comparison_only_selected_ids": [
+        "worker00019_clip014",
+        "worker00024_clip010",
+        "worker00123_clip020"
+      ],
+      "comparison_only_source_groups": [
+        "worker00019",
+        "worker00024",
+        "worker00123"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.056178576555797256,
+      "focal_only_selected_ids": [
+        "worker00155_clip005",
+        "worker00311_clip010",
+        "worker00411_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00155",
+        "worker00311",
+        "worker00411"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00112_clip013"
+      ],
+      "unit_id": "seed_67:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.00010910603786107309,
+      "comparison_after_mse": 0.3815366500707559,
+      "comparison_only_selected_ids": [
+        "worker00028_clip003",
+        "worker00028_clip014"
+      ],
+      "comparison_only_source_groups": [
+        "worker00028"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.3814275440328948,
+      "focal_only_selected_ids": [
+        "worker00028_clip015",
+        "worker00254_clip010"
+      ],
+      "focal_only_source_groups": [
+        "worker00028",
+        "worker00254"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00037_clip011",
+        "worker00065_clip008"
+      ],
+      "unit_id": "seed_97:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 0.0001056487531961442,
+      "comparison_after_mse": 0.08835243873734268,
+      "comparison_only_selected_ids": [
+        "worker00012_clip007",
+        "worker00040_clip004",
+        "worker00068_clip001",
+        "worker00068_clip003"
+      ],
+      "comparison_only_source_groups": [
+        "worker00012",
+        "worker00040",
+        "worker00068"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.08824678998414653,
+      "focal_only_selected_ids": [
+        "worker00043_clip006",
+        "worker00112_clip010",
+        "worker00125_clip019",
+        "worker00408_clip012"
+      ],
+      "focal_only_source_groups": [
+        "worker00043",
+        "worker00112",
+        "worker00125",
+        "worker00408"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_17:episode_002"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 5.76177770602454e-05,
+      "comparison_after_mse": 0.05996764929223018,
+      "comparison_only_selected_ids": [
+        "worker00041_clip008",
+        "worker00047_clip003"
+      ],
+      "comparison_only_source_groups": [
+        "worker00041",
+        "worker00047"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.05991003151516994,
+      "focal_only_selected_ids": [
+        "worker00049_clip011",
+        "worker00102_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00049",
+        "worker00102"
+      ],
+      "jaccard": 0.3333333333333333,
+      "shared_selected_ids": [
+        "worker00047_clip009",
+        "worker00049_clip007"
+      ],
+      "unit_id": "seed_17:episode_001"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 4.487378704134959e-05,
+      "comparison_after_mse": 0.055052941432081365,
+      "comparison_only_selected_ids": [
+        "worker00025_clip017",
+        "worker00025_clip020",
+        "worker00038_clip019",
+        "worker00123_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00025",
+        "worker00038",
+        "worker00123"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.055008067645040015,
+      "focal_only_selected_ids": [
+        "worker00123_clip015",
+        "worker00145_clip014",
+        "worker00153_clip001",
+        "worker00163_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00123",
+        "worker00145",
+        "worker00153",
+        "worker00163"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_67:episode_003"
+    },
+    {
+      "advantage_direction": "focal_lower_mse",
+      "after_mse_advantage": 4.321063134372222e-05,
+      "comparison_after_mse": 0.05505127827638374,
+      "comparison_only_selected_ids": [
+        "worker00025_clip017",
+        "worker00025_clip020",
+        "worker00038_clip006",
+        "worker00123_clip005"
+      ],
+      "comparison_only_source_groups": [
+        "worker00025",
+        "worker00038",
+        "worker00123"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.055008067645040015,
+      "focal_only_selected_ids": [
+        "worker00123_clip015",
+        "worker00145_clip014",
+        "worker00153_clip001",
+        "worker00163_clip018"
+      ],
+      "focal_only_source_groups": [
+        "worker00123",
+        "worker00145",
+        "worker00153",
+        "worker00163"
+      ],
+      "jaccard": 0.0,
+      "shared_selected_ids": [],
+      "unit_id": "seed_67:episode_001"
+    },
+    {
+      "advantage_direction": "comparison_lower_mse",
+      "after_mse_advantage": -3.7619798780412494e-05,
+      "comparison_after_mse": 0.056140956757016844,
+      "comparison_only_selected_ids": [
+        "worker00112_clip002",
+        "worker00123_clip005",
+        "worker00123_clip015"
+      ],
+      "comparison_only_source_groups": [
+        "worker00112",
+        "worker00123"
+      ],
+      "comparison_policy": "quality_stratified_random_v1",
+      "focal_after_mse": 0.056178576555797256,
+      "focal_only_selected_ids": [
+        "worker00155_clip005",
+        "worker00311_clip010",
+        "worker00411_clip004"
+      ],
+      "focal_only_source_groups": [
+        "worker00155",
+        "worker00311",
+        "worker00411"
+      ],
+      "jaccard": 0.14285714285714285,
+      "shared_selected_ids": [
+        "worker00112_clip013"
+      ],
+      "unit_id": "seed_67:episode_000"
+    }
+  ],
+  "input": {
+    "budget_k": 4,
+    "comparison_policies": [
+      "ts2vec_kcenter_v1",
+      "submitted_full_replay_v1",
+      "quality_stratified_random_v1"
+    ],
+    "focal_policy": "window_kcenter_v1",
+    "policies": [
+      "quality_only_v1",
+      "quality_stratified_random_v1",
+      "submitted_full_replay_v1",
+      "ts2vec_kcenter_v1",
+      "window_kcenter_v1"
+    ],
+    "run_input": "artifacts/offline_active_benchmark/gcp_runs/20260509_downstream_forecast_survivors_10seed_locked/gcp_downloads/survivors-locked-20260509T1515Z/results_survivors-locked-20260509T1515Z.tgz",
+    "seed_count": 10,
+    "seed_names": [
+      "seed_101",
+      "seed_17",
+      "seed_23",
+      "seed_37",
+      "seed_41",
+      "seed_53",
+      "seed_67",
+      "seed_79",
+      "seed_83",
+      "seed_97"
+    ],
+    "source_kind": "tar_archive",
+    "unit_count": 40
+  },
+  "pairwise_selection_contrasts": [
+    {
+      "exact_match_rate": 0.025,
+      "highlight": false,
+      "mean_after_mse_advantage_a_over_b": -0.0031183638554709557,
+      "mean_after_mse_delta_a_minus_b": 0.0031183638554709557,
+      "mean_jaccard": 0.40738095238095234,
+      "mean_jaccard_when_policy_a_wins": 0.3664399092970521,
+      "mean_jaccard_when_policy_b_wins": 0.4222222222222222,
+      "mean_policy_a_only_clip_count": 1.775,
+      "mean_policy_b_only_clip_count": 1.775,
+      "mean_shared_clip_count": 2.225,
+      "mean_source_jaccard": 0.5783333333333334,
+      "paired_unit_count": 40,
+      "policy_a": "quality_only_v1",
+      "policy_a_lower_mse_count": 21,
+      "policy_b": "quality_stratified_random_v1",
+      "policy_b_lower_mse_count": 18,
+      "tie_count": 1,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 5,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00055"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00073"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00030"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00022"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00047"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00018"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00102"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 7,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00123"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00077"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00068"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00112"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00020"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00133"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00065"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00032"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.0,
+      "highlight": false,
+      "mean_after_mse_advantage_a_over_b": -0.004833110537767954,
+      "mean_after_mse_delta_a_minus_b": 0.004833110537767954,
+      "mean_jaccard": 0.10952380952380952,
+      "mean_jaccard_when_policy_a_wins": 0.20879120879120877,
+      "mean_jaccard_when_policy_b_wins": 0.06172839506172839,
+      "mean_policy_a_only_clip_count": 3.3,
+      "mean_policy_b_only_clip_count": 3.3,
+      "mean_shared_clip_count": 0.7,
+      "mean_source_jaccard": 0.19583333333333333,
+      "paired_unit_count": 40,
+      "policy_a": "quality_only_v1",
+      "policy_a_lower_mse_count": 13,
+      "policy_b": "submitted_full_replay_v1",
+      "policy_b_lower_mse_count": 27,
+      "tie_count": 0,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 14,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 10,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 10,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00047"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00030"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00012"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00041"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00113"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00055"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00008"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00112"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00259"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00261"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.0,
+      "highlight": false,
+      "mean_after_mse_advantage_a_over_b": -0.004847189099347301,
+      "mean_after_mse_delta_a_minus_b": 0.004847189099347301,
+      "mean_jaccard": 0.10714285714285714,
+      "mean_jaccard_when_policy_a_wins": 0.1369047619047619,
+      "mean_jaccard_when_policy_b_wins": 0.0873015873015873,
+      "mean_policy_a_only_clip_count": 3.3,
+      "mean_policy_b_only_clip_count": 3.3,
+      "mean_shared_clip_count": 0.7,
+      "mean_source_jaccard": 0.23583333333333334,
+      "paired_unit_count": 40,
+      "policy_a": "quality_only_v1",
+      "policy_a_lower_mse_count": 16,
+      "policy_b": "ts2vec_kcenter_v1",
+      "policy_b_lower_mse_count": 24,
+      "tie_count": 0,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 14,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 12,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 10,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00047"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00012"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00113"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00055"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00008"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00032"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00031"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00342"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00156"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.0,
+      "highlight": false,
+      "mean_after_mse_advantage_a_over_b": -0.007343368125184497,
+      "mean_after_mse_delta_a_minus_b": 0.007343368125184497,
+      "mean_jaccard": 0.07976190476190476,
+      "mean_jaccard_when_policy_a_wins": 0.1372549019607843,
+      "mean_jaccard_when_policy_b_wins": 0.037267080745341616,
+      "mean_policy_a_only_clip_count": 3.475,
+      "mean_policy_b_only_clip_count": 3.475,
+      "mean_shared_clip_count": 0.525,
+      "mean_source_jaccard": 0.17375000000000002,
+      "paired_unit_count": 40,
+      "policy_a": "quality_only_v1",
+      "policy_a_lower_mse_count": 17,
+      "policy_b": "window_kcenter_v1",
+      "policy_b_lower_mse_count": 23,
+      "tie_count": 0,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 14,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 10,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 10,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00047"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00025"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00030"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00014"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00022"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00012"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 8,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00401"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.0,
+      "highlight": false,
+      "mean_after_mse_advantage_a_over_b": -0.0017147466822969991,
+      "mean_after_mse_delta_a_minus_b": 0.0017147466822969991,
+      "mean_jaccard": 0.10357142857142856,
+      "mean_jaccard_when_policy_a_wins": 0.15343915343915343,
+      "mean_jaccard_when_policy_b_wins": 0.0890937019969278,
+      "mean_policy_a_only_clip_count": 3.325,
+      "mean_policy_b_only_clip_count": 3.325,
+      "mean_shared_clip_count": 0.675,
+      "mean_source_jaccard": 0.2450595238095238,
+      "paired_unit_count": 40,
+      "policy_a": "quality_stratified_random_v1",
+      "policy_a_lower_mse_count": 9,
+      "policy_b": "submitted_full_replay_v1",
+      "policy_b_lower_mse_count": 31,
+      "tie_count": 0,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 9,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00112"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00123"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00068"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00077"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00008"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00046"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 5,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00112"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00259"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00261"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.0,
+      "highlight": false,
+      "mean_after_mse_advantage_a_over_b": -0.001728825243876346,
+      "mean_after_mse_delta_a_minus_b": 0.001728825243876346,
+      "mean_jaccard": 0.11785714285714285,
+      "mean_jaccard_when_policy_a_wins": 0.1282051282051282,
+      "mean_jaccard_when_policy_b_wins": 0.1128747795414462,
+      "mean_policy_a_only_clip_count": 3.225,
+      "mean_policy_b_only_clip_count": 3.225,
+      "mean_shared_clip_count": 0.775,
+      "mean_source_jaccard": 0.25333333333333335,
+      "paired_unit_count": 40,
+      "policy_a": "quality_stratified_random_v1",
+      "policy_a_lower_mse_count": 13,
+      "policy_b": "ts2vec_kcenter_v1",
+      "policy_b_lower_mse_count": 27,
+      "tie_count": 0,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 10,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 8,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 7,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00112"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00123"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00077"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00008"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00030"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 5,
+          "source_group_id": "worker00032"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00031"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00342"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00156"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00024"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.0,
+      "highlight": true,
+      "mean_after_mse_advantage_a_over_b": -0.0042250042697135415,
+      "mean_after_mse_delta_a_minus_b": 0.0042250042697135415,
+      "mean_jaccard": 0.09166666666666666,
+      "mean_jaccard_when_policy_a_wins": 0.0992063492063492,
+      "mean_jaccard_when_policy_b_wins": 0.08843537414965986,
+      "mean_policy_a_only_clip_count": 3.4,
+      "mean_policy_b_only_clip_count": 3.4,
+      "mean_shared_clip_count": 0.6,
+      "mean_source_jaccard": 0.2356547619047619,
+      "paired_unit_count": 40,
+      "policy_a": "quality_stratified_random_v1",
+      "policy_a_lower_mse_count": 12,
+      "policy_b": "window_kcenter_v1",
+      "policy_b_lower_mse_count": 28,
+      "tie_count": 0,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 9,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00123"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00068"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00077"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00008"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00112"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 8,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00401"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00261"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00090"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.05,
+      "highlight": true,
+      "mean_after_mse_advantage_a_over_b": -1.4078561579347139e-05,
+      "mean_after_mse_delta_a_minus_b": 1.4078561579347139e-05,
+      "mean_jaccard": 0.3761904761904762,
+      "mean_jaccard_when_policy_a_wins": 0.2531328320802005,
+      "mean_jaccard_when_policy_b_wins": 0.43358395989974935,
+      "mean_policy_a_only_clip_count": 1.95,
+      "mean_policy_b_only_clip_count": 1.95,
+      "mean_shared_clip_count": 2.05,
+      "mean_source_jaccard": 0.5120833333333333,
+      "paired_unit_count": 40,
+      "policy_a": "submitted_full_replay_v1",
+      "policy_a_lower_mse_count": 19,
+      "policy_b": "ts2vec_kcenter_v1",
+      "policy_b_lower_mse_count": 19,
+      "tie_count": 2,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 4,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00317"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00401"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00125"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00408"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00156"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00222"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00032"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00031"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00342"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00156"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00068"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00041"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00207"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00222"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00235"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00375"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.1,
+      "highlight": true,
+      "mean_after_mse_advantage_a_over_b": -0.002510257587416542,
+      "mean_after_mse_delta_a_minus_b": 0.002510257587416542,
+      "mean_jaccard": 0.5571428571428572,
+      "mean_jaccard_when_policy_a_wins": 0.5261904761904762,
+      "mean_jaccard_when_policy_b_wins": 0.4933333333333333,
+      "mean_policy_a_only_clip_count": 1.225,
+      "mean_policy_b_only_clip_count": 1.225,
+      "mean_shared_clip_count": 2.775,
+      "mean_source_jaccard": 0.7108333333333333,
+      "paired_unit_count": 40,
+      "policy_a": "submitted_full_replay_v1",
+      "policy_a_lower_mse_count": 16,
+      "policy_b": "window_kcenter_v1",
+      "policy_b_lower_mse_count": 20,
+      "tie_count": 4,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 4,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00153"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00255"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00342"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00026"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00259"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00323"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00075"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00316"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00153"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00228"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00113"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00031"
+        }
+      ]
+    },
+    {
+      "exact_match_rate": 0.0,
+      "highlight": true,
+      "mean_after_mse_advantage_a_over_b": -0.002496179025837195,
+      "mean_after_mse_delta_a_minus_b": 0.002496179025837195,
+      "mean_jaccard": 0.22547619047619047,
+      "mean_jaccard_when_policy_a_wins": 0.25476190476190474,
+      "mean_jaccard_when_policy_b_wins": 0.18154761904761904,
+      "mean_policy_a_only_clip_count": 2.65,
+      "mean_policy_b_only_clip_count": 2.65,
+      "mean_shared_clip_count": 1.35,
+      "mean_source_jaccard": 0.38821428571428573,
+      "paired_unit_count": 40,
+      "policy_a": "ts2vec_kcenter_v1",
+      "policy_a_lower_mse_count": 24,
+      "policy_b": "window_kcenter_v1",
+      "policy_b_lower_mse_count": 16,
+      "tie_count": 0,
+      "top_policy_a_only_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00032"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00342"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00156"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00024"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00060"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00109"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00031"
+        },
+        {
+          "count": 2,
+          "source_group_id": "worker00068"
+        }
+      ],
+      "top_policy_b_only_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00316"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00153"
+        },
+        {
+          "count": 3,
+          "source_group_id": "worker00228"
+        }
+      ]
+    }
+  ],
+  "policy_outcome_profiles": [
+    {
+      "best_or_tie_count": 11,
+      "mean_after_mse": 0.11859361426601053,
+      "mean_relative_mse_reduction": 0.0863953876325966,
+      "median_after_mse": 0.0848659566565594,
+      "policy_id": "window_kcenter_v1",
+      "row_count": 40
+    },
+    {
+      "best_or_tie_count": 12,
+      "mean_after_mse": 0.12108979329184773,
+      "mean_relative_mse_reduction": 0.07883314315159659,
+      "median_after_mse": 0.0812802703085392,
+      "policy_id": "ts2vec_kcenter_v1",
+      "row_count": 40
+    },
+    {
+      "best_or_tie_count": 9,
+      "mean_after_mse": 0.12110387185342708,
+      "mean_relative_mse_reduction": 0.07878182885929998,
+      "median_after_mse": 0.0859009743369161,
+      "policy_id": "submitted_full_replay_v1",
+      "row_count": 40
+    },
+    {
+      "best_or_tie_count": 4,
+      "mean_after_mse": 0.12281861853572408,
+      "mean_relative_mse_reduction": 0.06106380579616372,
+      "median_after_mse": 0.08855220727318233,
+      "policy_id": "quality_stratified_random_v1",
+      "row_count": 40
+    },
+    {
+      "best_or_tie_count": 8,
+      "mean_after_mse": 0.12593698239119502,
+      "mean_relative_mse_reduction": 0.049101766890640317,
+      "median_after_mse": 0.08868444775261022,
+      "policy_id": "quality_only_v1",
+      "row_count": 40
+    }
+  ],
+  "policy_selection_profiles": [
+    {
+      "artifact_gate_pass_rate": 1.0,
+      "duplicate_source_batch_rate": 1.0,
+      "mean_artifact_score": 0.0,
+      "mean_largest_source_group_fraction": 0.575,
+      "mean_quality_score": 1.0,
+      "mean_rank_index": 2.5,
+      "mean_unique_source_fraction": 0.5625,
+      "policy_id": "quality_only_v1",
+      "selected_row_count": 160,
+      "top_source_groups": [
+        {
+          "count": 14,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 12,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 10,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 8,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 8,
+          "source_group_id": "worker00047"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00025"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00030"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00014"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00022"
+        }
+      ],
+      "unique_selected_clip_count": 77,
+      "unique_selected_clip_fraction": 0.48125,
+      "unique_source_group_count": 37,
+      "unit_count": 40,
+      "valid_rate": 1.0
+    },
+    {
+      "artifact_gate_pass_rate": 1.0,
+      "duplicate_source_batch_rate": 0.875,
+      "mean_artifact_score": 0.0,
+      "mean_largest_source_group_fraction": 0.4875,
+      "mean_quality_score": 1.0,
+      "mean_rank_index": 2.5,
+      "mean_unique_source_fraction": 0.71875,
+      "policy_id": "quality_stratified_random_v1",
+      "selected_row_count": 160,
+      "top_source_groups": [
+        {
+          "count": 10,
+          "source_group_id": "worker00028"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00006"
+        },
+        {
+          "count": 9,
+          "source_group_id": "worker00058"
+        },
+        {
+          "count": 7,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 7,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00112"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00123"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00047"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00068"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00008"
+        }
+      ],
+      "unique_selected_clip_count": 106,
+      "unique_selected_clip_fraction": 0.6625,
+      "unique_source_group_count": 54,
+      "unit_count": 40,
+      "valid_rate": 1.0
+    },
+    {
+      "artifact_gate_pass_rate": 1.0,
+      "duplicate_source_batch_rate": 0.25,
+      "mean_artifact_score": 0.0010266036336670375,
+      "mean_largest_source_group_fraction": 0.3125,
+      "mean_quality_score": 0.9928000248696225,
+      "mean_rank_index": 2.5,
+      "mean_unique_source_fraction": 0.9375,
+      "policy_id": "submitted_full_replay_v1",
+      "selected_row_count": 160,
+      "top_source_groups": [
+        {
+          "count": 6,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00037"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00079"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00261"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00259"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00102"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00046"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00112"
+        }
+      ],
+      "unique_selected_clip_count": 83,
+      "unique_selected_clip_fraction": 0.51875,
+      "unique_source_group_count": 66,
+      "unit_count": 40,
+      "valid_rate": 1.0
+    },
+    {
+      "artifact_gate_pass_rate": 1.0,
+      "duplicate_source_batch_rate": 0.2,
+      "mean_artifact_score": 0.0008400537634408602,
+      "mean_largest_source_group_fraction": 0.3,
+      "mean_quality_score": 0.995014486090774,
+      "mean_rank_index": 2.5,
+      "mean_unique_source_fraction": 0.95,
+      "policy_id": "ts2vec_kcenter_v1",
+      "selected_row_count": 160,
+      "top_source_groups": [
+        {
+          "count": 7,
+          "source_group_id": "worker00032"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00156"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00031"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00024"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00047"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00200"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00342"
+        }
+      ],
+      "unique_selected_clip_count": 87,
+      "unique_selected_clip_fraction": 0.54375,
+      "unique_source_group_count": 69,
+      "unit_count": 40,
+      "valid_rate": 1.0
+    },
+    {
+      "artifact_gate_pass_rate": 1.0,
+      "duplicate_source_batch_rate": 0.225,
+      "mean_artifact_score": 0.0011946143863552094,
+      "mean_largest_source_group_fraction": 0.30625,
+      "mean_quality_score": 0.9940269280682239,
+      "mean_rank_index": 2.5,
+      "mean_unique_source_fraction": 0.94375,
+      "policy_id": "window_kcenter_v1",
+      "selected_row_count": 160,
+      "top_source_groups": [
+        {
+          "count": 8,
+          "source_group_id": "worker00364"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00129"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00090"
+        },
+        {
+          "count": 6,
+          "source_group_id": "worker00049"
+        },
+        {
+          "count": 5,
+          "source_group_id": "worker00479"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00401"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00261"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00411"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00112"
+        },
+        {
+          "count": 4,
+          "source_group_id": "worker00311"
+        }
+      ],
+      "unique_selected_clip_count": 84,
+      "unique_selected_clip_fraction": 0.525,
+      "unique_source_group_count": 61,
+      "unit_count": 40,
+      "valid_rate": 1.0
+    }
+  ],
+  "read": [
+    "This is a selection-mechanism audit: it explains selected-set behavior, not a new policy decision.",
+    "All summaries use already-selected rows and downstream forecast rows; no target features are used for selection.",
+    "`window_kcenter_v1` vs `ts2vec_kcenter_v1` has largely different selected clips at K with mean clip Jaccard `0.225476`.",
+    "`window_kcenter_v1` vs `submitted_full_replay_v1` has partially overlapping selected clips at K with mean clip Jaccard `0.557143`.",
+    "`window_kcenter_v1` vs `quality_stratified_random_v1` has largely different selected clips at K with mean clip Jaccard `0.091667`.",
+    "`window_kcenter_v1` duplicate-source batch rate is `0.225000` and mean unique-source fraction is `0.943750`."
+  ]
+}
