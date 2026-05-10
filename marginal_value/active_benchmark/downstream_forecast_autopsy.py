@@ -554,6 +554,12 @@ def _result_card(
             f"{ts2vec_policy} remains a representation ablation / feature source.",
             "Do not add or tune policies based on this confirmation run.",
         ]
+        next_steps = [
+            "Treat this as a validation-only read of the frozen survivor policy set.",
+            "Report whether the locked window-geometry interpretation survives or reverses on this run.",
+            "If it reverses, do not add or tune policies on this validation target.",
+            "Hold big neural downstream training unless a separate pre-registered downstream objective is approved.",
+        ]
     else:
         killed_failed = (
             _advantage_for(pairwise_lookup.get((killed_policy, champion_policy), {}), killed_policy) <= 0.0
@@ -566,6 +572,12 @@ def _result_card(
             f"{submitted_policy} remains a defensible submitted-system comparator, not proof of downstream retraining optimality.",
             f"{ts2vec_policy} remains useful as a representation ablation / feature source, not the lead active-learning strategy.",
             "The hidden downstream target has now been used for decisions; stop designing new selectors against it.",
+        ]
+        next_steps = [
+            "Write/keep this result card as the frozen ProbCover decision.",
+            "Run only diagnostics that explain the loss; do not alter ProbCover thresholds or graph construction.",
+            "If running more compute, use a locked survivor-only confirmation with no new policies and no ProbCover rescue.",
+            "Hold big neural downstream training until the survivor-only selector conclusion is stable.",
         ]
     policy_decisions = {
         champion_policy: "current champion" if best_policy == champion_policy else "survivor, not current best",
@@ -583,12 +595,7 @@ def _result_card(
         "champion_mean_after_mse": by_policy.get(champion_policy, {}).get("mean_after_mse"),
         "policy_decisions": policy_decisions,
         "reads": reads,
-        "next_steps": [
-            "Write/keep this result card as the frozen ProbCover decision.",
-            "Run only diagnostics that explain the loss; do not alter ProbCover thresholds or graph construction.",
-            "If running more compute, use a locked survivor-only confirmation with no new policies and no ProbCover rescue.",
-            "Hold big neural downstream training until the survivor-only selector conclusion is stable.",
-        ],
+        "next_steps": next_steps,
     }
 
 

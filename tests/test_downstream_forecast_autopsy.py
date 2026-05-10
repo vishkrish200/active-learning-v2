@@ -68,18 +68,35 @@ class DownstreamForecastAutopsyTests(unittest.TestCase):
             self.assertIn("Downstream Forecast Policy Decision Card", output_md.read_text(encoding="utf-8"))
             self.assertIn("downstream_forecast_autopsy_written", result.stdout)
 
+    def test_survivor_only_autopsy_has_validation_next_steps_not_probcover_tuning(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_seed(root, "seed_109", baseline=1.0, probcover=None, window=0.80, random=0.90)
+            _write_seed(root, "seed_127", baseline=1.0, probcover=None, window=0.82, random=0.89)
 
-def _write_seed(root: Path, seed_name: str, *, baseline: float, probcover: float, window: float, random: float) -> None:
+            autopsy = build_downstream_forecast_autopsy(root)
+
+        self.assertEqual(autopsy["result_card"]["decision"], "survivor_confirmation_window_kcenter")
+        self.assertNotIn("support_gap_window_probcover_v1", autopsy["input"]["policies"])
+        self.assertTrue(any("not a ProbCover appeal" in item for item in autopsy["result_card"]["reads"]))
+        next_steps = "\n".join(autopsy["result_card"]["next_steps"])
+        self.assertIn("validation-only", next_steps)
+        self.assertIn("do not add or tune policies", next_steps)
+        self.assertNotIn("ProbCover thresholds", next_steps)
+
+
+def _write_seed(root: Path, seed_name: str, *, baseline: float, probcover: float | None, window: float, random: float) -> None:
     seed_dir = root / seed_name
     seed_dir.mkdir(parents=True, exist_ok=True)
     policies = {
         "quality_stratified_random_v1": random,
         "quality_only_v1": baseline,
         "window_kcenter_v1": window,
-        "support_gap_window_probcover_v1": probcover,
         "submitted_full_replay_v1": window + 0.01,
         "ts2vec_kcenter_v1": random - 0.02,
     }
+    if probcover is not None:
+        policies["support_gap_window_probcover_v1"] = probcover
     rows = []
     for episode_index in range(2):
         episode_id = f"episode_{episode_index:03d}"

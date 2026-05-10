@@ -535,6 +535,64 @@ class CoverageBenchmarkFromUrlsTests(unittest.TestCase):
         self.assertIn("--downstream-forecast-top-policy window_kcenter_v1", startup)
         self.assertIn("--downstream-forecast-baseline-policy quality_stratified_random_v1", startup)
 
+    def test_heldout_source_downstream_forecast_config_is_preregistered_not_ten_seed(self):
+        config_path = Path("configs/downstream_forecast_task_gcp_heldout_source_validation_3seed.json")
+        protocol_path = Path("docs/downstream_forecast_heldout_validation_protocol_2026-05-10.md")
+        manifest_path = Path("artifacts/offline_active_benchmark/gcp_inputs/heldout_pretrain_urls_workers_0501_0900_c20.txt")
+        self.assertTrue(config_path.exists())
+        self.assertTrue(protocol_path.exists())
+        self.assertTrue(manifest_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["no_large_downstream_training"])
+        self.assertTrue(config["execution"]["pre_registered_heldout_validation"])
+        self.assertEqual(config["data"]["manifest"], str(manifest_path))
+        self.assertEqual(config["data"]["selection_seeds"], [109, 127, 149])
+        self.assertLess(len(config["data"]["selection_seeds"]), 10)
+        self.assertLessEqual(config["data"]["max_rows_per_seed"], 420)
+        self.assertEqual(
+            config["benchmark"]["policies"],
+            [
+                "quality_stratified_random_v1",
+                "quality_only_v1",
+                "window_kcenter_v1",
+                "submitted_full_replay_v1",
+                "ts2vec_kcenter_v1",
+            ],
+        )
+        self.assertNotIn("support_gap_window_probcover_v1", config["benchmark"]["policies"])
+        self.assertEqual(config["downstream_forecast"]["top_policy"], "window_kcenter_v1")
+        self.assertEqual(config["downstream_forecast"]["baseline_policy"], "quality_stratified_random_v1")
+        self.assertIn("source-disjoint from the locked 500-worker canary manifest", config["acceptance"]["required_checks"])
+        self.assertIn("no policy tuning or new selector is allowed after looking", config["acceptance"]["decision_rule"])
+
+        heldout_groups = _source_groups_from_manifest(manifest_path)
+        locked_groups = _source_groups_from_manifest(Path("artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt"))
+        self.assertEqual(len(heldout_groups), 400)
+        self.assertFalse(heldout_groups & locked_groups)
+        self.assertEqual(min(heldout_groups), "worker00501")
+        self.assertEqual(max(heldout_groups), "worker00900")
+
+        startup = launch_coverage_benchmark_gcp._startup_script(
+            config=config,
+            run_id="unit-test",
+            gcs_prefix="gs://bucket/unit-test",
+            bundle_name="repo_bundle.tgz",
+            manifest_name="manifest.txt",
+            checkpoint_name="ts2vec_best.pt",
+        )
+
+        self.assertIn("--downstream-forecast-enable", startup)
+        self.assertIn("--downstream-forecast-top-policy window_kcenter_v1", startup)
+        self.assertIn("--downstream-forecast-baseline-policy quality_stratified_random_v1", startup)
+        self.assertIn(
+            "--policies quality_stratified_random_v1,quality_only_v1,window_kcenter_v1,submitted_full_replay_v1,ts2vec_kcenter_v1",
+            startup,
+        )
+        self.assertNotIn("support_gap_window_probcover_v1", startup)
+
     def test_gcp_launcher_startup_runs_round_loop_downstream_utility_runner(self):
         config = json.loads(
             Path("configs/downstream_active_loop_gcp_ts2vec_kcenter_3seed_fast.json").read_text(encoding="utf-8")
@@ -722,6 +780,18 @@ def _clip(sample_id: str, group_id: str, point: list[float], *, quality: float =
         embeddings={"window": vector, "ts2vec": vector},
         quality_score=quality,
     )
+
+
+def _source_groups_from_manifest(path: Path) -> set[str]:
+    groups = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        for part in line.strip().split("/"):
+            if part.startswith("worker"):
+                groups.add(part)
+                break
+    return groups
 
 
 if __name__ == "__main__":
