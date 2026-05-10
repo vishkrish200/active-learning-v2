@@ -1,0 +1,128 @@
+{
+  "purpose": "Pre-registered fresh-source downstream bridge validation after the held-out forecast reversal. This is a separate source-family pseudo-label objective on workers 00901-01200; it is not a forecast retry, not selector tuning, not TS2Vec retraining, and not large downstream training.",
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 150,
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "no_large_downstream_training": true,
+    "actual_downstream_model_update": true,
+    "pre_registered_fresh_source_validation": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "artifacts/offline_active_benchmark/gcp_inputs/heldout_pretrain_urls_workers_0901_1200_c20.txt",
+    "heldout_source_group_range": "worker00901-worker01200",
+    "excluded_prior_canary_source_group_range": "worker00001-worker00500",
+    "excluded_forecast_validation_source_group_range": "worker00501-worker00900",
+    "max_rows_per_seed": 450,
+    "max_groups": 150,
+    "clips_per_group": 3,
+    "sampling_mode": "random",
+    "selection_seeds": [211, 223, 251],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "source_family_label_holdout",
+    "episode_representation": "window",
+    "source_family_count": 4,
+    "folds": 6,
+    "candidate_groups_per_episode": 12,
+    "target_groups_per_episode": 6,
+    "target_candidate_groups_per_episode": 4,
+    "target_families_per_episode": 2,
+    "max_support_groups": 96,
+    "budgets": [1, 2, 4],
+    "quality_threshold": 0.85,
+    "max_stationary_fraction": 0.9,
+    "max_abs_value": 60.0,
+    "max_artifact_score": 0.05,
+    "distance_metric": "euclidean",
+    "oracle_exact_combination_limit": 100000,
+    "representations": ["ts2vec", "window", "raw_shape_stats"],
+    "eval_views": ["ts2vec", "window", "raw_shape_stats"],
+    "primary_eval_views": ["window", "raw_shape_stats"],
+    "eval_view_families": {
+      "ts2vec": "ts2vec",
+      "window": "window",
+      "raw_shape_stats": "raw_shape"
+    },
+    "ts2vec_view": "ts2vec",
+    "window_view": "window",
+    "blend_alpha": 0.5,
+    "policies": [
+      "quality_stratified_random_v1",
+      "quality_only_v1",
+      "window_kcenter_v1",
+      "submitted_full_replay_v1",
+      "ts2vec_kcenter_v1",
+      "oracle_greedy_target_family_v1"
+    ]
+  },
+  "downstream": {
+    "model": "source_family_bridge_frozen_feature_classifier",
+    "label_source": "source_family",
+    "label_representation": "window",
+    "source_family_count": 4,
+    "representations": ["window", "raw_shape_stats"],
+    "models": ["nearest_centroid", "ridge_classifier"],
+    "top_policy": "window_kcenter_v1",
+    "baseline_policy": "quality_stratified_random_v1",
+    "decision": "pre_registered_fresh_source_bridge_validation",
+    "primary_metric": "ridge_classifier_mean_balanced_accuracy_gain_at_k4",
+    "secondary_metrics": [
+      "ridge_classifier_mean_nll_reduction_at_k4",
+      "nearest_centroid_mean_balanced_accuracy_gain_at_k4",
+      "target_family_discovery_rate_at_k4"
+    ]
+  },
+  "reporting": {
+    "decision_report_script": "scripts/summarize_coverage_benchmark_reports.py",
+    "baseline_policy": "quality_stratified_random_v1",
+    "oracle_policy": "oracle_greedy_target_family_v1",
+    "bootstrap_replicates": 1000,
+    "bootstrap_unit": "seed_episode"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260510_downstream_source_family_bridge_fresh_source_3seed"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 3,
+    "minimum_episodes_per_seed": 6,
+    "minimum_independent_episodes": 18,
+    "required_artifacts": [
+      "selected_urls.txt",
+      "blind_target_coverage_benchmark_report.json",
+      "blind_target_coverage_benchmark_report.md",
+      "coverage_proof_summary.json",
+      "downstream_coverage_supervised_smoke_report.json",
+      "downstream_coverage_supervised_smoke_report.md",
+      "coverage_decision_report.json",
+      "coverage_decision_report.md"
+    ],
+    "required_checks": [
+      "fresh source groups are disjoint from worker00001-worker00900",
+      "source-group leakage is false for all seeds",
+      "frozen TS2Vec embeddings are used without retraining",
+      "large neural downstream training is not run",
+      "candidate pool includes target-family bridge groups",
+      "support excludes held-out target families",
+      "budget 0 support-only baseline is present",
+      "nearest_centroid and ridge_classifier frozen-feature heads are both reported",
+      "oracle_greedy_target_family_v1 is diagnostic only",
+      "selected_invalid_rate_max is zero",
+      "selected_target_leak_count_total is zero",
+      "selected_duplicate_clip_count_total is zero",
+      "VM spawned for this run is deleted after artifact copy"
+    ],
+    "decision_rule": "Primary read is K=4 ridge_classifier mean balanced-accuracy gain on the fresh source-family bridge objective. A fixed non-oracle policy must beat quality_stratified_random_v1 and quality_only_v1 on the primary metric and not lose target-family discovery to be considered positive evidence for that separate objective. Oracle is only an identifiability ceiling. If results are flat, quality-only wins, or the winner conflicts with forecast again, report mixed evidence and stop; do not tune selectors on this target.",
+    "non_claim": "This is not a forecast retry, not a 10-seed run, not a learned query policy, not challenge-label downstream proof, not TS2Vec retraining, not large neural downstream training, and not permission to policy-shop after seeing the result."
+  }
+}

@@ -382,6 +382,45 @@ class DownstreamSupervisedSmokeTests(unittest.TestCase):
         self.assertIn("support excludes target family", config["acceptance"]["required_checks"])
         self.assertIn("candidate includes target-family bridge groups", config["acceptance"]["required_checks"])
 
+    def test_fresh_source_bridge_validation_config_is_preregistered_not_forecast_retry(self):
+        config_path = Path("configs/downstream_source_family_bridge_fresh_source_3seed.json")
+        manifest_path = Path("artifacts/offline_active_benchmark/gcp_inputs/heldout_pretrain_urls_workers_0901_1200_c20.txt")
+
+        self.assertTrue(config_path.exists())
+        self.assertTrue(manifest_path.exists())
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        manifest_workers = _manifest_workers(manifest_path)
+        locked_workers = _manifest_workers(Path("artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt"))
+        forecast_workers = _manifest_workers(
+            Path("artifacts/offline_active_benchmark/gcp_inputs/heldout_pretrain_urls_workers_0501_0900_c20.txt")
+        )
+
+        self.assertEqual(len(manifest_workers), 300)
+        self.assertEqual(min(manifest_workers), "worker00901")
+        self.assertEqual(max(manifest_workers), "worker01200")
+        self.assertFalse(manifest_workers & locked_workers)
+        self.assertFalse(manifest_workers & forecast_workers)
+        self.assertEqual(config["data"]["manifest"], str(manifest_path))
+        self.assertEqual(config["data"]["selection_seeds"], [211, 223, 251])
+        self.assertLess(len(config["data"]["selection_seeds"]), 10)
+        self.assertTrue(config["execution"]["no_gpu"])
+        self.assertTrue(config["execution"]["no_ts2vec_retraining"])
+        self.assertTrue(config["execution"]["no_large_downstream_training"])
+        self.assertEqual(config["benchmark"]["episode_strategy"], "source_family_label_holdout")
+        self.assertEqual(config["benchmark"]["policies"], [
+            "quality_stratified_random_v1",
+            "quality_only_v1",
+            "window_kcenter_v1",
+            "submitted_full_replay_v1",
+            "ts2vec_kcenter_v1",
+            "oracle_greedy_target_family_v1",
+        ])
+        self.assertEqual(config["downstream"]["models"], ["nearest_centroid", "ridge_classifier"])
+        self.assertEqual(config["downstream"]["decision"], "pre_registered_fresh_source_bridge_validation")
+        self.assertEqual(config["downstream"]["primary_metric"], "ridge_classifier_mean_balanced_accuracy_gain_at_k4")
+        self.assertIn("not a forecast retry", config["acceptance"]["non_claim"])
+        self.assertIn("oracle_greedy_target_family_v1 is diagnostic only", config["acceptance"]["required_checks"])
+
     def test_supervised_utility_rewards_acquiring_target_family_labels(self):
         clips = [
             _clip("support_a", "fam_a_worker_support", [0.0, 0.0], quality=0.90),
@@ -497,3 +536,12 @@ def _coverage_selected(policy_id: str, budget_k: int, rank_index: int, sample_id
         valid=True,
         passed_artifact_gate=True,
     )
+
+
+def _manifest_workers(path: Path) -> set[str]:
+    workers: set[str] = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        for part in line.split("/"):
+            if part.startswith("worker") and len(part) == len("worker00000"):
+                workers.add(part)
+    return workers
