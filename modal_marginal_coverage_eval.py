@@ -16,7 +16,7 @@ app = modal.App(APP_NAME)
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
-    .uv_pip_install("numpy==2.2.6")
+    .uv_pip_install("numpy==2.2.6", "torch==2.8.0")
     .add_local_python_source("marginal_value")
 )
 
@@ -26,6 +26,7 @@ artifacts_volume = modal.Volume.from_name(ARTIFACTS_VOLUME_NAME, create_if_missi
 
 @app.function(
     image=image,
+    gpu="H100",
     timeout=3600,
     cpu=16,
     memory=32768,

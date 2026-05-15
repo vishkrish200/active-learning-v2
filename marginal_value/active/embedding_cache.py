@@ -1,0 +1,643 @@
+from __future__ import annotations
+
+from concurrent.futures import ThreadPoolExecutor
+import hashlib
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Callable, Mapping, Sequence
+
+import numpy as np
+
+from marginal_value.active.registry import ClipRecord
+from marginal_value.logging_utils import log_event, log_progress
+from marginal_value.preprocessing.quality import load_modal_jsonl_imu
+from marginal_value.ranking.baseline_ranker import (
+    raw_shape_stats_embedding,
+    temporal_order_embedding,
+    window_mean_std_embedding,
+)
+from marginal_value.models.imu2clip_inference import IMU2CLIPInference
+from marginal_value.models.imagebind_imu_inference import ImageBindIMUInference
+
+
+EMBEDDING_CACHE_VERSION = "active_embedding_cache_v1"
+SUPPORTED_REPRESENTATIONS = (
+    "window_mean_std_pool",
+    "temporal_order",
+    "raw_shape_stats",
+    "window_shape_stats",
+    "imu2clip",
+    "imu2clip_multiscale",
+    "imagebind_imu",
+)
+
+
+@dataclass(frozen=True)
+class EmbeddingLookupResult:
+    embeddings: dict[str, dict[str, np.ndarray]]
+    cache_status: str
+    cache_path: Path | None
+    n_clips: int
+
+    def report(self) -> dict[str, object]:
+        return {
+            "status": self.cache_status,
+            "path": str(self.cache_path) if self.cache_path is not None else "",
+            "n_clips": int(self.n_clips),
+        }
+
+
+def load_embedding_lookup(
+    clips: Sequence[ClipRecord],
+    *,
+    representations: Sequence[str],
+    sample_rate: float,
+    raw_shape_max_samples: object | None,
+    cache_dir: str | Path | None = None,
+    component: str = "active_embedding_cache",
+    mode: str = "full",
+    imu2clip_config: Mapping[str, object] | None = None,
+    imagebind_imu_config: Mapping[str, object] | None = None,
+) -> EmbeddingLookupResult:
+    reps = [str(rep) for rep in representations]
+    _validate_representations(reps)
+    _validate_imu2clip_config(reps, imu2clip_config)
+    _validate_imagebind_imu_config(reps, imagebind_imu_config)
+    ordered_clips = sorted(clips, key=lambda clip: clip.sample_id)
+    metadata = _cache_metadata(
+        ordered_clips,
+        representations=reps,
+        sample_rate=sample_rate,
+        raw_shape_max_samples=raw_shape_max_samples,
+        imu2clip_config=imu2clip_config,
+        imagebind_imu_config=imagebind_imu_config,
+    )
+    cache_path = _cache_path(cache_dir, metadata)
+    if cache_path is not None and cache_path.exists():
+        log_event(component, "embedding_cache_hit", mode=mode, cache_path=str(cache_path), n_clips=len(ordered_clips))
+        return EmbeddingLookupResult(
+            embeddings=_read_cache_pack(cache_path, metadata),
+            cache_status="hit",
+            cache_path=cache_path,
+            n_clips=len(ordered_clips),
+        )
+    shard_manifest_path = _shard_manifest_path(cache_dir, metadata)
+    if shard_manifest_path is not None and shard_manifest_path.exists():
+        log_event(
+            component,
+            "embedding_shard_cache_hit",
+            mode=mode,
+            cache_path=str(shard_manifest_path),
+            n_clips=len(ordered_clips),
+        )
+        return EmbeddingLookupResult(
+            embeddings=_read_shard_cache(shard_manifest_path, metadata),
+            cache_status="shard_hit",
+            cache_path=shard_manifest_path,
+            n_clips=len(ordered_clips),
+        )
+
+    log_event(
+        component,
+        "embedding_cache_miss" if cache_path is not None else "embedding_cache_disabled",
+        mode=mode,
+        cache_path=str(cache_path) if cache_path is not None else "",
+        n_clips=len(ordered_clips),
+    )
+    matrices = _compute_embedding_matrices(
+        ordered_clips,
+        representations=reps,
+        sample_rate=sample_rate,
+        raw_shape_max_samples=raw_shape_max_samples,
+        component=component,
+        mode=mode,
+        imu2clip_config=imu2clip_config,
+        imagebind_imu_config=imagebind_imu_config,
+    )
+    if cache_path is not None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        _write_cache_pack(cache_path, metadata, matrices)
+        log_event(component, "embedding_cache_write", mode=mode, cache_path=str(cache_path), n_clips=len(ordered_clips))
+    return EmbeddingLookupResult(
+        embeddings=_matrices_to_lookup(metadata["sample_ids"], matrices),
+        cache_status="miss" if cache_path is not None else "disabled",
+        cache_path=cache_path,
+        n_clips=len(ordered_clips),
+    )
+
+
+def write_embedding_shard_cache(
+    clips: Sequence[ClipRecord],
+    *,
+    representations: Sequence[str],
+    sample_rate: float,
+    raw_shape_max_samples: object | None,
+    cache_dir: str | Path,
+    shard_size: int,
+    component: str = "active_embedding_cache",
+    mode: str = "full",
+    on_shard_written: Callable[[], None] | None = None,
+    workers: int = 1,
+    imu2clip_config: Mapping[str, object] | None = None,
+    imagebind_imu_config: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    reps = [str(rep) for rep in representations]
+    _validate_representations(reps)
+    _validate_imu2clip_config(reps, imu2clip_config)
+    _validate_imagebind_imu_config(reps, imagebind_imu_config)
+    if int(shard_size) <= 0:
+        raise ValueError("shard_size must be positive.")
+    if int(workers) <= 0:
+        raise ValueError("workers must be positive.")
+    ordered_clips = sorted(clips, key=lambda clip: clip.sample_id)
+    metadata = _cache_metadata(
+        ordered_clips,
+        representations=reps,
+        sample_rate=sample_rate,
+        raw_shape_max_samples=raw_shape_max_samples,
+        imu2clip_config=imu2clip_config,
+        imagebind_imu_config=imagebind_imu_config,
+    )
+    manifest_path = _shard_manifest_path(cache_dir, metadata)
+    if manifest_path is None:
+        raise ValueError("cache_dir is required for sharded embedding precompute.")
+    shard_dir = _shard_dir(cache_dir, metadata)
+    shard_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+
+    shards = _shard_plan(ordered_clips, shard_size=int(shard_size))
+    manifest_shards: list[dict[str, object]] = []
+    for shard_index, shard_clips in enumerate(shards):
+        relpath = f"{shard_dir.name}/shard_{shard_index:05d}.npz"
+        shard_path = manifest_path.parent / relpath
+        sample_ids = [clip.sample_id for clip in shard_clips]
+        if shard_path.exists():
+            log_event(
+                component,
+                "embedding_shard_cache_skip_existing",
+                mode=mode,
+                shard_index=shard_index,
+                n_shards=len(shards),
+                shard_path=str(shard_path),
+                n_clips=len(shard_clips),
+            )
+        else:
+            matrices = _compute_embedding_matrices(
+                shard_clips,
+                representations=reps,
+                sample_rate=sample_rate,
+                raw_shape_max_samples=raw_shape_max_samples,
+                component=component,
+                mode=mode,
+                workers=int(workers),
+                imu2clip_config=imu2clip_config,
+                imagebind_imu_config=imagebind_imu_config,
+            )
+            _write_shard_file(shard_path, sample_ids, matrices)
+            log_event(
+                component,
+                "embedding_shard_cache_write",
+                mode=mode,
+                shard_index=shard_index + 1,
+                n_shards=len(shards),
+                shard_path=str(shard_path),
+                n_clips=len(shard_clips),
+            )
+            if on_shard_written is not None:
+                on_shard_written()
+        manifest_shards.append(
+            {
+                "index": int(shard_index),
+                "path": relpath,
+                "sample_ids": sample_ids,
+                "n_clips": int(len(shard_clips)),
+            }
+        )
+
+    manifest = {
+        "metadata": metadata,
+        "n_clips": int(len(ordered_clips)),
+        "n_shards": int(len(shards)),
+        "shards": manifest_shards,
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    log_event(
+        component,
+        "embedding_shard_manifest_write",
+        mode=mode,
+        manifest_path=str(manifest_path),
+        n_clips=len(ordered_clips),
+        n_shards=len(shards),
+    )
+    return {
+        "manifest_path": str(manifest_path),
+        "n_clips": int(len(ordered_clips)),
+        "n_shards": int(len(shards)),
+        "shard_dir": str(shard_dir),
+    }
+
+
+def embedding_cache_dir_from_config(config: Mapping[str, object]) -> Path | None:
+    value = config.get("embeddings")
+    if not isinstance(value, Mapping):
+        return None
+    if value.get("enabled", True) is False:
+        return None
+    cache_dir = value.get("cache_dir")
+    if cache_dir is None or str(cache_dir).strip() == "":
+        return None
+    return Path(str(cache_dir))
+
+
+def _compute_embedding_matrices(
+    clips: Sequence[ClipRecord],
+    *,
+    representations: Sequence[str],
+    sample_rate: float,
+    raw_shape_max_samples: object | None,
+    component: str,
+    mode: str,
+    workers: int = 1,
+    imu2clip_config: Mapping[str, object] | None = None,
+    imagebind_imu_config: Mapping[str, object] | None = None,
+) -> dict[str, np.ndarray]:
+    rows: dict[str, list[np.ndarray]] = {rep: [] for rep in representations}
+    max_samples = int(raw_shape_max_samples) if raw_shape_max_samples is not None else None
+    progress_every = max(1, len(clips) // 10) if clips else 1
+    worker_count = min(int(workers), len(clips)) if clips else 1
+    imu2clip_inference = _build_imu2clip_inference(representations, imu2clip_config)
+    imagebind_imu_inference = _build_imagebind_imu_inference(representations, imagebind_imu_config)
+    if _needs_imu2clip(representations) or _needs_imagebind_imu(representations):
+        worker_count = 1
+    if worker_count <= 1:
+        row_iter = (
+            _compute_clip_embedding_rows(
+                clip,
+                representations=representations,
+                sample_rate=sample_rate,
+                max_samples=max_samples,
+                imu2clip_inference=imu2clip_inference,
+                imagebind_imu_inference=imagebind_imu_inference,
+            )
+            for clip in clips
+        )
+        close_pool = None
+    else:
+        pool = ThreadPoolExecutor(max_workers=worker_count)
+        close_pool = pool
+        row_iter = pool.map(
+            lambda clip: _compute_clip_embedding_rows(
+                clip,
+                representations=representations,
+                sample_rate=sample_rate,
+                max_samples=max_samples,
+                imu2clip_inference=imu2clip_inference,
+                imagebind_imu_inference=imagebind_imu_inference,
+            ),
+            clips,
+        )
+    try:
+        for index, clip_rows in enumerate(row_iter, start=1):
+            for representation in representations:
+                rows[representation].append(clip_rows[representation])
+            log_progress(
+                component,
+                "embedding_progress",
+                index=index,
+                total=len(clips),
+                every=progress_every,
+                mode=mode,
+            )
+    finally:
+        if close_pool is not None:
+            close_pool.shutdown(wait=True)
+    return {rep: np.vstack(values).astype("float32") for rep, values in rows.items()}
+
+
+def _compute_clip_embedding_rows(
+    clip: ClipRecord,
+    *,
+    representations: Sequence[str],
+    sample_rate: float,
+    max_samples: int | None,
+    imu2clip_inference: IMU2CLIPInference | None = None,
+    imagebind_imu_inference: ImageBindIMUInference | None = None,
+) -> dict[str, np.ndarray]:
+    rows: dict[str, np.ndarray] = {}
+    windows: np.ndarray | None = None
+    raw_samples: np.ndarray | None = None
+    for representation in representations:
+        if representation in {"window_mean_std_pool", "temporal_order", "window_shape_stats"}:
+            if windows is None:
+                windows = _load_windows(clip)
+            if representation == "window_mean_std_pool":
+                rows[representation] = window_mean_std_embedding(windows)
+            elif representation == "temporal_order":
+                rows[representation] = temporal_order_embedding(windows)
+            elif representation == "window_shape_stats":
+                rows[representation] = _window_shape_stats_embedding(windows)
+        elif representation == "raw_shape_stats":
+            samples, _timestamps = load_modal_jsonl_imu(clip.raw_path, max_samples=max_samples)
+            rows[representation] = raw_shape_stats_embedding(samples, sample_rate=sample_rate)
+        elif representation in {"imu2clip", "imu2clip_multiscale"}:
+            if imu2clip_inference is None:
+                raise ValueError("imu2clip_config.checkpoint_path is required for IMU2CLIP representations.")
+            if raw_samples is None:
+                raw_samples, _timestamps = load_modal_jsonl_imu(clip.raw_path, max_samples=max_samples)
+            if representation == "imu2clip":
+                rows[representation] = imu2clip_inference.encode_clip(raw_samples)
+            else:
+                rows[representation] = imu2clip_inference.encode_clip_multiscale(raw_samples)
+        elif representation == "imagebind_imu":
+            if imagebind_imu_inference is None:
+                raise ValueError("imagebind_imu_config is required for ImageBind IMU representations.")
+            if raw_samples is None:
+                raw_samples, _timestamps = load_modal_jsonl_imu(clip.raw_path, max_samples=max_samples)
+            rows[representation] = imagebind_imu_inference.encode_clip(raw_samples)
+        else:
+            raise ValueError(f"Unsupported representation: {representation}")
+    return rows
+
+
+def _write_cache_pack(path: Path, metadata: Mapping[str, object], matrices: Mapping[str, np.ndarray]) -> None:
+    payload: dict[str, object] = {
+        "metadata_json": np.asarray(json.dumps(metadata, sort_keys=True)),
+        "sample_ids": np.asarray(metadata["sample_ids"], dtype=str),
+    }
+    for representation, matrix in matrices.items():
+        payload[f"rep__{representation}"] = np.asarray(matrix, dtype="float32")
+    np.savez_compressed(path, **payload)
+
+
+def _read_cache_pack(path: Path, expected_metadata: Mapping[str, object]) -> dict[str, dict[str, np.ndarray]]:
+    with np.load(path, allow_pickle=False) as data:
+        metadata = json.loads(str(data["metadata_json"].item()))
+        if metadata != expected_metadata:
+            raise ValueError(f"Embedding cache metadata mismatch for {path}")
+        sample_ids = [str(sample_id) for sample_id in data["sample_ids"].tolist()]
+        matrices = {
+            representation: np.asarray(data[f"rep__{representation}"], dtype="float32").copy()
+            for representation in expected_metadata["representations"]
+        }
+    return _matrices_to_lookup(sample_ids, matrices)
+
+
+def _write_shard_file(path: Path, sample_ids: Sequence[str], matrices: Mapping[str, np.ndarray]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload: dict[str, object] = {"sample_ids": np.asarray(sample_ids, dtype=str)}
+    for representation, matrix in matrices.items():
+        payload[f"rep__{representation}"] = np.asarray(matrix, dtype="float32")
+    np.savez(path, **payload)
+
+
+def _read_shard_cache(
+    manifest_path: Path,
+    expected_metadata: Mapping[str, object],
+) -> dict[str, dict[str, np.ndarray]]:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    metadata = manifest.get("metadata")
+    if metadata != expected_metadata:
+        raise ValueError(f"Embedding shard cache metadata mismatch for {manifest_path}")
+    sample_ids: list[str] = []
+    rows: dict[str, list[np.ndarray]] = {
+        str(rep): []
+        for rep in expected_metadata["representations"]
+    }
+    for shard in manifest.get("shards", []):
+        if not isinstance(shard, Mapping):
+            raise ValueError(f"Malformed shard entry in {manifest_path}")
+        shard_path = manifest_path.parent / str(shard["path"])
+        with np.load(shard_path, allow_pickle=False) as data:
+            shard_ids = [str(sample_id) for sample_id in data["sample_ids"].tolist()]
+            sample_ids.extend(shard_ids)
+            for representation in rows:
+                rows[representation].append(np.asarray(data[f"rep__{representation}"], dtype="float32").copy())
+    matrices = {
+        representation: np.vstack(parts).astype("float32")
+        for representation, parts in rows.items()
+    }
+    if sample_ids != list(expected_metadata["sample_ids"]):
+        raise ValueError(f"Embedding shard cache sample order mismatch for {manifest_path}")
+    return _matrices_to_lookup(sample_ids, matrices)
+
+
+def _matrices_to_lookup(
+    sample_ids: Sequence[str],
+    matrices: Mapping[str, np.ndarray],
+) -> dict[str, dict[str, np.ndarray]]:
+    return {
+        representation: {
+            str(sample_id): np.asarray(matrix[index], dtype="float32")
+            for index, sample_id in enumerate(sample_ids)
+        }
+        for representation, matrix in matrices.items()
+    }
+
+
+def _cache_metadata(
+    clips: Sequence[ClipRecord],
+    *,
+    representations: Sequence[str],
+    sample_rate: float,
+    raw_shape_max_samples: object | None,
+    imu2clip_config: Mapping[str, object] | None,
+    imagebind_imu_config: Mapping[str, object] | None,
+) -> dict[str, object]:
+    return {
+        "version": EMBEDDING_CACHE_VERSION,
+        "sample_ids": [clip.sample_id for clip in clips],
+        "representations": [str(rep) for rep in representations],
+        "sample_rate": float(sample_rate),
+        "raw_shape_max_samples": int(raw_shape_max_samples) if raw_shape_max_samples is not None else None,
+        "imu2clip_config": _imu2clip_cache_metadata(representations, imu2clip_config),
+        "imagebind_imu_config": _imagebind_imu_cache_metadata(representations, imagebind_imu_config),
+    }
+
+
+def _cache_path(cache_dir: str | Path | None, metadata: Mapping[str, object]) -> Path | None:
+    if cache_dir is None:
+        return None
+    digest = hashlib.sha256(json.dumps(metadata, sort_keys=True).encode("utf-8")).hexdigest()[:24]
+    return Path(cache_dir) / f"embeddings_{digest}.npz"
+
+
+def _shard_manifest_path(cache_dir: str | Path | None, metadata: Mapping[str, object]) -> Path | None:
+    if cache_dir is None:
+        return None
+    digest = hashlib.sha256(json.dumps(metadata, sort_keys=True).encode("utf-8")).hexdigest()[:24]
+    return Path(cache_dir) / f"embeddings_{digest}.shards.json"
+
+
+def _shard_dir(cache_dir: str | Path, metadata: Mapping[str, object]) -> Path:
+    digest = hashlib.sha256(json.dumps(metadata, sort_keys=True).encode("utf-8")).hexdigest()[:24]
+    return Path(cache_dir) / f"embeddings_{digest}_shards"
+
+
+def _shard_plan(clips: Sequence[ClipRecord], *, shard_size: int) -> list[list[ClipRecord]]:
+    return [
+        list(clips[start : start + int(shard_size)])
+        for start in range(0, len(clips), int(shard_size))
+    ]
+
+
+def _validate_representations(representations: Sequence[str]) -> None:
+    if not representations:
+        raise ValueError("At least one embedding representation is required.")
+    unsupported = set(str(rep) for rep in representations) - set(SUPPORTED_REPRESENTATIONS)
+    if unsupported:
+        raise ValueError(f"Unsupported active embedding representations: {sorted(unsupported)}")
+
+
+def _needs_imu2clip(representations: Sequence[str]) -> bool:
+    return any(str(rep) in {"imu2clip", "imu2clip_multiscale"} for rep in representations)
+
+
+def _needs_imagebind_imu(representations: Sequence[str]) -> bool:
+    return any(str(rep) == "imagebind_imu" for rep in representations)
+
+
+def _validate_imu2clip_config(
+    representations: Sequence[str],
+    imu2clip_config: Mapping[str, object] | None,
+) -> None:
+    if not _needs_imu2clip(representations):
+        return
+    if not isinstance(imu2clip_config, Mapping):
+        raise ValueError("imu2clip_config.checkpoint_path is required for IMU2CLIP representations.")
+    if str(imu2clip_config.get("checkpoint_path", "")).strip() == "":
+        raise ValueError("imu2clip_config.checkpoint_path is required for IMU2CLIP representations.")
+
+
+def _validate_imagebind_imu_config(
+    representations: Sequence[str],
+    imagebind_imu_config: Mapping[str, object] | None,
+) -> None:
+    if not _needs_imagebind_imu(representations):
+        return
+    if imagebind_imu_config is not None and not isinstance(imagebind_imu_config, Mapping):
+        raise ValueError("imagebind_imu_config must be a mapping when ImageBind IMU is requested.")
+
+
+def _build_imu2clip_inference(
+    representations: Sequence[str],
+    imu2clip_config: Mapping[str, object] | None,
+) -> IMU2CLIPInference | None:
+    if not _needs_imu2clip(representations):
+        return None
+    _validate_imu2clip_config(representations, imu2clip_config)
+    config = dict(imu2clip_config or {})
+    return IMU2CLIPInference(
+        checkpoint_path=str(config["checkpoint_path"]),
+        device=str(config.get("device", "cpu")),
+        target_hz=int(config.get("target_hz", 30)),
+        window_len_s=float(config.get("window_len_s", 2.0)),
+        stride_ratio=float(config.get("stride_ratio", 0.5)),
+        pool=str(config.get("pool", "max")),
+        expected_hz=int(config.get("expected_hz", 200)),
+        batch_size=int(config.get("batch_size", 128)),
+        model_window_timesteps=int(config.get("model_window_timesteps", 1000)),
+    )
+
+
+def _build_imagebind_imu_inference(
+    representations: Sequence[str],
+    imagebind_imu_config: Mapping[str, object] | None,
+) -> ImageBindIMUInference | None:
+    if not _needs_imagebind_imu(representations):
+        return None
+    _validate_imagebind_imu_config(representations, imagebind_imu_config)
+    config = dict(imagebind_imu_config or {})
+    return ImageBindIMUInference(
+        device=str(config.get("device", "cpu")),
+        target_hz=int(config.get("target_hz", 30)),
+        expected_hz=int(config.get("expected_hz", 200)),
+        window_len_s=float(config.get("window_len_s", 10.0)),
+        stride_ratio=float(config.get("stride_ratio", 0.5)),
+        pool=str(config.get("pool", "max")),
+        batch_size=int(config.get("batch_size", 32)),
+        pretrained=bool(config.get("pretrained", True)),
+        checkpoint_path=str(config["checkpoint_path"]) if "checkpoint_path" in config else None,
+        checkpoint_dir=str(config["checkpoint_dir"]) if "checkpoint_dir" in config else None,
+    )
+
+
+def _imu2clip_cache_metadata(
+    representations: Sequence[str],
+    imu2clip_config: Mapping[str, object] | None,
+) -> dict[str, object] | None:
+    if not _needs_imu2clip(representations):
+        return None
+    config = dict(imu2clip_config or {})
+    keys = (
+        "checkpoint_path",
+        "target_hz",
+        "window_len_s",
+        "stride_ratio",
+        "pool",
+        "expected_hz",
+        "batch_size",
+        "model_window_timesteps",
+    )
+    return {key: config.get(key) for key in keys if key in config}
+
+
+def _imagebind_imu_cache_metadata(
+    representations: Sequence[str],
+    imagebind_imu_config: Mapping[str, object] | None,
+) -> dict[str, object] | None:
+    if not _needs_imagebind_imu(representations):
+        return None
+    config = dict(imagebind_imu_config or {})
+    keys = (
+        "device",
+        "target_hz",
+        "expected_hz",
+        "window_len_s",
+        "stride_ratio",
+        "pool",
+        "batch_size",
+        "pretrained",
+        "checkpoint_path",
+        "checkpoint_dir",
+    )
+    return {key: config.get(key) for key in keys if key in config}
+
+
+def _load_windows(clip: ClipRecord) -> np.ndarray:
+    with np.load(clip.feature_path) as data:
+        return np.asarray(data["window_features"], dtype="float32")
+
+
+def _window_shape_stats_embedding(windows: np.ndarray) -> np.ndarray:
+    values = _finite_2d(windows)
+    if len(values) > 1:
+        diffs = np.diff(values, axis=0)
+        diff_parts = [np.mean(np.abs(diffs), axis=0), np.max(np.abs(diffs), axis=0)]
+    else:
+        diff_parts = [np.zeros(values.shape[1]), np.zeros(values.shape[1])]
+    return np.nan_to_num(
+        np.concatenate(
+            [
+                np.mean(values, axis=0),
+                np.std(values, axis=0),
+                np.min(values, axis=0),
+                np.max(values, axis=0),
+                np.percentile(values, 25, axis=0),
+                np.percentile(values, 75, axis=0),
+                *diff_parts,
+            ]
+        ),
+        nan=0.0,
+        posinf=0.0,
+        neginf=0.0,
+    )
+
+
+def _finite_2d(values: np.ndarray) -> np.ndarray:
+    array = np.asarray(values, dtype=float)
+    if array.ndim != 2:
+        raise ValueError("Expected a 2D array.")
+    if array.shape[0] == 0:
+        raise ValueError("Expected at least one row.")
+    return np.nan_to_num(array, nan=0.0, posinf=0.0, neginf=0.0)

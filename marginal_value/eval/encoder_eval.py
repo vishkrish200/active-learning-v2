@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 import numpy as np
 
+from marginal_value.indexing.cosine_search import cosine_knn as search_cosine_knn
 from marginal_value.indexing.knn_features import normalize_rows
 
 
@@ -60,18 +61,7 @@ def validate_eval_config(config: dict[str, Any]) -> None:
 
 
 def cosine_knn(support: np.ndarray, query: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-    support_vectors = normalize_rows(np.asarray(support, dtype=float))
-    query_vectors = normalize_rows(np.asarray(query, dtype=float))
-    k_eff = min(int(k), len(support_vectors))
-    if k_eff <= 0:
-        raise ValueError("support must contain at least one embedding")
-    similarities = query_vectors @ support_vectors.T
-    order = np.argpartition(-similarities, kth=k_eff - 1, axis=1)[:, :k_eff]
-    rows = np.arange(len(query_vectors))[:, None]
-    sorted_local = np.argsort(-similarities[rows, order], axis=1)
-    indices = order[rows, sorted_local]
-    distances = 1.0 - similarities[rows, indices]
-    return distances, indices
+    return search_cosine_knn(support, query, k=k, backend="auto")
 
 
 def evaluate_retrieval(

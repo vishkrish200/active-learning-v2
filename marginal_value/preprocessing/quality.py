@@ -220,6 +220,12 @@ def _sample_from_jsonl_record(record: Mapping[str, object]) -> list[float]:
             raise ValueError("JSONL records with acc/gyro must contain three values each")
         return [float(value) for value in [*acc[:3], *gyro[:3]]]
 
+    if "gyro" in record:
+        recovered = _recover_acc_with_mangled_key(record)
+        if recovered is not None:
+            acc, gyro = recovered
+            return [float(value) for value in [*acc[:3], *gyro[:3]]]
+
     channel_keys = ("acc_x", "acc_y", "acc_z", "gyro_x", "gyro_y", "gyro_z")
     if all(key in record for key in channel_keys):
         return [float(record[key]) for key in channel_keys]  # type: ignore[arg-type]
@@ -232,6 +238,22 @@ def _sample_from_jsonl_record(record: Mapping[str, object]) -> list[float]:
     if len(numeric) < 6:
         raise ValueError("JSONL IMU records must include acc/gyro arrays or at least six numeric channels")
     return numeric[:6]
+
+
+def _recover_acc_with_mangled_key(record: Mapping[str, object]) -> tuple[list[float], list[float]] | None:
+    gyro_value = record.get("gyro")
+    if not isinstance(gyro_value, list | tuple) or len(gyro_value) < 3:
+        return None
+    vector_candidates = [
+        value
+        for key, value in record.items()
+        if key not in {"gyro", "timestamp", "time", "t", "ts", "t_us"}
+        and isinstance(value, list | tuple)
+        and len(value) >= 3
+    ]
+    if len(vector_candidates) != 1:
+        return None
+    return list(vector_candidates[0]), list(gyro_value)
 
 
 def _timestamp_seconds_from_jsonl_record(record: Mapping[str, object]) -> float | None:

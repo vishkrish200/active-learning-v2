@@ -1,0 +1,53 @@
+{
+  "execution": {
+    "provider": "modal",
+    "gpu": "H100",
+    "data_volume": "imu-novelty-subset-data",
+    "artifacts_volume": "activelearning-imu-rebuild-cache"
+  },
+  "data": {
+    "root": "/data",
+    "manifest": "cache/manifests/pretrain_full_cached_urls.txt",
+    "target_hz": 30,
+    "expected_hz": 200,
+    "window_len_s": 2.0,
+    "window_timesteps": 1000,
+    "smoke_max_files": 32,
+    "validation_max_files": 4096,
+    "full_max_files": 50000,
+    "preload_windows": true,
+    "preload_before_gpu": true,
+    "preloaded_windows_path": "/artifacts/cache/imu2clip_style/validation_windows.npz",
+    "preload_windows_per_file": 1,
+    "preload_progress_every": 512
+  },
+  "encoder": {
+    "architecture": "imu2clip_style_mw2",
+    "hidden_dim": 512,
+    "output_dim": 512,
+    "gru_layers": 2,
+    "cnn_layers": 4,
+    "cnn_channels": 32
+  },
+  "training": {
+    "seed": 17,
+    "batch_size": 32,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.01,
+    "temperature": 0.1,
+    "smoke_steps": 5,
+    "validation_steps": 300,
+    "max_steps": 10000,
+    "progress_every_steps": 10,
+    "checkpoint_dir": "/artifacts/checkpoints/imu2clip_style",
+    "validation_checkpoint_name": "validation_imu2clip_style_encoder.pt",
+    "full_checkpoint_name": "imu2clip_style_encoder.pt"
+  },
+  "audit": {
+    "manifest_path": "/data/cache/manifests/pretrain_full_cached_urls.txt",
+    "n_clips": 500,
+    "output_path": "/artifacts/reports/imu2clip_embedding_audit.md",
+    "preload_before_gpu": true,
+    "preloaded_clips_path": "/artifacts/cache/imu2clip_style/audit_clips_500.npz"
+  }
+}

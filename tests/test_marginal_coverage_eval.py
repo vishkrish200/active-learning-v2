@@ -160,6 +160,8 @@ class MarginalCoverageEvalTests(unittest.TestCase):
         self.assertIn("marginal-value-marginal-coverage-eval", source)
         self.assertIn("remote_marginal_coverage_eval.remote", source)
         self.assertIn("run_marginal_coverage_eval", source)
+        self.assertIn('"torch==2.8.0"', source)
+        self.assertIn('gpu="H100"', source)
         self.assertEqual(config["data"]["pretrain_manifest"], "cache/manifests/pretrain_physical_source_urls.txt")
         self.assertEqual(config["ranking"]["reranker_method"], "tiered_cluster_cap")
         self.assertIn("raw_shape_stats", config["eval"]["representations"])
