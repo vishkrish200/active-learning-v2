@@ -1,0 +1,154 @@
+{
+  "purpose": "Bounded frozen-feature downstream canary after the expanded CPU coverage gate passed. Keeps acquisition policies fixed, adds selected candidate clips to support, and evaluates predeclared source-family pseudo-label heads only. This is not large downstream training and does not retrain TS2Vec.",
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 240,
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "no_large_downstream_training": true,
+    "frozen_feature_downstream_canary": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt",
+    "max_rows_per_seed": 720,
+    "max_groups": 240,
+    "clips_per_group": 3,
+    "sampling_mode": "random",
+    "selection_seeds": [
+      17,
+      23,
+      37
+    ],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "source_family_label_holdout",
+    "episode_representation": "window",
+    "source_family_count": 4,
+    "folds": 8,
+    "candidate_groups_per_episode": 12,
+    "target_groups_per_episode": 8,
+    "target_candidate_groups_per_episode": 4,
+    "target_families_per_episode": 2,
+    "max_support_groups": 128,
+    "budgets": [
+      1,
+      2,
+      4
+    ],
+    "quality_threshold": 0.85,
+    "max_stationary_fraction": 0.9,
+    "max_abs_value": 60.0,
+    "max_artifact_score": 0.05,
+    "distance_metric": "euclidean",
+    "oracle_exact_combination_limit": 100000,
+    "representations": [
+      "ts2vec",
+      "window",
+      "raw_shape_stats"
+    ],
+    "eval_views": [
+      "ts2vec",
+      "window",
+      "raw_shape_stats"
+    ],
+    "primary_eval_views": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "eval_view_families": {
+      "ts2vec": "ts2vec",
+      "window": "window",
+      "raw_shape_stats": "raw_shape"
+    },
+    "ts2vec_view": "ts2vec",
+    "window_view": "window",
+    "blend_alpha": 0.5,
+    "policies": [
+      "quality_stratified_random_v1",
+      "quality_only_v1",
+      "window_kcenter_v1",
+      "submitted_full_replay_v1",
+      "ts2vec_kcenter_v1"
+    ],
+    "candidate_group_sweep": [
+      {
+        "label": "pool36",
+        "candidate_groups_per_episode": 12,
+        "target_candidate_groups_per_episode": 4
+      },
+      {
+        "label": "pool72",
+        "candidate_groups_per_episode": 24,
+        "target_candidate_groups_per_episode": 8
+      }
+    ]
+  },
+  "downstream": {
+    "model": "predeclared_frozen_feature_source_family_bridge",
+    "models": [
+      "nearest_centroid",
+      "ridge_classifier"
+    ],
+    "label_source": "source_family",
+    "label_representation": "window",
+    "source_family_count": 4,
+    "representations": [
+      "window",
+      "raw_shape_stats"
+    ],
+    "top_policy": "ts2vec_kcenter_v1",
+    "baseline_policy": "quality_stratified_random_v1",
+    "decision": "bounded_frozen_canary"
+  },
+  "reporting": {
+    "decision_report_script": "scripts/summarize_coverage_benchmark_reports.py",
+    "baseline_policy": "quality_stratified_random_v1",
+    "oracle_policy": "oracle_exact_coverage_v1",
+    "bootstrap_replicates": 1000,
+    "bootstrap_unit": "seed_episode"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260509_downstream_canary_ts2vec_kcenter_3seed_8fold_pool_sweep"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 3,
+    "minimum_episodes_per_seed": 16,
+    "minimum_independent_episodes": 48,
+    "required_artifacts": [
+      "selected_urls.txt",
+      "blind_target_coverage_benchmark_report.json",
+      "blind_target_coverage_benchmark_report.md",
+      "coverage_proof_summary.json",
+      "downstream_coverage_supervised_smoke_report.json",
+      "downstream_coverage_supervised_smoke_report.md",
+      "coverage_decision_report.json",
+      "coverage_decision_report.md"
+    ],
+    "required_checks": [
+      "source-group leakage is false for all seeds",
+      "frozen TS2Vec embeddings are used without retraining",
+      "candidate pool stress includes both 36-clip and 72-clip episodes",
+      "candidate pool includes target-family bridge groups",
+      "support excludes held-out target families",
+      "predeclared frozen heads include nearest_centroid and ridge_classifier",
+      "budget 0 support-only baseline is present in downstream rows",
+      "ts2vec_kcenter_v1 is compared directly against quality_stratified_random_v1",
+      "bounded_frozen_canary is pass in downstream bridge proxy decision",
+      "balanced-accuracy delta vs quality_stratified_random_v1 has CI95 low above zero",
+      "target-family discovery delta vs quality_stratified_random_v1 is positive",
+      "large_training remains hold",
+      "VM spawned for this run is deleted after artifact copy"
+    ],
+    "promotion_rule": "If the downstream bridge proxy passes on at least 48 seed-episode-pool units, allow one larger frozen-feature supervised probe. Do not launch large neural downstream training or TS2Vec retraining from this canary.",
+    "non_claim": "This is a source-family pseudo-label frozen-feature downstream canary, not real challenge-label downstream proof."
+  }
+}

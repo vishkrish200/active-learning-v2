@@ -1,0 +1,79 @@
+{
+  "execution": {
+    "provider": "gcp_compute",
+    "machine_type": "e2-standard-4",
+    "zone": "us-central1-a",
+    "max_runtime_minutes": 60,
+    "no_gpu": true,
+    "no_ts2vec_retraining": true,
+    "linear_model_only": true,
+    "delete_vm_after_copy": true
+  },
+  "data": {
+    "manifest": "artifacts/offline_active_benchmark/gcp_inputs/pretrain_urls_gcp_10000_g500_c20.txt",
+    "max_rows_per_seed": 300,
+    "max_groups": 100,
+    "clips_per_group": 3,
+    "sampling_mode": "random",
+    "selection_seeds": [17],
+    "max_samples_per_clip": 900
+  },
+  "ts2vec": {
+    "checkpoint_path": "/Users/vishnukrishnan/.config/superpowers/worktrees/active-learning-v2/codex/ts2vec-pipeline/artifacts/gcp_stage/checkpoints/ts2vec_candidate_eval/ts2vec_best.pt",
+    "device": "cpu",
+    "batch_size": 32
+  },
+  "benchmark": {
+    "episode_strategy": "source_family_shift",
+    "episode_representation": "window",
+    "source_family_count": 4,
+    "folds": 2,
+    "candidate_groups_per_episode": 6,
+    "target_groups_per_episode": 2,
+    "max_support_groups": 64,
+    "rounds": 2,
+    "batch_size": 2,
+    "oracle_candidate_cap": null,
+    "oracle_exact_combination_limit": 5000,
+    "representations": ["ts2vec", "window", "raw_shape_stats"],
+    "primary_representations": ["window", "raw_shape_stats"],
+    "blend_left_representation": "ts2vec",
+    "blend_right_representation": "window",
+    "blend_alpha": 0.5,
+    "max_artifact_score": 0.05,
+    "policies": [
+      "random_valid",
+      "quality_only",
+      "old_novelty_window",
+      "old_novelty_ts2vec",
+      "kcenter_quality_gated_ts2vec",
+      "submitted_full_replay",
+      "submitted_minus_ts2vec",
+      "submitted_minus_window",
+      "ts2vec_novelty_same_gates_no_kcenter"
+    ]
+  },
+  "downstream": {
+    "model": "linear_reconstruction_pca",
+    "representations": ["window", "raw_shape_stats"],
+    "max_components": 4,
+    "baseline_policy": "old_novelty_ts2vec",
+    "random_policy": "random_valid",
+    "decision": "hold_after_smoke"
+  },
+  "artifacts": {
+    "local_output_dir": "artifacts/offline_active_benchmark/gcp_runs/20260507_downstream_ts2vec_tiny_smoke"
+  },
+  "acceptance": {
+    "minimum_completed_seeds": 1,
+    "minimum_episodes_per_seed": 2,
+    "required_checks": [
+      "source-group leakage is false",
+      "frozen TS2Vec embeddings are used without retraining",
+      "linear reconstruction report is written",
+      "old_novelty_ts2vec is compared against random_valid and submitted_full_replay",
+      "downstream_training decision remains hold",
+      "VM spawned for this run is deleted after artifact copy"
+    ]
+  }
+}
